@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Terms of Service — CHP Management</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --bg: #1e1f22;
+    --panel: #2b2d31;
+    --text: #dcddde;
+    --muted: #96989d;
+    --accent: #5865F2;
+    --border: #3a3c41;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+  }
+  h1 {
+    font-size: 28px;
+    margin: 0 0 8px;
+    color: #fff;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  h2 {
+    font-size: 19px;
+    color: #fff;
+    margin-top: 40px;
+    border-left: 3px solid var(--accent);
+    padding-left: 12px;
+  }
+  h3 {
+    font-size: 15px;
+    color: #fff;
+    margin-top: 20px;
+  }
+  p, li { font-size: 15px; color: var(--text); }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+  }
+  .notice {
+    background: rgba(88, 101, 242, 0.08);
+    border: 1px solid rgba(88, 101, 242, 0.35);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  code {
+    background: #1a1b1e;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  a { color: #7289da; }
+  .toc {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 24px;
+  }
+  .toc a { display: block; padding: 4px 0; font-size: 14px; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Terms of Service</h1>
+    <div class="subtitle">CHP Management — Discord Bot &amp; Associated Services</div>
+    <div class="subtitle">Last Updated: <strong>July 1, 2026</strong></div>
+  </header>
+
+  <div class="notice">
+    By inviting, installing, configuring, or using CHP Management (the "Bot", "Service") in any Discord server
+    ("Server", "Guild"), or by interacting with any of its commands, components, DMs, webhooks, or any associated
+    panel, you ("User", "you") agree to be bound by these Terms of Service ("Terms"). If you are a Server
+    administrator or owner who adds the Bot to a Server, you additionally agree on behalf of every member of that
+    Server who interacts with the Bot, and you are responsible for ensuring your members are aware of and comply
+    with these Terms. If you do not agree to these Terms, you must not use the Bot and must remove it from any
+    Server you control.
+  </div>
+
+  <div class="toc">
+    <strong>Contents</strong>
+    <a href="#s1">1. Definitions</a>
+    <a href="#s2">2. Eligibility &amp; Acceptance</a>
+    <a href="#s3">3. Description of the Service</a>
+    <a href="#s4">4. Account, Server &amp; Role Linking</a>
+    <a href="#s5">5. Acceptable Use</a>
+    <a href="#s6">6. Prohibited Conduct (Non-Exhaustive)</a>
+    <a href="#s7">7. Roleplay &amp; In-Character Disclaimer</a>
+    <a href="#s8">8. Data Accuracy &amp; Recordkeeping</a>
+    <a href="#s9">9. Third-Party Services</a>
+    <a href="#s10">10. Service Availability, Beta Status &amp; No Warranty</a>
+    <a href="#s11">11. Suspension, Termination &amp; Enforcement</a>
+    <a href="#s12">12. Reporting Violations</a>
+    <a href="#s13">13. Intellectual Property</a>
+    <a href="#s14">14. Limitation of Liability</a>
+    <a href="#s15">15. Indemnification</a>
+    <a href="#s16">16. Privacy</a>
+    <a href="#s17">17. Modifications to the Service or Terms</a>
+    <a href="#s18">18. Severability &amp; Entire Agreement</a>
+    <a href="#s19">19. Governing Law</a>
+    <a href="#s20">20. Contact</a>
+  </div>
+
+  <h2 id="s1">1. Definitions</h2>
+  <ul>
+    <li><strong>"Bot"</strong> or <strong>"Service"</strong> refers to the CHP Management Discord application, all of
+      its slash (<code>/</code>) and prefix (<code>&gt;</code>) commands, interactive components (buttons, select
+      menus, modals), background tasks, webhooks, direct messages it sends, and any companion web panel or API
+      operated in connection with it.</li>
+    <li><strong>"Operator"</strong>, <strong>"we"</strong>, <strong>"us"</strong> refers to the developer(s) who own,
+      operate, host, and maintain the Bot.</li>
+    <li><strong>"Server"</strong> or <strong>"Guild"</strong> refers to any Discord server in which the Bot has been
+      added or is otherwise active.</li>
+    <li><strong>"Server Administrator"</strong> refers to any individual with administrative permissions over a
+      Server in which the Bot operates, including the ability to configure the Bot via <code>/setup</code>,
+      <code>/config</code>, or any equivalent command.</li>
+    <li><strong>"User"</strong> refers to any individual who sends a command to, receives a message from, is
+      mentioned by, or otherwise has data processed by the Bot, regardless of whether that individual personally
+      invited the Bot to a Server.</li>
+    <li><strong>"In-Game"</strong> refers to the Roblox experience the Bot integrates with (including but not
+      limited to Emergency Response: Liberty County / "ER:LC"), as distinct from Discord itself.</li>
+    <li><strong>"Roleplay Record"</strong> refers to any duty/shift log, break, leave of absence, field training
+      (RA/FTO) session, feedback submission, infraction, promotion record, or similar entry generated through use
+      of the Bot.</li>
+  </ul>
+
+  <h2 id="s2">2. Eligibility &amp; Acceptance</h2>
+  <ul>
+    <li>You must meet Discord's own minimum age requirement (currently 13, or higher where required by local law)
+      and must comply with the
+      <a href="https://discord.com/terms" target="_blank" rel="noopener">Discord Terms of Service</a> and
+      <a href="https://discord.com/guidelines" target="_blank" rel="noopener">Discord Community Guidelines</a> at
+      all times while using the Bot.</li>
+    <li>Where the Bot integrates with Roblox or any Roblox experience, you must also comply with the
+      <a href="https://en.help.roblox.com/hc/en-us/articles/115004647846" target="_blank" rel="noopener">Roblox
+      Terms of Use</a> and Roblox Community Standards, and with any in-experience rules of the relevant Roblox
+      group or game.</li>
+    <li>You represent that any information you provide to the Bot (including but not limited to your Roblox
+      username, in-game callsign/nickname, requests submitted through commands, and content of feedback or
+      messages) is accurate and that you have the right to provide it.</li>
+    <li>If you are using the Bot on behalf of an organization, community, or Roblox group, you represent that you
+      have authority to bind that organization to these Terms.</li>
+    <li>Continued use of the Bot after any update to these Terms constitutes acceptance of the updated Terms. It is
+      your responsibility to periodically review this document.</li>
+  </ul>
+
+  <h2 id="s3">3. Description of the Service</h2>
+  <p>The Bot is provided to support administration of a Roblox roleplay community and may include, without
+    limitation, the following functionality, each of which is governed by these Terms in full:</p>
+  <ul>
+    <li><strong>Duty / Shift Management</strong> — clocking on/off duty, break tracking, shift type selection,
+      in-game nickname/callsign prefixing, quota tracking, promotion-quota tracking, weekly leaderboards, and
+      automated or manual shift reports (including direct messages summarizing shift length, quota progress, and
+      promotion progress).</li>
+    <li><strong>Staff Management</strong> — role assignment/removal tied to duty status, Leave of Absence ("LOA")
+      requests and approvals, High-Rank ("HR") activity review, and related staff administration tools.</li>
+    <li><strong>RA / Field Training ("FTO") Program</strong> — Field Training Officer availability toggling, ride-
+      along/training session requests, claiming, hosting, completion, results submission, pass/fail tracking, fail
+      limits, FTO inactivity tracking, cooldowns, anonymous feedback submission, and related leaderboards and
+      history.</li>
+    <li><strong>Game Security &amp; Logging</strong> — relaying in-game player logs, kill logs, and related
+      moderation/condition-based alerts from the connected Roblox experience into Discord.</li>
+    <li><strong>Configuration &amp; Setup</strong> — Server-Administrator-driven configuration of roles, channels,
+      quotas, and feature toggles via <code>/setup</code> and <code>/config</code> or equivalent commands.</li>
+    <li><strong>Roblox Account Linking</strong> — associating a Discord account with a Roblox account, via
+      third-party verification services and/or in-description verification codes, for the purpose of identifying
+      Users consistently between Discord and the connected Roblox experience.</li>
+    <li><strong>Custom Commands</strong> — Server-Administrator-defined custom text commands and responses.</li>
+    <li>Any other feature, command, or function the Bot offers now or in the future, whether or not specifically
+      described above.</li>
+  </ul>
+  <p>The "Assistance" / support-ticket feature has been disabled. Requests for help from Bot Development must be
+    made through the channels the Operator designates from time to time (e.g., the community's official support
+    server or another contact method published by the Operator). The unavailability of an in-Bot assistance feature
+    does not exempt any User from these Terms.</p>
+
+  <h2 id="s4">4. Account, Server &amp; Role Linking</h2>
+  <ul>
+    <li>Access to specific commands and features may be restricted based on Discord roles, channel permissions, or
+      Server-specific configuration set by a Server Administrator. The Operator is not responsible for
+      misconfiguration, role hierarchy errors, or permission mistakes made by a Server Administrator, including
+      any unintended access this grants to a User.</li>
+    <li>Linking a Discord account to a Roblox account through the Bot is done at your own risk and is subject to the
+      policies of the relevant third-party verification provider. You are responsible for the security of both
+      your Discord and Roblox accounts.</li>
+    <li>You may not link, or attempt to link, an account that does not belong to you, or use a linked account to
+      misrepresent your identity to staff, FTOs, or other Users.</li>
+  </ul>
+
+  <h2 id="s5">5. Acceptable Use</h2>
+  <p>You agree to use the Bot only:</p>
+  <ul>
+    <li>For its intended purpose of supporting legitimate roleplay community administration in connection with the
+      associated Roblox experience and Discord Server;</li>
+    <li>In a manner consistent with the rules of the Server in which you are using it;</li>
+    <li>In a manner consistent with Discord's and Roblox's own terms, guidelines, and policies; and</li>
+    <li>Without attempting to circumvent, disable, or interfere with any limit, cooldown, permission check, or
+      other control mechanism built into the Bot.</li>
+  </ul>
+
+  <h2 id="s6">6. Prohibited Conduct (Non-Exhaustive)</h2>
+  <div class="panel">
+    <p><strong>The list below is illustrative, not exhaustive.</strong> Conduct that is not explicitly listed here
+    is not implicitly permitted. Any use of the Bot that is dishonest, abusive, deceptive, exploitative, harmful to
+    other Users, harmful to the integrity of the Service, or contrary to the spirit of these Terms is prohibited,
+    whether or not it is specifically described below, and the Operator retains sole discretion to determine
+    whether conduct violates this section.</p>
+  </div>
+  <p>Without limiting the foregoing, you must not:</p>
+  <ol>
+    <li><strong>Falsify or game Roleplay Records</strong>, including but not limited to: clocking on duty without
+      performing corresponding in-game duties, leaving a shift active while away ("AFK farming") to inflate logged
+      time, manipulating or fabricating shift start/end times, breaks, or shift types, or otherwise artificially
+      inflating any value used to calculate quota, promotion-quota, or leaderboard standing.</li>
+    <li><strong>Abuse the Leave of Absence system</strong>, including submitting false reasons for leave, repeatedly
+      requesting LOA to avoid quota enforcement without genuine need, or impersonating another User in an LOA
+      request or approval.</li>
+    <li><strong>Abuse the RA / FTO program</strong>, including but not limited to: submitting false training
+      results, falsely marking a trainee as passed or failed, claiming ride-along/training sessions without
+      conducting them, submitting false or malicious anonymous feedback, colluding with another User to
+      manufacture favorable results, or attempting to identify the submitter of anonymous feedback through
+      technical or social means.</li>
+    <li><strong>Provide false information</strong> in any command, modal, form, or request handled by the Bot,
+      including misrepresenting your Roblox identity, in-game actions, or reason for a request.</li>
+    <li><strong>Impersonate</strong> another User, a staff member, a Field Training Officer, a Server Administrator,
+      or the Operator, whether through nickname, linked account, custom command, or any other Bot feature.</li>
+    <li><strong>Use automation against the Bot</strong>, including self-bots, macros, scripts, scheduled/automated
+      command spam, or any tool designed to interact with the Bot's commands or components without direct, manual,
+      good-faith human input for each interaction.</li>
+    <li><strong>Exploit bugs, glitches, race conditions, or misconfigurations</strong> in the Bot or its
+      integrations rather than reporting them, including exploiting a Server Administrator's configuration mistake
+      to gain unauthorized access, permissions, roles, or data.</li>
+    <li><strong>Interfere with other Users' use of the Bot</strong>, including claiming, hosting, or otherwise
+      tampering with another User's RA session, shift, LOA request, or other Bot-managed process without
+      authorization, or spamming commands, buttons, or modals in a way that degrades the Service for others.</li>
+    <li><strong>Attempt to disrupt, overload, or deny service</strong> to the Bot, its host infrastructure, or its
+      database, including excessive or automated command requests intended to cause errors, rate-limit other
+      Users, or degrade performance.</li>
+    <li><strong>Reverse engineer, decompile, scrape, or extract</strong> the Bot's source code, underlying data, or
+      proprietary logic beyond what is exposed through normal, intended command use, except to the extent such
+      restriction is prohibited by applicable law.</li>
+    <li><strong>Scrape, bulk-export, mine, resell, or redistribute</strong> data produced by the Bot (including
+      Roleplay Records, exported leaderboards, or member data) for any purpose other than legitimate, authorized
+      community administration.</li>
+    <li><strong>Sell, rent, sublicense, share credentials for, or otherwise transfer</strong> access to the Bot,
+      its panel (if any), or any privileged role/permission tied to it, to any third party.</li>
+    <li><strong>Use the Bot outside of its intended Discord/Roblox roleplay context</strong>, including using its
+      data, exports, or outputs to make real-world decisions about a person's employment, reputation, or
+      creditworthiness, or for any purpose unrelated to the relevant Roblox roleplay community.</li>
+    <li><strong>Submit illegal, harassing, hateful, sexually explicit, or otherwise abusive content</strong>
+      through any Bot feature that accepts free-text input (including but not limited to custom commands, RA
+      feedback, LOA reasons, and any request or modal field).</li>
+    <li><strong>Use the Bot to harass, stalk, dox, or retaliate against</strong> another User, including using
+      shift, RA, or LOA data obtained through the Bot to target a User outside of legitimate staff administration.</li>
+    <li><strong>Circumvent a suspension, ban, role removal, or other enforcement action</strong> taken against you
+      or another User by the Operator or a Server Administrator, including through alternate accounts.</li>
+    <li><strong>Violate any applicable law</strong> in connection with your use of the Bot.</li>
+  </ol>
+  <p>If a method of misusing the Bot is discovered that is not listed above, it is still prohibited if it is
+    dishonest, exploitative, disruptive to other Users or the Service, or contrary to the purpose for which the
+    relevant feature was built. You may not rely on the absence of an explicit rule as a defense; this Section is
+    intentionally written to cover conduct not yet known to the Operator at the time of writing.</p>
+
+  <h2 id="s7">7. Roleplay &amp; In-Character Disclaimer</h2>
+  <p>The Bot supports a roleplay community modeled on emergency-services activity within a Roblox experience. All
+    titles, ranks, "citations," "infractions," "termination" notices, and similar language used by the Bot are
+    fictional, role-play-only constructs internal to the Discord Server and Roblox experience. They have no
+    real-world legal effect, do not constitute real employment, and do not create any real-world relationship
+    between the Operator, any Server Administrator, and any User.</p>
+
+  <h2 id="s8">8. Data Accuracy &amp; Recordkeeping</h2>
+  <ul>
+    <li>The Bot's calculations (including elapsed shift time, quota progress, promotion eligibility, and
+      leaderboard rankings) are provided on a best-effort basis and may be affected by Discord/Roblox API
+      downtime, network issues, database latency, or bugs. The Operator does not guarantee the accuracy,
+      completeness, or availability of any Roleplay Record at any given time.</li>
+    <li>Server Administrators are solely responsible for any staffing, promotion, or disciplinary decisions made
+      using data produced by the Bot. The Bot is a recordkeeping and automation aid, not a substitute for human
+      judgment or verification.</li>
+    <li>The Operator reserves the right to correct, delete, or adjust any Roleplay Record found to be inaccurate,
+      fraudulent, or the result of prohibited conduct under Section 6, without prior notice.</li>
+  </ul>
+
+  <h2 id="s9">9. Third-Party Services</h2>
+  <p>The Bot interoperates with third-party platforms and services not owned or controlled by the Operator,
+    including but not limited to Discord, Roblox, the relevant ER:LC/Roblox experience and its API, Bloxlink
+    account-linking services, and the Operator's cloud database and hosting providers. The Operator is not
+    responsible for the availability, accuracy, security, or policies of these third-party services, and your use
+    of them remains governed by their own respective terms. Outages, API changes, rate limits, or policy changes by
+    any third party may affect or interrupt the Bot's functionality, and the Operator is not liable for any such
+    interruption.</p>
+
+  <h2 id="s10">10. Service Availability, Beta Status &amp; No Warranty</h2>
+  <ul>
+    <li>The Bot may be in active development and may be labeled as beta or pre-release. Bugs, downtime, data loss,
+      incorrect calculations, or unexpected behavior may occur.</li>
+    <li>THE BOT IS PROVIDED "AS IS" AND "AS AVAILABLE," WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, OR
+      STATUTORY, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE,
+      NON-INFRINGEMENT, OR THAT THE BOT WILL BE UNINTERRUPTED, ERROR-FREE, OR SECURE.</li>
+    <li>The Operator does not guarantee any specific level of uptime, response time, or feature availability, and
+      may modify, suspend, or discontinue the Bot or any feature at any time, with or without notice.</li>
+  </ul>
+
+  <h2 id="s11">11. Suspension, Termination &amp; Enforcement</h2>
+  <ul>
+    <li>The Operator may, at its sole discretion and without prior notice, restrict, suspend, or permanently revoke
+      any User's access to the Bot or any of its features, remove the Bot from any Server, delete or freeze any
+      User's Roleplay Records, or take any other action reasonably necessary to enforce these Terms, respond to
+      a violation of Section 6, or protect the integrity of the Service.</li>
+    <li>A Server Administrator may independently restrict a User's access to Bot features within their own Server
+      through Discord's permission system, separately from any action the Operator may take.</li>
+    <li>Enforcement decisions made under this Section are final and at the Operator's sole discretion. There is no
+      guaranteed appeal process, though the Operator may, at its discretion, consider an appeal submitted through
+      the contact method in Section 20.</li>
+    <li>Sections 6 ("Prohibited Conduct"), 8, 10, 13, 14, 15, and 19 survive termination of your access to the Bot.</li>
+  </ul>
+
+  <h2 id="s12">12. Reporting Violations</h2>
+  <p>If you discover a bug, exploit, or vulnerability in the Bot, you must report it to the Operator promptly and
+    in good faith through the contact method in Section 20, and must not exploit it, publicly disclose it, or use
+    it to gain an advantage before the Operator has had a reasonable opportunity to address it. Failing to report a
+    known exploit before using it is itself a violation of Section 6.</p>
+
+  <h2 id="s13">13. Intellectual Property</h2>
+  <p>The Bot, including its source code, branding, command structure, and original content, is the property of the
+    Operator (and/or its underlying open-source project contributors, where applicable) and is protected by
+    applicable intellectual property laws. Except for the limited right to use the Bot as intended by these Terms,
+    no other rights are granted to you. You retain ownership of original content you submit through the Bot (such
+    as custom command text or feedback), but you grant the Operator a non-exclusive, royalty-free license to store,
+    process, display, and use that content as necessary to operate the Service.</p>
+
+  <h2 id="s14">14. Limitation of Liability</h2>
+  <p>TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE OPERATOR SHALL NOT BE LIABLE FOR ANY INDIRECT,
+    INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, OR ANY LOSS OF DATA, ROLEPLAY RECORDS,
+    ROLES, REPUTATION, OR PROFITS, ARISING OUT OF OR RELATED TO YOUR USE OF, OR INABILITY TO USE, THE BOT, EVEN IF
+    THE OPERATOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. THE OPERATOR'S TOTAL AGGREGATE LIABILITY FOR
+    ANY CLAIM ARISING FROM THESE TERMS OR YOUR USE OF THE BOT SHALL NOT EXCEED THE GREATER OF (A) THE AMOUNT YOU
+    PAID, IF ANY, TO THE OPERATOR FOR USE OF THE BOT IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM, OR (B) TEN
+    UNITED STATES DOLLARS (US$10), AS THE BOT IS PRIMARILY PROVIDED FREE OF CHARGE.</p>
+
+  <h2 id="s15">15. Indemnification</h2>
+  <p>You agree to indemnify, defend, and hold harmless the Operator from and against any claims, liabilities,
+    damages, losses, and expenses (including reasonable legal fees) arising out of or in any way connected with
+    your violation of these Terms, your violation of any third-party right (including Discord's or Roblox's
+    terms), or your misuse of the Bot, including conduct described in Section 6.</p>
+
+  <h2 id="s16">16. Privacy</h2>
+  <p>Our collection, use, and storage of your data in connection with the Bot is described in the
+    <a href="pp.html">Privacy Policy</a>, which is incorporated into these Terms by reference. By using the Bot,
+    you also agree to the Privacy Policy.</p>
+
+  <h2 id="s17">17. Modifications to the Service or Terms</h2>
+  <p>The Operator may modify these Terms, the Bot, or any feature of the Bot at any time. Material changes to
+    these Terms will be reflected by updating the "Last Updated" date above, and where reasonably practicable, will
+    be announced through the Operator's designated community/support channels. Your continued use of the Bot after
+    a change takes effect constitutes your acceptance of the revised Terms. If you do not agree to a change, your
+    only remedy is to stop using the Bot and have it removed from any Server you control.</p>
+
+  <h2 id="s18">18. Severability &amp; Entire Agreement</h2>
+  <p>If any provision of these Terms is found to be unenforceable or invalid, that provision will be limited or
+    eliminated to the minimum extent necessary so that the remaining Terms remain in full force and effect. These
+    Terms, together with the Privacy Policy, constitute the entire agreement between you and the Operator regarding
+    use of the Bot, and supersede any prior agreements on this subject.</p>
+
+  <h2 id="s19">19. Governing Law</h2>
+  <p>These Terms are governed by and construed in accordance with the laws of the <strong>Republic of
+    Colombia</strong>, without regard to its conflict-of-law provisions, except where applicable law requires
+    otherwise. You agree to submit to the personal jurisdiction of the competent courts of Colombia for the
+    resolution of any dispute arising from these Terms or your use of the Bot.</p>
+
+  <h2 id="s20">20. Contact</h2>
+  <p>Questions about these Terms, exploit/bug reports, appeals, or other inquiries should be directed to the
+    Operator via email at <a href="mailto:havens.cutie.1m@icloud.com">havens.cutie.1m@icloud.com</a>, or through the
+    CHP assistance channel at
+    <a href="https://discord.com/channels/1117606532771754045/1296007757782061158" target="_blank" rel="noopener">https://discord.com/channels/1117606532771754045/1296007757782061158</a>.</p>
+
+  <footer>
+    CHP Management Terms of Service. This document does not constitute legal advice. The Operator strongly
+    recommends having these Terms reviewed by a qualified attorney before relying on them for liability protection.
+  </footer>
+</div>
+</body>
+</html>
