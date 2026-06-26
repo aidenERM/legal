@@ -1,106 +1,124 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Liquid Glass UI</title>
+    <title>Liquid Glass Ultimate</title>
     <style>
-        :root {
-            --bg-opacity: 0.2;
-            --blur-val: 20px;
-            --saturate-val: 180%;
-            --border-val: 0.3;
-            --tilt-x: 0deg;
-            --tilt-y: 0deg;
-        }
-
         body {
             margin: 0;
-            height: 100vh;
+            background: #050505;
+            color: white;
+            font-family: system-ui, sans-serif;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #0f172a;
-            overflow: hidden;
-            perspective: 1000px; /* Needed for 3D tilt */
+            height: 100vh;
         }
 
-        /* Animated Background Gradients */
-        .bg-glow {
+        canvas {
             position: absolute;
-            width: 600px; height: 600px;
-            background: radial-gradient(circle, #3b82f6, transparent 70%);
-            filter: blur(100px);
-            opacity: 0.5;
-            animation: move 10s infinite alternate;
+            top: 0;
+            left: 0;
+            z-index: 0;
         }
 
-        @keyframes move { from { transform: translate(-20%, -20%); } to { transform: translate(20%, 20%); } }
-
-        .glass-panel {
-            width: 380px;
-            padding: 32px;
-            border-radius: 30px;
-            color: white;
-            position: relative;
-            transform-style: preserve-3d;
-            transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+        .main-card {
+            z-index: 1;
+            width: 320px;
+            padding: 40px;
+            border-radius: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
             transition: transform 0.1s ease-out;
-
-            /* Core Glass Effect */
-            background: rgba(255, 255, 255, var(--bg-opacity));
-            backdrop-filter: blur(var(--blur-val)) saturate(var(--saturate-val));
-            -webkit-backdrop-filter: blur(var(--blur-val)) saturate(var(--saturate-val));
-            border: 1px solid rgba(255, 255, 255, var(--border-val));
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-
-            /* Glint Effect */
-            background-image: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+            transform-style: preserve-3d;
+            text-align: center;
         }
 
-        .controls { margin-top: 25px; display: flex; flex-direction: column; gap: 15px; }
-        label { font-size: 10px; text-transform: uppercase; opacity: 0.6; }
-        input { width: 100%; cursor: grab; }
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            width: 300px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 2;
+        }
+
+        input {
+            width: 100%;
+            margin: 10px 0;
+            accent-color: white;
+        }
     </style>
 </head>
 <body>
 
-    <div class="bg-glow"></div>
+    <canvas id="fluidCanvas"></canvas>
 
-    <div class="glass-panel" id="glass">
-        <h2>Liquid Glass Pro</h2>
-        <p>Tilt your mouse over me! Use the sliders to adjust the depth, tint, and blur in real-time.</p>
-        
-        <div class="controls">
-            <label>Transparency</label>
-            <input type="range" id="opacity" min="5" max="40" value="20">
-            <label>Blur Intensity</label>
-            <input type="range" id="blur" min="0" max="60" value="20">
-        </div>
+    <div class="main-card" id="card">
+        <h1>Liquid Glass</h1>
+        <p>This is the ultimate glass interface.</p>
+    </div>
+
+    <div class="controls">
+        <label>Blur Intensity</label>
+        <input type="range" id="blurSlider" min="0" max="50" value="20">
+        <label>Opacity</label>
+        <input type="range" id="opacitySlider" min="5" max="40" value="10">
     </div>
 
     <script>
-        const glass = document.getElementById('glass');
-        
-        // 1. Parallax Tilt Effect
+        const card = document.getElementById('card');
+        const blurSlider = document.getElementById('blurSlider');
+        const opacitySlider = document.getElementById('opacitySlider');
+        const canvas = document.getElementById('fluidCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Resize Canvas
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.onresize = resize;
+        resize();
+
+        // Fluid Background Animation
+        let time = 0;
+        function draw() {
+            ctx.fillStyle = '#050505';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = `hsl(${(time * 50) % 360}, 70%, 50%)`;
+            ctx.beginPath();
+            ctx.arc(canvas.width/2 + Math.sin(time)*100, canvas.height/2 + Math.cos(time)*100, 200, 0, Math.PI*2);
+            ctx.fill();
+            time += 0.01;
+            requestAnimationFrame(draw);
+        }
+        draw();
+
+        // 3D Tilt
         document.addEventListener('mousemove', (e) => {
-            const { innerWidth, innerHeight } = window;
-            const x = (e.clientX - innerWidth / 2) / 20;
-            const y = (e.clientY - innerHeight / 2) / 20;
-            glass.style.setProperty('--tilt-x', `${-y}deg`);
-            glass.style.setProperty('--tilt-y', `${x}deg`);
+            const x = (e.clientX - window.innerWidth / 2) / 20;
+            const y = (e.clientY - window.innerHeight / 2) / 20;
+            card.style.transform = `rotateY(${x}deg) rotateX(${-y}deg)`;
         });
 
-        // 2. Real-time controls with visual update
-        document.getElementById('opacity').addEventListener('input', (e) => {
-            glass.style.setProperty('--bg-opacity', e.target.value / 100);
-        });
+        // Sliders
+        blurSlider.oninput = (e) => {
+            card.style.backdropFilter = `blur(${e.target.value}px) saturate(200%)`;
+        };
 
-        document.getElementById('blur').addEventListener('input', (e) => {
-            glass.style.setProperty('--blur-val', e.target.value + 'px');
-            // 3. Simulated Haptic Feedback (console log serves as signal)
-            if (window.navigator.vibrate) window.navigator.vibrate(5); 
-        });
+        opacitySlider.oninput = (e) => {
+            card.style.background = `rgba(255, 255, 255, ${e.target.value / 100})`;
+        };
     </script>
 </body>
 </html>
+
