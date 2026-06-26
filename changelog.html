@@ -4,119 +4,58 @@
 <meta charset="UTF-8">
 <title>Update Log — CHP Management</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  :root {
-    --bg: #1e1f22;
-    --panel: #2b2d31;
-    --text: #dcddde;
-    --muted: #96989d;
-    --accent: #5865F2;
-    --border: #3a3c41;
-    --green: #3ba55d;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.6;
-  }
-  .wrap {
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 48px 24px 96px;
-  }
-  header {
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 24px;
-    margin-bottom: 32px;
-  }
-  h1 {
-    font-size: 28px;
-    margin: 0 0 8px;
-    color: #fff;
-  }
-  .subtitle { color: var(--muted); font-size: 14px; }
-  .entry {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px 24px;
-    margin: 20px 0;
-  }
-  .entry h2 {
-    font-size: 18px;
-    color: #fff;
-    margin: 0 0 4px;
-  }
-  .meta { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
-  .badge {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    padding: 2px 8px;
-    border-radius: 4px;
-    margin-right: 8px;
-  }
-  .badge.feature { background: rgba(88, 101, 242, 0.18); color: #aab4ff; }
-  .badge.fix { background: rgba(59, 165, 93, 0.18); color: #8fe0ab; }
-  p, li { font-size: 15px; color: var(--text); }
-  ul { padding-left: 22px; margin: 8px 0 0; }
-  li { margin-bottom: 6px; }
-  a { color: #7289da; }
-  .old-updates-header {
-    margin: 48px 0 8px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border);
-    color: var(--muted);
-    font-size: 18px;
-    font-weight: 600;
-  }
-  .old-updates .entry { opacity: 0.85; }
-</style>
+<link rel="stylesheet" href="assets/chp-theme.css">
+<link rel="icon" href="assets/images/chp-badge.png">
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>Update Log</h1>
-    <div class="subtitle">Everything shipped to CHP Management, newest first.</div>
-  </header>
-    <div class="entry">
-    <span class="badge feature">New Feature</span>
-    <h2>Full Application System, /ask, /profile &amp; /dashboard</h2>
-    <div class="meta">Update #2 &middot; 2026-06-25</div>
-    <p>A complete in-house application system, an AI assistant that knows CHP policy, a personal /profile card with badges and streaks, and a /dashboard overview for management - plus a refreshed look across the board.</p>
-    <ul>
-      <li>New application system: a DM-based pre-screening flow (privacy policy, background check, required reading, AI warning) followed by 23 application questions, with progress automatically saved if you time out mid-application.</li>
-      <li>Staff can Claim, Accept, or Decline applications, run an AI Detector and Summary, check applicant history and background, flag for priority review, leave notes, and view a reapplication diff - all from the application embed.</li>
-      <li>/ask - ask the bot anything about CHP (ranks, codes, policy, vehicles) and it answers using the official CHP knowledge base, with Bedrock/Claude.</li>
-      <li>/profile - shows your weekly hours vs quota, shift streak, RA pass rate, and earned badges.</li>
-      <li>/dashboard - a management overview combining shift, RA, and recruitment activity in one place.</li>
-      <li>Accepted applicants now get a step-by-step welcome guide instead of a plain acceptance message.</li>
-      <li>Automatic weekly report card DMs, quota reminders for anyone falling behind, and a weekly recruitment report.</li>
-      <li>Refreshed embed styling using the server&#x27;s own custom emojis across Applications, /profile, and /dashboard.</li>
-    </ul>
+<div class="chp-wrap">
+  <div class="chp-header">
+    <img class="chp-badge" src="assets/images/chp-badge.png" alt="CHP Badge">
+    <div>
+      <h1>Update Log</h1>
+      <div class="chp-subtitle">Everything shipped to CHP Management, newest first.</div>
+    </div>
   </div>
-
-    <div class="old-updates-header">Old Updates</div>
-  <div class="old-updates">
-  <div class="entry">
-    <span class="badge feature">New Feature</span>
-    <h2>Recruitment Auto Setup &amp; Update Log</h2>
-    <div class="meta">Update #1 &middot; 2026-06-25</div>
-    <p>Automatic Setup now also finds or creates your recruitment roles and channels, and you&#x27;ll see a quick heads-up here whenever a real feature ships - like this one.</p>
+    <div class="entry chp-panel">
+    <span class="chp-badge-tag feature">New Feature</span>
+    <h2 style="border-left:none;padding-left:0;margin:8px 0 4px;">CHP Management Launch - Recruitment, Applications, /ask &amp; a Big QOL Pass</h2>
+    <div class="chp-subtitle" style="margin-bottom:12px;">Update #1 &middot; 2026-06-26</div>
+    <p>The first full release: automatic recruitment setup, a complete in-house application system with AI-assisted review, an AI assistant that knows CHP policy, a personal /settings command, an extra layer of tools for Deputies, and a long list of quality-of-life improvements across shifts and applications.</p>
     <ul>
       <li>Automatic Setup resolves the Hicom, Officer, Probationary Officer, Denied, and Blacklisted roles, plus the applications-log, apply, hicom-announcements, and recruitment-report channels - creating anything that&#x27;s missing.</li>
       <li>Passing an RA session now also grants the Officer role and swaps PO to O in the trainee&#x27;s nickname.</li>
       <li>/config is reorganized into focused pages (Roles, Channels &amp; Quotas, RA Training, Recruitment) with plain-language explanations instead of one long dropdown.</li>
+      <li>New application system: a DM-based pre-screening flow (privacy policy, background check, required reading, AI warning) followed by 23 application questions, with progress automatically saved if you time out mid-application.</li>
+      <li>Staff can Claim, Accept, or Decline applications, run an AI Detector and Summary, check applicant history and background, flag for priority review, leave notes, and view a reapplication diff - all from the application embed.</li>
+      <li>/ask - ask the bot anything about CHP (ranks, codes, policy, vehicles) and it answers using the official CHP knowledge base.</li>
+      <li>/profile - shows your weekly hours vs quota, shift streak, RA pass rate, and earned badges.</li>
+      <li>/dashboard - a management overview combining shift, RA, and recruitment activity in one place.</li>
+      <li>Accepted applicants now get a step-by-step welcome guide instead of a plain acceptance message.</li>
+      <li>Automatic weekly report card DMs, quota reminders for anyone falling behind, and a weekly recruitment report.</li>
+      <li>/settings - a personal settings command nobody else can change for you: private profile (hide your duty time from non-Hicom staff and leaderboards), timezone, mobile-friendly embeds, and opt-outs for inactivity nudges and the weekly report card.</li>
+      <li>Deputy-only settings (visible to Staff Role holders): a default shift type so you don&#x27;t have to pick one every time, your own quota reminder day/time instead of the server default, an optional confirmation before ending unusually long shifts, auto-claiming applications you open, a default max-trainee cap for bulk RA sessions, auto-toggling your RA availability when you go on/off duty, which /profile widgets you see, and DM alerts for new applications or when a trainee of yours gets a verdict.</li>
+      <li>/myactions - a Deputy-only scoped view of your own recent application reviews and RA results, without needing full audit access.</li>
+      <li>/info - a dropdown reference for 10 codes, penal/vehicle codes, loadout, vehicle regulations, and FAQ.</li>
+      <li>/practice - a 5-question quiz pulled from codes and policy to test yourself anytime.</li>
+      <li>/lookup - quickly check anyone&#x27;s rank, badge number, on-duty status, and join date.</li>
+      <li>A gentler daily check-in DM for anyone inactive a few days, separate from the harsher quota reminder, and smart enough to skip people who&#x27;ve been busy training recruits instead of logging a shift.</li>
+      <li>/profile now shows a quota progress bar and how much more time you need for your next promotion, and respects a grace period so a mid-week promotion doesn&#x27;t retroactively flag you for missing a quota you only just inherited.</li>
+      <li>Shift fixes: a clear &quot;you&#x27;re already on duty&quot; message instead of silently doing nothing, shifts left open 16+ hours from a crash now auto-close instead of getting stuck forever, an optional note you can leave when ending a shift, and paginated shift history in /duty time.</li>
+      <li>Application fixes: a review-and-confirm screen before final submission, a heads-up when you&#x27;re running low on time to answer a question, and an Apply Again button if you accidentally decline the Privacy Policy step (no cooldown applies).</li>
+      <li>/ask is now capped at one request every 30 seconds bot-wide to keep AI costs in check, and the application flow skips its own Privacy Policy step if you&#x27;ve already agreed to the bot&#x27;s Terms/Privacy Policy elsewhere.</li>
+      <li>Refreshed embed styling using the server&#x27;s own custom emojis across Applications, /profile, and /dashboard.</li>
     </ul>
   </div>
 
-  </div>
-
+  
 </div>
+<script src="assets/chp-paginate.js"></script>
+<script>
+  initChpPaginator({
+    containerSelector: ".chp-wrap",
+    breakSelector: ".entry",
+    introLabel: "Latest",
+  });
+</script>
 </body>
 </html>
