@@ -67,6 +67,15 @@
   ul { padding-left: 22px; margin: 8px 0 0; }
   li { margin-bottom: 6px; }
   a { color: #7289da; }
+  .old-updates-header {
+    margin: 48px 0 8px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .old-updates .entry { opacity: 0.85; }
 </style>
 </head>
 <body>
@@ -77,6 +86,25 @@
   </header>
     <div class="entry">
     <span class="badge feature">New Feature</span>
+    <h2>Full Application System, /ask, /profile &amp; /dashboard</h2>
+    <div class="meta">Update #2 &middot; 2026-06-25</div>
+    <p>A complete in-house application system, an AI assistant that knows CHP policy, a personal /profile card with badges and streaks, and a /dashboard overview for management - plus a refreshed look across the board.</p>
+    <ul>
+      <li>New application system: a DM-based pre-screening flow (privacy policy, background check, required reading, AI warning) followed by 23 application questions, with progress automatically saved if you time out mid-application.</li>
+      <li>Staff can Claim, Accept, or Decline applications, run an AI Detector and Summary, check applicant history and background, flag for priority review, leave notes, and view a reapplication diff - all from the application embed.</li>
+      <li>/ask - ask the bot anything about CHP (ranks, codes, policy, vehicles) and it answers using the official CHP knowledge base, with Bedrock/Claude.</li>
+      <li>/profile - shows your weekly hours vs quota, shift streak, RA pass rate, and earned badges.</li>
+      <li>/dashboard - a management overview combining shift, RA, and recruitment activity in one place.</li>
+      <li>Accepted applicants now get a step-by-step welcome guide instead of a plain acceptance message.</li>
+      <li>Automatic weekly report card DMs, quota reminders for anyone falling behind, and a weekly recruitment report.</li>
+      <li>Refreshed embed styling using the server&#x27;s own custom emojis across Applications, /profile, and /dashboard.</li>
+    </ul>
+  </div>
+
+    <div class="old-updates-header">Old Updates</div>
+  <div class="old-updates">
+  <div class="entry">
+    <span class="badge feature">New Feature</span>
     <h2>Recruitment Auto Setup &amp; Update Log</h2>
     <div class="meta">Update #1 &middot; 2026-06-25</div>
     <p>Automatic Setup now also finds or creates your recruitment roles and channels, and you&#x27;ll see a quick heads-up here whenever a real feature ships - like this one.</p>
@@ -85,6 +113,8 @@
       <li>Passing an RA session now also grants the Officer role and swaps PO to O in the trainee&#x27;s nickname.</li>
       <li>/config is reorganized into focused pages (Roles, Channels &amp; Quotas, RA Training, Recruitment) with plain-language explanations instead of one long dropdown.</li>
     </ul>
+  </div>
+
   </div>
 
 </div>
