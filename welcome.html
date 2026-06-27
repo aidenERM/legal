@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Welcome — CHP Management</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="assets/chp-theme.css">
+<link rel="icon" href="assets/images/chp-badge.png">
+<style>
+  .chp-toc { display: flex; flex-direction: column; gap: 0; background: none; border: none; padding: 0; }
+  .chp-toc a { display: block; padding: 7px 4px; font-size: 14px; text-decoration: none; border-bottom: 1px solid rgba(201,166,107,0.12); }
+  .chp-toc a:hover { color: var(--chp-gold-bright); }
+
+  .chp-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+    margin: 18px 0;
+  }
+  .chp-feature-card {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--chp-glass-border);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .chp-feature-card .chp-feature-icon { font-size: 22px; margin-bottom: 8px; display: block; }
+  .chp-feature-card h3 { margin: 0 0 6px; font-size: 15px; }
+  .chp-feature-card p { margin: 0; font-size: 13.5px; color: var(--chp-muted); }
+
+  .chp-role-card {
+    border-left: 3px solid var(--chp-gold);
+    padding-left: 16px;
+    margin: 18px 0 28px;
+  }
+  .chp-role-card h3 { font-size: 16px; color: var(--chp-gold-bright); margin: 0 0 8px; }
+
+  .chp-vs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .chp-vs > div { background: rgba(0,0,0,0.25); border: 1px solid var(--chp-glass-border); border-radius: 14px; padding: 16px 18px; }
+  .chp-vs h4 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--chp-muted); }
+  @media (max-width: 640px) { .chp-vs { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="chp-wrap">
+  <div class="chp-header">
+    <img class="chp-badge" src="assets/images/chp-badge.png" alt="CHP Badge">
+    <div>
+      <h1>Welcome to CHP Management</h1>
+      <div class="chp-subtitle">Update #1 &middot; Launch Guide</div>
+      <div class="chp-subtitle">Everything the bot does, and what it means for your rank.</div>
+    </div>
+  </div>
+
+  <div class="chp-notice">
+    CHP Management is the all-in-one Discord bot for California Highway Patrol's roleplay community - shifts,
+    recruitment, RA training, leave of absence, promotions, and an AI assistant that knows your department's
+    policy, all in one place. This guide walks through what it does, what changed from the base ERM project it
+    grew out of, and exactly what each rank can do with it.
+  </div>
+
+  <div class="chp-toc">
+    <strong>Contents</strong>
+    <a href="#s-best">1. Best Features</a>
+    <a href="#s-all">2. All Features</a>
+    <a href="#s-erm">3. Improvements Compared to ERM</a>
+    <a href="#s-po">4. For Probationary Officers</a>
+    <a href="#s-deputy">5. For Deputies</a>
+    <a href="#s-fto">6. For Field Training Officers</a>
+    <a href="#s-hr">7. For High Ranks &amp; Command</a>
+    <a href="#s-ooc">8. For the Office of Commissioners</a>
+  </div>
+
+  <div class="chp-section" id="s-best">
+    <h2>Best Features</h2>
+    <p>The highlights - if you only remember a handful of things about this bot, make it these.</p>
+    <div class="chp-feature-grid">
+      <div class="chp-feature-card">
+        <span class="chp-feature-icon">&#x1F916;</span>
+        <h3>/ask - AI Assistant</h3>
+        <p>Ask anything about CHP - ranks, codes, policy, vehicles - and get an answer pulled straight from the
+        official knowledge base, not a guess.</p>
+      </div>
+      <div class="chp-feature-card">
+        <span class="chp-feature-icon">&#x1F4DD;</span>
+        <h3>In-House Applications</h3>
+        <p>A full DM-based application flow with AI-assisted review, AI detection, background checks, and
+        history - all from one embed, no spreadsheets.</p>
+      </div>
+      <div class="chp-feature-card">
+        <span class="chp-feature-icon">&#x2699;&#xFE0F;</span>
+        <h3>/settings - Truly Personal</h3>
+        <p>Timezone, accent color, notification timing, profile widgets - nobody but you can change your own
+        settings, not even Command.</p>
+      </div>
+      <div class="chp-feature-card">
+        <span class="chp-feature-icon">&#x1F396;&#xFE0F;</span>
+        <h3>Automatic Promotions &amp; Discipline</h3>
+        <p>Meeting quota can automatically move you up the rank ladder; missing it automatically escalates a
+        Warning/Strike track - no manual role-juggling for Command.</p>
+      </div>
+      <div class="chp-feature-card">
+        <span class="chp-feature-icon">&#x1F3C5;</span>
+        <h3>Earned Badges on /profile</h3>
+        <p>Medals, ribbons, service stripes, and Trooper of the Week all show up automatically on your profile
+        the moment you earn them - no manual setup per badge.</p>
+      </div>
+      <div class="chp-feature-card">
+        <span class="chp-feature-icon">&#x1F50D;</span>
+        <h3>Universal Search</h3>
+        <p>One search command to find a member's rank, duty status, applications, and RA history without
+        hopping between five different commands.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="chp-section" id="s-all">
+    <h2>All Features</h2>
+
+    <h3>Shifts &amp; Duty</h3>
+    <ul>
+      <li>Clock on/off duty, take breaks, and view your stats with <code>/duty manage</code>.</li>
+      <li>See everyone currently on duty with <code>/duty active</code>.</li>
+      <li>Your own duty time, shift history, and all-time profile via <code>/duty time</code>, <code>/duty history</code>, <code>/duty profile</code>.</li>
+      <li>Weekly leaderboard, quota tracking, and a progress bar right on <code>/profile</code>.</li>
+      <li>Per-rank quotas, configurable shift types, and an optional confirmation before ending unusually long shifts.</li>
+      <li>A weekly duty leaderboard automatically logged to a channel (and optionally a Google Sheet) every time the week resets.</li>
+    </ul>
+
+    <h3>Leave of Absence</h3>
+    <ul>
+      <li>File, view, and track your own LOA with <code>/loa request</code> and <code>/loa view</code>.</li>
+      <li>Admin tier can review and administrate anyone's LOA.</li>
+    </ul>
+
+    <h3>RA Training</h3>
+    <ul>
+      <li>FTOs host individual or bulk training sessions and submit pass/fail results.</li>
+      <li>Probationary Officers request training, which pings every FTO.</li>
+      <li>RA leaderboard, history, and anonymous FTO feedback ratings.</li>
+      <li>Passing an RA session automatically grants the Officer role and updates your nickname.</li>
+      <li>Auto-toggle your RA availability based on duty status, with a one-click Available/Unavailable button for FTOs.</li>
+    </ul>
+
+    <h3>Applications &amp; Recruitment</h3>
+    <ul>
+      <li>A DM-based application flow with progress auto-saved if you time out mid-application.</li>
+      <li>Hicom can Claim, Accept, or Decline, run an AI Detector and Summary, check applicant history and
+      background, and leave notes - all from the application embed.</li>
+      <li>Automatic setup resolves every recruitment role and channel, creating anything that's missing.</li>
+      <li>Weekly recruitment activity reports.</li>
+    </ul>
+
+    <h3>Promotions &amp; Discipline</h3>
+    <ul>
+      <li>Weekly promotion list (Probationary Officer through Senior Sergeant) and quota enforcement list,
+      both reviewable before anything sends.</li>
+      <li>Choose per-list whether roles are applied automatically, the message is sent automatically, both, or
+      neither - full control over how automated discipline and promotions actually are.</li>
+      <li>Automatic Warning 1 &#x2192; Warning 2 &#x2192; Strike 1 &#x2192; Strike 2 escalation for missed quota, with a
+      non-pinging alert posted for Command once someone reaches the top of the ladder.</li>
+      <li>Monthly High Rank promotion review based on the last 5 weeks of duty activity.</li>
+      <li>Automatic service stripe progression based on tenure - no manual role updates.</li>
+    </ul>
+
+    <h3>Profile, Settings &amp; Personalization</h3>
+    <ul>
+      <li><code>/profile</code> - hours vs quota, shift streak, RA stats, and every earned badge.</li>
+      <li><code>/settings</code> - private profile, timezone (accepts IANA names, abbreviations, UTC offsets, or
+      city names), accent color, mobile-friendly embeds, notification timing, and more - paginated and
+      permission-gated by rank.</li>
+      <li><code>/myactions</code> - your own recent application reviews and RA results.</li>
+    </ul>
+
+    <h3>Reference Tools</h3>
+    <ul>
+      <li><code>/ask</code> - AI assistant for CHP policy questions.</li>
+      <li><code>/info</code> - codes, penal/vehicle codes, loadout, and FAQ.</li>
+      <li><code>/practice</code> - a quick quiz to test yourself on codes and policy.</li>
+      <li><code>/lookup</code> - check anyone's rank, badge number, on-duty status, and join date.</li>
+      <li>A universal search command across members, applications, and RA history.</li>
+    </ul>
+
+    <h3>Configuration</h3>
+    <ul>
+      <li><code>/config</code> - organized into focused, paginated pages (Roles, Channels &amp; Quotas, RA
+      Training, Recruitment, Applications) with plain-language explanations instead of one long dropdown.</li>
+      <li>A distinct Admin Role (shift/LOA management without full Commissioner access) and Internal Affairs
+      Role (can view private profiles for investigations) alongside Staff, Management, and HR roles.</li>
+    </ul>
+  </div>
+
+  <div class="chp-section" id="s-erm">
+    <h2>Improvements Compared to ERM</h2>
+    <p>CHP Management is built on the open-source ERM project, but a large amount has changed since. The short
+    version: faster, more reliable, and a lot of features ERM never had.</p>
+
+    <div class="chp-vs">
+      <div>
+        <h4>New, not in base ERM</h4>
+        <ul>
+          <li>The entire AI Assistant (<code>/ask</code>), AI application detector/summary, and background check tools.</li>
+          <li>The full in-house DM application system, replacing external form links.</li>
+          <li>Personal <code>/settings</code> - private profile, timezone, accent color, notification timing.</li>
+          <li>Automatic promotion and infraction role ladders.</li>
+          <li>Automatic service stripe progression and generic badge detection (medals, ribbons, Trooper of the Week).</li>
+          <li>Admin Role and Internal Affairs Role as distinct permission tiers.</li>
+          <li>Weekly duty leaderboard logging to a channel and Google Sheets.</li>
+          <li><code>/myactions</code>, universal search, <code>/dashboard</code>, <code>/lookup</code>, <code>/practice</code>, <code>/info</code>.</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Fixed or hardened since launch</h4>
+        <ul>
+          <li>Startup speed: dependency cleanup, parallel extension loading, and a command-sync cache so
+          restarts skip unnecessary network round trips.</li>
+          <li>Shift leaderboard caching instead of recomputing on every single read.</li>
+          <li>A permission bug where Admin tier (Command/HR) couldn't view another staff member's duty profile
+          unless they were also a Commissioner - despite that being core to an HR's job.</li>
+          <li>A pagination bug in <code>/config</code> that could silently fail to save role/channel changes.</li>
+          <li>Dual-shape settings data (some fields stored as a single role vs. a list depending on which setup
+          flow was used) normalized everywhere it's read, instead of crashing.</li>
+          <li>Stale/crashed shifts left open 16+ hours now auto-close instead of getting stuck forever.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="chp-section" id="s-po">
+    <h2>For Probationary Officers</h2>
+    <div class="chp-role-card">
+      <h3>What you can do</h3>
+      <ul>
+        <li>Request RA training with <code>/ra request</code> - this pings every FTO so you don't have to track
+        anyone down individually.</li>
+        <li>Check your own duty time, shift history, and profile with <code>/duty time</code> and <code>/profile</code>.</li>
+        <li>Customize your own experience in <code>/settings</code> - timezone, accent color, mobile-friendly
+        embeds, and whether you get inactivity check-in DMs.</li>
+        <li>Passing your RA session automatically grants you the Officer role and updates your nickname - no
+        need to ask anyone.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="chp-section" id="s-deputy">
+    <h2>For Deputies</h2>
+    <div class="chp-role-card">
+      <h3>What you can do</h3>
+      <ul>
+        <li>Manage your own shifts end-to-end with <code>/duty manage</code> - clock on/off, take breaks, see
+        your stats.</li>
+        <li>File and track your own Leave of Absence with <code>/loa request</code> and <code>/loa view</code>.</li>
+        <li>See who's currently on duty with <code>/duty active</code>, and the team-wide leaderboard with
+        <code>/duty leaderboard</code>.</li>
+        <li>A full extra tier of personal settings in <code>/settings</code> - default shift type, your own quota
+        reminder timing, a confirmation prompt before ending unusually long shifts, default RA trainee cap, and
+        which widgets show on your profile.</li>
+        <li>Earn badges automatically - medals, ribbons, service stripes, and Trooper of the Week all show up
+        on <code>/profile</code> the moment a Discord role is granted, no extra step needed.</li>
+        <li>Get automatically promoted (Probationary Officer through Senior Sergeant) just by meeting quota -
+        no need to ask Command if a weekly auto-promotion run is enabled.</li>
+      </ul>
+      <p style="color:var(--chp-muted);font-size:13px;">Note: reviewing applications is a Hicom-only function -
+      Deputies don't have access to the application queue.</p>
+    </div>
+  </div>
+
+  <div class="chp-section" id="s-fto">
+    <h2>For Field Training Officers</h2>
+    <div class="chp-role-card">
+      <h3>What you can do</h3>
+      <ul>
+        <li>Host individual or bulk RA sessions with <code>/ra host</code>, and submit pass/fail results with
+        <code>/ra results</code>.</li>
+        <li>Toggle your training availability with a one-click button - it can also auto-toggle alongside your
+        duty status if you turn that on in <code>/settings</code>.</li>
+        <li>Check the RA leaderboard, search session history, and see your own anonymous feedback ratings.</li>
+        <li>Opt into a DM whenever a trainee you worked with gets a verdict on their application, so you find
+        out without having to ask.</li>
+        <li>Command and High Rank Team can also step into any FTO tool without holding the FTO tag themselves
+        - so oversight never requires re-tagging anyone.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="chp-section" id="s-hr">
+    <h2>For High Ranks &amp; Command</h2>
+    <div class="chp-role-card">
+      <h3>What you can do</h3>
+      <ul>
+        <li>View any staff member's duty profile, time, and history - including someone with a Private Profile
+        set, since reviewing duty activity is exactly what this tier exists for.</li>
+        <li>Administrate shifts and LOAs for anyone with <code>/duty admin</code> and <code>/loa admin</code> -
+        force-end, void, or edit a shift, or step in on someone's leave request.</li>
+        <li>Run the monthly High Rank promotion review with <code>/duty hrreview</code>, based on the last 5
+        weeks of logged activity.</li>
+        <li>Decide what happens once a Deputy reaches the top of the infraction ladder (Strike 2) - the bot
+        flags it for you instead of guessing what discipline should follow.</li>
+        <li>Everything a Deputy can do, plus all of the above - this tier stacks, it doesn't replace.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="chp-section" id="s-ooc">
+    <h2>For the Office of Commissioners</h2>
+    <div class="chp-role-card">
+      <h3>What you can do</h3>
+      <ul>
+        <li>Full access to <code>/config</code> and <code>/setup</code> - every role, channel, quota, and
+        recruitment setting, organized into focused pages instead of one long list.</li>
+        <li>Control exactly how automated promotions and discipline are: choose per-list whether roles are
+        applied automatically, the announcement is sent automatically, both, or neither.</li>
+        <li>Reset the week, review the promotion and quota enforcement lists, and trigger the official
+        announcements with <code>/duty quota</code>.</li>
+        <li>Configure the Admin Role and Internal Affairs Role as their own permission tiers, separate from
+        full Commissioner access.</li>
+        <li>Set up the weekly duty leaderboard log (channel + optional Google Sheet) so a permanent record
+        exists every week without anyone having to remember to export it.</li>
+        <li>Hicom-tier access to the full application queue, AI-assisted review tools, and recruitment reports.</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer class="chp-footer">
+    See the full <a href="changelog.html">Update Log</a> for everything shipped, release by release.
+  </footer>
+</div>
+<script src="assets/chp-paginate.js"></script>
+<script>
+  initChpPaginator({
+    containerSelector: ".chp-wrap",
+    breakSelector: ".chp-section",
+    introLabel: "Welcome",
+  });
+</script>
+</body>
+</html>
