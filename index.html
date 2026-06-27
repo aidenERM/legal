@@ -1,124 +1,305 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liquid Glass Ultimate</title>
-    <style>
-        body {
-            margin: 0;
-            background: #050505;
-            color: white;
-            font-family: system-ui, sans-serif;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHP Management</title>
+<link rel="icon" href="assets/images/chp-badge.png">
+<link rel="stylesheet" href="assets/chp-theme.css">
+<style>
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
 
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 0;
-        }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse 100% 80% at 50% 0%, #1c1708 0%, #08080b 55%);
+  }
 
-        .main-card {
-            z-index: 1;
-            width: 320px;
-            padding: 40px;
-            border-radius: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px) saturate(200%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            transition: transform 0.1s ease-out;
-            transform-style: preserve-3d;
-            text-align: center;
-        }
+  /* ── Centered hub card ── */
+  .hub {
+    position: relative;
+    z-index: 10;
+    width: 420px;
+    max-width: calc(100vw - 48px);
+    padding: 44px 40px 40px;
+    border-radius: 32px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.11);
+    backdrop-filter: blur(56px) saturate(190%);
+    -webkit-backdrop-filter: blur(56px) saturate(190%);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,0.18),
+      inset 0 -1px 0 rgba(0,0,0,0.3),
+      0 32px 80px rgba(0,0,0,0.70),
+      0 6px 20px rgba(0,0,0,0.45),
+      0 0 0 1px rgba(255,255,255,0.05);
+    animation: hub-appear 0.9s cubic-bezier(0.22,1,0.36,1) both;
+    transform-style: preserve-3d;
+    will-change: transform;
+    text-align: center;
+  }
 
-        .controls {
-            position: absolute;
-            bottom: 30px;
-            width: 300px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            z-index: 2;
-        }
+  /* Top specular highlight */
+  .hub::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+      linear-gradient(140deg,
+        rgba(255,255,255,0.14) 0%,
+        rgba(255,255,255,0.04) 30%,
+        transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
 
-        input {
-            width: 100%;
-            margin: 10px 0;
-            accent-color: white;
-        }
-    </style>
+  /* Gold top edge */
+  .hub::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 20%; right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(201,166,107,0.65) 30%,
+      rgba(255,255,255,0.45) 50%,
+      rgba(201,166,107,0.65) 70%,
+      transparent);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .hub > * { position: relative; z-index: 1; }
+
+  @keyframes hub-appear {
+    from { opacity: 0; transform: translateY(32px) scale(0.94); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
+  }
+
+  /* ── Badge + wordmark ── */
+  .hub-badge {
+    width: 88px;
+    height: 88px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 20px rgba(201,166,107,0.50));
+    transition: filter 0.4s, transform 0.5s cubic-bezier(0.34,1.56,0.64,1);
+    animation: badge-drop 1.0s cubic-bezier(0.34,1.56,0.64,1) 0.15s both;
+    cursor: default;
+  }
+  .hub-badge:hover {
+    filter: drop-shadow(0 0 34px rgba(201,166,107,0.80));
+    transform: scale(1.07) rotate(-3deg);
+  }
+
+  @keyframes badge-drop {
+    from { opacity: 0; transform: scale(0.6) translateY(-10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .hub-wordmark {
+    display: block;
+    width: 140px;
+    margin: 18px auto 6px;
+    opacity: 0.80;
+    filter: invert(1) brightness(0.75) sepia(1) saturate(2) hue-rotate(0deg);
+    animation: fade-up 0.7s cubic-bezier(0.22,1,0.36,1) 0.25s both;
+  }
+
+  .hub-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(201,166,107,0.85);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    animation: fade-up 0.7s cubic-bezier(0.22,1,0.36,1) 0.3s both;
+  }
+
+  .hub-desc {
+    font-size: 13px;
+    color: rgba(255,255,255,0.40);
+    margin-bottom: 32px;
+    animation: fade-up 0.7s cubic-bezier(0.22,1,0.36,1) 0.35s both;
+  }
+
+  /* ── Nav links ── */
+  .hub-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: fade-up 0.7s cubic-bezier(0.22,1,0.36,1) 0.4s both;
+  }
+
+  .hub-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    text-decoration: none;
+    color: var(--chp-text);
+    transition:
+      background 0.25s cubic-bezier(0.22,1,0.36,1),
+      border-color 0.25s,
+      transform 0.35s cubic-bezier(0.34,1.56,0.64,1),
+      box-shadow 0.25s;
+    position: relative;
+    overflow: hidden;
+    text-align: left;
+  }
+
+  .hub-link::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .hub-link:hover {
+    background: rgba(255,255,255,0.09);
+    border-color: rgba(201,166,107,0.35);
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+  .hub-link:hover::before { opacity: 1; }
+  .hub-link:active { transform: translateY(0) scale(0.98); transition-duration: 0.15s; }
+
+  .hub-link-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: rgba(201,166,107,0.12);
+    border: 1px solid rgba(201,166,107,0.22);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 17px;
+    transition: background 0.25s, transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .hub-link:hover .hub-link-icon {
+    background: rgba(201,166,107,0.20);
+    transform: scale(1.12) rotate(-5deg);
+  }
+
+  .hub-link-text { flex: 1; }
+  .hub-link-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .hub-link-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.38);
+  }
+
+  .hub-link-arrow {
+    font-size: 16px;
+    color: rgba(201,166,107,0.45);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), color 0.2s;
+  }
+  .hub-link:hover .hub-link-arrow {
+    transform: translateX(4px);
+    color: var(--chp-gold-bright);
+  }
+
+  /* ── Footer note ── */
+  .hub-foot {
+    margin-top: 28px;
+    font-size: 11.5px;
+    color: rgba(255,255,255,0.20);
+    animation: fade-up 0.6s cubic-bezier(0.22,1,0.36,1) 0.55s both;
+  }
+
+  /* ── Orbs (reuse scene tokens from theme) ── */
+  .chp-orb-1 { opacity: 0.55; }
+  .chp-orb-2 { opacity: 0.50; }
+  .chp-orb-3 { opacity: 0.38; }
+</style>
 </head>
 <body>
 
-    <canvas id="fluidCanvas"></canvas>
+<div class="chp-scene" aria-hidden="true">
+  <div class="chp-orb chp-orb-1"></div>
+  <div class="chp-orb chp-orb-2"></div>
+  <div class="chp-orb chp-orb-3"></div>
+  <div class="chp-orb chp-orb-4"></div>
+  <div class="chp-beam"></div>
+  <div class="chp-beam chp-beam-2"></div>
+</div>
 
-    <div class="main-card" id="card">
-        <h1>Liquid Glass</h1>
-        <p>This is the ultimate glass interface.</p>
-    </div>
+<main class="hub" id="hub" role="main">
+  <img class="hub-badge" src="assets/images/chp-badge.png" alt="California Highway Patrol badge" draggable="false">
+  <img class="hub-wordmark" src="assets/images/chp-wordmark.png" alt="CHP wordmark">
+  <p class="hub-title">Management Bot</p>
+  <p class="hub-desc">Discord bot for CHP roleplay community administration</p>
 
-    <div class="controls">
-        <label>Blur Intensity</label>
-        <input type="range" id="blurSlider" min="0" max="50" value="20">
-        <label>Opacity</label>
-        <input type="range" id="opacitySlider" min="5" max="40" value="10">
-    </div>
+  <nav class="hub-links" aria-label="Legal documents">
+    <a class="hub-link" href="tos.html">
+      <span class="hub-link-icon">📋</span>
+      <span class="hub-link-text">
+        <span class="hub-link-label">Terms of Service</span>
+        <span class="hub-link-sub">Usage rules &amp; your agreement</span>
+      </span>
+      <span class="hub-link-arrow">›</span>
+    </a>
+    <a class="hub-link" href="pp.html">
+      <span class="hub-link-icon">🔒</span>
+      <span class="hub-link-text">
+        <span class="hub-link-label">Privacy Policy</span>
+        <span class="hub-link-sub">How your data is handled</span>
+      </span>
+      <span class="hub-link-arrow">›</span>
+    </a>
+    <a class="hub-link" href="changelog.html">
+      <span class="hub-link-icon">✦</span>
+      <span class="hub-link-text">
+        <span class="hub-link-label">Update Log</span>
+        <span class="hub-link-sub">Everything shipped, newest first</span>
+      </span>
+      <span class="hub-link-arrow">›</span>
+    </a>
+  </nav>
 
-    <script>
-        const card = document.getElementById('card');
-        const blurSlider = document.getElementById('blurSlider');
-        const opacitySlider = document.getElementById('opacitySlider');
-        const canvas = document.getElementById('fluidCanvas');
-        const ctx = canvas.getContext('2d');
+  <p class="hub-foot">Last updated July 1, 2026 &middot; CHP Management</p>
+</main>
 
-        // Resize Canvas
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.onresize = resize;
-        resize();
+<script>
+  // Smooth 3-D parallax tilt on the hub card
+  const hub  = document.getElementById("hub");
+  let raf = null;
+  let tx = 0, ty = 0, cx = 0, cy = 0;
 
-        // Fluid Background Animation
-        let time = 0;
-        function draw() {
-            ctx.fillStyle = '#050505';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = `hsl(${(time * 50) % 360}, 70%, 50%)`;
-            ctx.beginPath();
-            ctx.arc(canvas.width/2 + Math.sin(time)*100, canvas.height/2 + Math.cos(time)*100, 200, 0, Math.PI*2);
-            ctx.fill();
-            time += 0.01;
-            requestAnimationFrame(draw);
-        }
-        draw();
+  document.addEventListener("mousemove", (e) => {
+    const mx = (e.clientX / window.innerWidth  - 0.5) * 2;
+    const my = (e.clientY / window.innerHeight - 0.5) * 2;
+    tx = mx * 10;
+    ty = my * -10;
+    if (!raf) raf = requestAnimationFrame(tick);
+  });
 
-        // 3D Tilt
-        document.addEventListener('mousemove', (e) => {
-            const x = (e.clientX - window.innerWidth / 2) / 20;
-            const y = (e.clientY - window.innerHeight / 2) / 20;
-            card.style.transform = `rotateY(${x}deg) rotateX(${-y}deg)`;
-        });
+  document.addEventListener("mouseleave", () => {
+    tx = 0; ty = 0;
+    if (!raf) raf = requestAnimationFrame(tick);
+  });
 
-        // Sliders
-        blurSlider.oninput = (e) => {
-            card.style.backdropFilter = `blur(${e.target.value}px) saturate(200%)`;
-        };
-
-        opacitySlider.oninput = (e) => {
-            card.style.background = `rgba(255, 255, 255, ${e.target.value / 100})`;
-        };
-    </script>
+  function tick() {
+    raf = null;
+    cx += (tx - cx) * 0.10;
+    cy += (ty - cy) * 0.10;
+    hub.style.transform = `perspective(900px) rotateY(${cx}deg) rotateX(${cy}deg)`;
+    if (Math.abs(tx - cx) > 0.05 || Math.abs(ty - cy) > 0.05) {
+      raf = requestAnimationFrame(tick);
+    }
+  }
+</script>
 </body>
 </html>
-

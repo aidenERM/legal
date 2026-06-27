@@ -2,35 +2,45 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Privacy Policy — CHP Management</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="assets/chp-theme.css">
+<title>Privacy Policy — CHP Management</title>
 <link rel="icon" href="assets/images/chp-badge.png">
+<link rel="stylesheet" href="assets/chp-theme.css">
 <style>
-  .chp-toc { display: flex; flex-direction: column; gap: 0; background: none; border: none; padding: 0; }
-  .chp-toc a { display: block; padding: 7px 4px; font-size: 14px; text-decoration: none; border-bottom: 1px solid rgba(201,166,107,0.12); }
-  .chp-toc a:hover { color: var(--chp-gold-bright); }
-  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; }
-  th, td { border: 1px solid var(--chp-glass-border); padding: 8px 12px; text-align: left; vertical-align: top; }
-  th { background: rgba(201, 166, 107, 0.12); color: #fff; }
+  .chp-toc { display: flex; flex-direction: column; }
+  .chp-toc a { border-bottom: 1px solid rgba(201,166,107,0.10); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 13.5px; }
+  th, td { border: 1px solid rgba(201,166,107,0.18); padding: 9px 14px; text-align: left; vertical-align: top; }
+  th { background: rgba(201,166,107,0.10); color: #fff; font-weight: 600; font-size: 13px; letter-spacing: 0.01em; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
 </style>
 </head>
 <body>
+
+<div class="chp-scene" aria-hidden="true">
+  <div class="chp-orb chp-orb-1"></div>
+  <div class="chp-orb chp-orb-2"></div>
+  <div class="chp-orb chp-orb-3"></div>
+  <div class="chp-orb chp-orb-4"></div>
+  <div class="chp-beam"></div>
+  <div class="chp-beam chp-beam-2"></div>
+</div>
+
 <div class="chp-wrap">
+
   <div class="chp-header">
-    <img class="chp-badge" src="assets/images/chp-badge.png" alt="CHP Badge">
+    <a href="index.html" style="display:contents;">
+      <img class="chp-badge" src="assets/images/chp-badge.png" alt="CHP Badge" title="Back to home">
+    </a>
     <div>
       <h1>Privacy Policy</h1>
       <div class="chp-subtitle">CHP Management — Discord Bot &amp; Associated Services</div>
-      <div class="chp-subtitle">Last Updated: <strong>July 1, 2026</strong></div>
+      <div class="chp-subtitle">Last Updated: <strong style="color:var(--chp-gold-bright)">July 1, 2026</strong></div>
     </div>
   </div>
 
   <div class="chp-notice">
-    This Privacy Policy explains what information CHP Management (the "Bot", "Service") collects, why it collects
-    it, how it is stored, and what rights you have over it. It applies to every feature of the Bot, including
-    features that are currently disabled, and is incorporated by reference into our
-    <a href="tos.html">Terms of Service</a>. By using the Bot, you consent to the practices described here.
+    This Privacy Policy explains what information CHP Management (the "Bot", "Service") collects, why it collects it, how it is stored, and what rights you have over it. It applies to every feature of the Bot, including features that are currently disabled, and is incorporated by reference into our <a href="tos.html">Terms of Service</a>. By using the Bot, you consent to the practices described here.
   </div>
 
   <div class="chp-toc">
@@ -54,14 +64,10 @@
   </div>
 
   <h2 id="s1">1. Who We Are</h2>
-  <p>CHP Management is a Discord bot operated by its developer(s) (the "Operator") to support administration of a
-    Roblox roleplay community. This Policy covers all data processed through the Bot's Discord commands,
-    components, scheduled tasks, webhooks, direct messages, and any associated web panel.</p>
+  <p>CHP Management is a Discord bot operated by its developer(s) (the "Operator") to support administration of a Roblox roleplay community. This Policy covers all data processed through the Bot's Discord commands, components, scheduled tasks, webhooks, direct messages, and any associated web panel.</p>
 
   <h2 id="s2">2. Information We Collect</h2>
-  <p>We collect only what is necessary to operate the features described below. We do <strong>not</strong>
-    knowingly collect payment card numbers, government identification numbers, precise geolocation, biometric data,
-    or any other special category of data not listed in this section.</p>
+  <p>We collect only what is necessary to operate the features described below. We do <strong>not</strong> knowingly collect payment card numbers, government identification numbers, precise geolocation, biometric data, or any other special category of data not listed in this section.</p>
 
   <h3>2.1 Information collected automatically through Discord</h3>
   <table>
@@ -83,7 +89,7 @@
     <tr><td>Promotion history records</td><td>Staff Management</td></tr>
     <tr><td>Infraction/punishment type configuration set by Server Administrators</td><td>Staff Management</td></tr>
     <tr><td>RA/FTO session records: session ID, host, trainee, FTO availability, claim status, results, pass/fail outcome, cooldown timestamps, fail counts, inactivity status</td><td>RA / Field Training Program</td></tr>
-    <tr><td>Anonymous feedback content submitted about a training session</td><td>RA / Field Training Program (feedback is stored without a displayed author identity to other Users, but is still logged internally for moderation/abuse-prevention purposes)</td></tr>
+    <tr><td>Anonymous feedback content submitted about a training session</td><td>RA / Field Training Program (stored without displayed author identity to other Users, but logged internally for moderation/abuse-prevention)</td></tr>
     <tr><td>Custom command names and response text</td><td>Custom Commands (set by Server Administrators)</td></tr>
     <tr><td>In-game player logs, kill logs, and condition-triggered alerts relayed from the connected Roblox experience</td><td>Game Security &amp; Logging</td></tr>
     <tr><td>Server configuration (enabled features, configured roles/channels, quotas, prefixes)</td><td>Configuration / Setup</td></tr>
@@ -98,24 +104,17 @@
 
   <h3>2.4 Technical / operational data</h3>
   <ul>
-    <li>Command usage logs (which command was run, by whom, when, and how long it took to execute), used for
-      debugging, abuse detection, and reliability monitoring.</li>
-    <li>Error reports and stack traces, which may incidentally include the Discord ID of the User who triggered the
-      error and the command/arguments involved.</li>
-    <li>Consent preferences you set with the Bot (for example, whether you wish to receive end-of-shift report
-      DMs).</li>
+    <li>Command usage logs (which command was run, by whom, when, and how long it took to execute), used for debugging, abuse detection, and reliability monitoring.</li>
+    <li>Error reports and stack traces, which may incidentally include the Discord ID of the User who triggered the error and the command/arguments involved.</li>
+    <li>Consent preferences you set with the Bot (for example, whether you wish to receive end-of-shift report DMs).</li>
     <li>If a companion web panel is used: authentication session data and any settings configured through it.</li>
   </ul>
 
   <h3>2.5 Information we do not intentionally collect</h3>
   <ul>
-    <li>Your Discord password or Roblox password (we never have access to these — authentication is handled by
-      Discord's and Roblox's own OAuth/verification systems).</li>
-    <li>Payment information (the Bot is provided free of charge; if a paid tier or panel subscription ever exists,
-      payment is processed entirely by a third-party payment processor, and we only retain the minimum
-      subscription/billing status needed to grant access).</li>
-    <li>Precise device location or IP-based geolocation, beyond what Discord or our hosting provider may log at the
-      infrastructure level for security purposes.</li>
+    <li>Your Discord password or Roblox password (we never have access to these — authentication is handled by Discord's and Roblox's own OAuth/verification systems).</li>
+    <li>Payment information (the Bot is provided free of charge; if a paid tier or panel subscription ever exists, payment is processed entirely by a third-party payment processor).</li>
+    <li>Precise device location or IP-based geolocation, beyond what Discord or our hosting provider may log at the infrastructure level for security purposes.</li>
   </ul>
 
   <h2 id="s3">3. How We Use Information</h2>
@@ -123,10 +122,8 @@
   <ul>
     <li>Operate, maintain, and provide the features of the Bot as described in the Terms of Service;</li>
     <li>Calculate and display shift, quota, promotion, RA/FTO, and leaderboard data accurately;</li>
-    <li>Send you informational direct messages you are eligible for and have not opted out of (e.g., end-of-shift
-      reports, LOA status updates, RA session/claim notifications);</li>
-    <li>Detect, investigate, and prevent fraud, abuse, exploitation, and violations of the Terms of Service
-      (including the conduct described in Section 6 of the Terms);</li>
+    <li>Send you informational direct messages you are eligible for and have not opted out of;</li>
+    <li>Detect, investigate, and prevent fraud, abuse, exploitation, and violations of the Terms of Service;</li>
     <li>Maintain historical Roleplay Records for Server Administrators to use in legitimate staffing decisions;</li>
     <li>Diagnose, debug, and improve the reliability and performance of the Bot;</li>
     <li>Comply with legal obligations and enforce our Terms of Service.</li>
@@ -134,133 +131,76 @@
   <p>We do not sell your personal information, and we do not use it for third-party advertising.</p>
 
   <h2 id="s4">4. Legal Bases for Processing</h2>
-  <p>Where applicable law (such as the EU/UK GDPR) requires a legal basis for processing, we rely on: (a)
-    performance of a contract — providing the Service you requested by using the Bot; (b) legitimate interests —
-    operating, securing, and improving the Service, and preventing abuse; and (c) consent — for optional features
-    such as end-of-shift report DMs, where you can opt out at any time.</p>
+  <p>Where applicable law (such as the EU/UK GDPR) requires a legal basis for processing, we rely on: (a) performance of a contract — providing the Service you requested by using the Bot; (b) legitimate interests — operating, securing, and improving the Service, and preventing abuse; and (c) consent — for optional features such as end-of-shift report DMs, where you can opt out at any time.</p>
 
   <h2 id="s5">5. Direct Messages</h2>
-  <p>The Bot may message you directly to deliver information relevant to your own activity (such as shift reports,
-    LOA confirmations, or RA session updates). These messages are sent only in connection with an action you or a
-    Server Administrator initiated, and are never used for unsolicited marketing. You may be able to disable
-    optional DM reports through the Bot's consent settings; required transactional messages tied to a feature you
-    are actively using (e.g., confirming a submitted request) may not be capable of being disabled while you use
-    that feature.</p>
+  <p>The Bot may message you directly to deliver information relevant to your own activity (such as shift reports, LOA confirmations, or RA session updates). These messages are sent only in connection with an action you or a Server Administrator initiated, and are never used for unsolicited marketing. You may be able to disable optional DM reports through the Bot's consent settings.</p>
 
   <h2 id="s6">6. Third-Party Services &amp; Sub-Processors</h2>
-  <p>To provide the Service, we rely on the following categories of third parties, each of which processes data
-    under its own privacy policy:</p>
+  <p>To provide the Service, we rely on the following categories of third parties, each of which processes data under its own privacy policy:</p>
   <ul>
-    <li><strong>Discord, Inc.</strong> — the platform through which the Bot operates. See the
-      <a href="https://discord.com/privacy" target="_blank" rel="noopener">Discord Privacy Policy</a>.</li>
-    <li><strong>Roblox Corporation</strong> — the platform hosting the connected roleplay experience. See the
-      <a href="https://en.help.roblox.com/hc/en-us/articles/115004630823" target="_blank" rel="noopener">Roblox
-      Privacy Policy</a>.</li>
-    <li><strong>Bloxlink</strong> and/or other Roblox-Discord account-linking providers — used to resolve a
-      Discord-to-Roblox account mapping when you choose to link your account.</li>
-    <li><strong>Database and hosting providers</strong> (e.g., MongoDB Atlas and our server/cloud hosting provider)
-      — used to store the data described in Section 2 securely.</li>
-    <li><strong>Error-monitoring / logging tooling</strong> — used to capture crash reports and diagnostic
-      information to keep the Bot reliable.</li>
+    <li><strong>Discord, Inc.</strong> — the platform through which the Bot operates. See the <a href="https://discord.com/privacy" target="_blank" rel="noopener">Discord Privacy Policy</a>.</li>
+    <li><strong>Roblox Corporation</strong> — the platform hosting the connected roleplay experience. See the <a href="https://en.help.roblox.com/hc/en-us/articles/115004630823" target="_blank" rel="noopener">Roblox Privacy Policy</a>.</li>
+    <li><strong>Bloxlink</strong> and/or other Roblox-Discord account-linking providers — used to resolve a Discord-to-Roblox account mapping when you choose to link your account.</li>
+    <li><strong>Database and hosting providers</strong> (e.g., MongoDB Atlas and our server/cloud hosting provider) — used to store the data described in Section 2 securely.</li>
+    <li><strong>Error-monitoring / logging tooling</strong> — used to capture crash reports and diagnostic information to keep the Bot reliable.</li>
   </ul>
-  <p>We only share the minimum data necessary with each provider for it to perform its function, and we do not
-    permit these providers to use your data for their own independent purposes.</p>
+  <p>We only share the minimum data necessary with each provider for it to perform its function, and we do not permit these providers to use your data for their own independent purposes.</p>
 
   <h2 id="s7">7. Data Storage, Security &amp; Retention</h2>
   <ul>
-    <li>Data is stored in a cloud-hosted database and protected with reasonable administrative, technical, and
-      organizational safeguards (including authenticated database access and restricted credential storage). No
-      method of electronic storage is 100% secure, and we cannot guarantee absolute security.</li>
-    <li>We retain Roleplay Records, configuration data, and linked-account data for as long as is reasonably
-      necessary to provide the Service, to resolve disputes, to enforce the Terms of Service, and to comply with
-      legal obligations — and, in the case of historical leaderboard/promotion data, for as long as the relevant
-      Server continues to use the Bot, unless a deletion request is honored under Section 12.</li>
-    <li>If the Bot is removed from a Server, Server-specific configuration and associated records may be retained
-      for a reasonable period in case the Server re-adds the Bot, after which it may be deleted at the Operator's
-      discretion.</li>
-    <li>Command usage and error logs are retained only as long as needed for debugging and abuse investigation, and
-      are periodically purged.</li>
+    <li>Data is stored in a cloud-hosted database and protected with reasonable administrative, technical, and organizational safeguards. No method of electronic storage is 100% secure, and we cannot guarantee absolute security.</li>
+    <li>We retain Roleplay Records, configuration data, and linked-account data for as long as is reasonably necessary to provide the Service, to resolve disputes, to enforce the Terms of Service, and to comply with legal obligations.</li>
+    <li>If the Bot is removed from a Server, Server-specific configuration and associated records may be retained for a reasonable period in case the Server re-adds the Bot, after which it may be deleted at the Operator's discretion.</li>
+    <li>Command usage and error logs are retained only as long as needed for debugging and abuse investigation, and are periodically purged.</li>
   </ul>
 
   <h2 id="s8">8. Data Sharing &amp; Disclosure</h2>
   <p>Beyond the service providers described in Section 6, we may disclose your information:</p>
   <ul>
-    <li>To Server Administrators of a Server you are a member of, where the data relates to your activity within
-      that Server (e.g., your shift logs, LOA history, or RA results are visible to that Server's staff/management
-      as part of normal moderation/administration functionality);</li>
+    <li>To Server Administrators of a Server you are a member of, where the data relates to your activity within that Server;</li>
     <li>Where required to comply with a valid legal request, subpoena, court order, or applicable law;</li>
-    <li>Where necessary to investigate, prevent, or take action regarding suspected fraud, security issues, or
-      violations of the Terms of Service;</li>
+    <li>Where necessary to investigate, prevent, or take action regarding suspected fraud, security issues, or violations of the Terms of Service;</li>
     <li>To protect the rights, property, or safety of the Operator, our Users, or the public;</li>
-    <li>In connection with a merger, acquisition, or transfer of the Bot's operation, subject to this Policy
-      continuing to apply or the new operator providing an updated policy.</li>
+    <li>In connection with a merger, acquisition, or transfer of the Bot's operation, subject to this Policy continuing to apply or the new operator providing an updated policy.</li>
   </ul>
 
   <h2 id="s9">9. Server Administrator Access</h2>
-  <p>By design, certain data the Bot collects about you is visible to the Server Administrators and configured
-    staff roles of any Server you participate in, because the Bot exists to support their administration of that
-    community (for example, shift history, LOA requests, RA training outcomes, and infraction configuration).
-    Anonymous RA feedback is not displayed with an attributed author to Server staff through normal Bot output, but
-    is retained internally and may be reviewed by the Operator if needed to investigate abuse of the feedback
-    system. The Operator is not responsible for how a Server Administrator subsequently uses data that the Bot
-    makes visible to them within their own Server, except to the extent the Operator's own systems are involved.</p>
+  <p>By design, certain data the Bot collects about you is visible to the Server Administrators and configured staff roles of any Server you participate in, because the Bot exists to support their administration of that community. Anonymous RA feedback is not displayed with an attributed author to Server staff through normal Bot output, but is retained internally and may be reviewed by the Operator if needed to investigate abuse.</p>
 
   <h2 id="s10">10. Children's Privacy</h2>
-  <p>The Bot is not directed at children under the minimum age required by Discord's Terms of Service (currently
-    13). We do not knowingly collect personal information from anyone below that age. If we become aware that we
-    have inadvertently collected data from a User below the applicable minimum age, we will take reasonable steps
-    to delete that data.</p>
+  <p>The Bot is not directed at children under the minimum age required by Discord's Terms of Service (currently 13). We do not knowingly collect personal information from anyone below that age. If we become aware that we have inadvertently collected data from a User below the applicable minimum age, we will take reasonable steps to delete that data.</p>
 
   <h2 id="s11">11. International Data Transfers</h2>
-  <p>Our database and hosting providers may store and process data in countries other than your own. By using the
-    Bot, you acknowledge and consent to your information being transferred to, stored in, and processed in such
-    jurisdictions, which may have different data protection laws than your country of residence.</p>
+  <p>Our database and hosting providers may store and process data in countries other than your own. By using the Bot, you acknowledge and consent to your information being transferred to, stored in, and processed in such jurisdictions, which may have different data protection laws than your country of residence.</p>
 
   <h2 id="s12">12. Your Rights &amp; Choices</h2>
-  <p>Depending on your location, you may have rights to access, correct, delete, restrict, or port your personal
-    information, or to object to certain processing. To exercise any of these rights:</p>
+  <p>Depending on your location, you may have rights to access, correct, delete, restrict, or port your personal information, or to object to certain processing. To exercise any of these rights:</p>
   <ul>
-    <li><strong>Opt out of optional DMs</strong> (such as end-of-shift reports) using the Bot's consent
-      command/settings, where available.</li>
-    <li><strong>Request access to or deletion of your data</strong> by contacting the Operator using the details in
-      Section 16. We will verify your identity (typically via your Discord account) before fulfilling the request.</li>
-    <li><strong>Note on deletion limits:</strong> we may retain limited data where necessary to comply with a legal
-      obligation, resolve a dispute, enforce the Terms of Service, or where a Server Administrator's own
-      independent administrative records depend on it (such records, once visible to and used by Server staff
-      outside the Bot, are outside our control). Deleting your account link or Roleplay Records may also mean you
-      lose access to features (such as quota or promotion history) that depend on that data.</li>
-    <li><strong>Leaving the Service:</strong> you may stop using the Bot at any time; a Server Administrator may
-      also remove the Bot from their Server at any time.</li>
+    <li><strong>Opt out of optional DMs</strong> (such as end-of-shift reports) using the Bot's consent command/settings, where available.</li>
+    <li><strong>Request access to or deletion of your data</strong> by contacting the Operator using the details in Section 16. We will verify your identity (typically via your Discord account) before fulfilling the request.</li>
+    <li><strong>Note on deletion limits:</strong> we may retain limited data where necessary to comply with a legal obligation, resolve a dispute, or enforce the Terms of Service. Deleting your account link or Roleplay Records may also mean you lose access to features that depend on that data.</li>
+    <li><strong>Leaving the Service:</strong> you may stop using the Bot at any time; a Server Administrator may also remove the Bot from their Server at any time.</li>
   </ul>
 
   <h2 id="s13">13. Cookies &amp; Tracking (Panel)</h2>
-  <p>If you use any companion web panel associated with the Bot, that panel may use cookies or similar local
-    storage technology strictly necessary for authentication and session management (for example, to keep you
-    logged in via Discord OAuth2). We do not use third-party advertising trackers on any such panel.</p>
+  <p>If you use any companion web panel associated with the Bot, that panel may use cookies or similar local storage technology strictly necessary for authentication and session management. We do not use third-party advertising trackers on any such panel.</p>
 
   <h2 id="s14">14. Data Breach Notification</h2>
-  <p>In the event of a data breach affecting your personal information that creates a meaningful risk of harm, we
-    will take reasonable steps to investigate, remediate, and notify affected Users and/or Server Administrators
-    without undue delay, and in any event in line with applicable legal requirements.</p>
+  <p>In the event of a data breach affecting your personal information that creates a meaningful risk of harm, we will take reasonable steps to investigate, remediate, and notify affected Users and/or Server Administrators without undue delay, and in any event in line with applicable legal requirements.</p>
 
   <h2 id="s15">15. Changes to This Policy</h2>
-  <p>We may update this Privacy Policy from time to time. Material changes will be reflected by updating the "Last
-    Updated" date above and, where reasonably practicable, announced through the Operator's designated
-    community/support channels. Your continued use of the Bot after a change takes effect constitutes your
-    acceptance of the revised Policy.</p>
+  <p>We may update this Privacy Policy from time to time. Material changes will be reflected by updating the "Last Updated" date above and, where reasonably practicable, announced through the Operator's designated community/support channels. Your continued use of the Bot after a change takes effect constitutes your acceptance of the revised Policy.</p>
 
   <h2 id="s16">16. Contact</h2>
-  <p>Questions about this Privacy Policy, or requests relating to your personal information, should be directed to
-    the Operator via email at <a href="mailto:havens.cutie.1m@icloud.com">havens.cutie.1m@icloud.com</a>, or through
-    the CHP assistance channel at
-    <a href="https://discord.com/channels/1117606532771754045/1296007757782061158" target="_blank" rel="noopener">https://discord.com/channels/1117606532771754045/1296007757782061158</a>.</p>
+  <p>Questions about this Privacy Policy, or requests relating to your personal information, should be directed to the Operator via email at <a href="mailto:havens.cutie.1m@icloud.com">havens.cutie.1m@icloud.com</a>, or through the CHP assistance channel at <a href="https://discord.com/channels/1117606532771754045/1296007757782061158" target="_blank" rel="noopener">Discord support channel</a>.</p>
 
   <footer class="chp-footer">
-    CHP Management Privacy Policy. This document does not constitute legal advice. The Operator strongly
-    recommends having this Policy reviewed by a qualified attorney, particularly if Users outside your home
-    jurisdiction (e.g., under GDPR or similar laws) are expected to use the Bot.
+    CHP Management Privacy Policy. This document does not constitute legal advice. The Operator strongly recommends having this Policy reviewed by a qualified attorney, particularly if Users outside your home jurisdiction (e.g., under GDPR or similar laws) are expected to use the Bot.
   </footer>
+
 </div>
+
 <script src="assets/chp-paginate.js"></script>
 <script>
   initChpPaginator({

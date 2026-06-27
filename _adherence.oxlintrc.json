@@ -1,0 +1,92 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "assets/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {},
+    "tokens": [
+      "--chp-black",
+      "--chp-black-soft",
+      "--chp-gold",
+      "--chp-gold-bright",
+      "--chp-gold-dim",
+      "--chp-text",
+      "--chp-text-faint",
+      "--chp-text-muted",
+      "--ease-out-expo",
+      "--ease-smooth",
+      "--ease-spring",
+      "--glass-bg",
+      "--glass-bg-hover",
+      "--glass-blur",
+      "--glass-blur-heavy",
+      "--glass-border",
+      "--glass-border-gold",
+      "--glass-highlight",
+      "--glass-shadow",
+      "--glass-shadow-raised"
+    ],
+    "tokenKinds": {
+      "--chp-black": "color",
+      "--chp-black-soft": "color",
+      "--chp-gold": "color",
+      "--chp-gold-bright": "color",
+      "--chp-gold-dim": "color",
+      "--chp-text": "font",
+      "--chp-text-muted": "font",
+      "--chp-text-faint": "font",
+      "--glass-bg": "color",
+      "--glass-bg-hover": "color",
+      "--glass-border": "color",
+      "--glass-border-gold": "color",
+      "--glass-highlight": "color",
+      "--glass-blur": "other",
+      "--glass-blur-heavy": "other",
+      "--glass-shadow": "shadow",
+      "--glass-shadow-raised": "shadow",
+      "--ease-spring": "other",
+      "--ease-out-expo": "other",
+      "--ease-smooth": "other"
+    },
+    "fontFamilies": []
+  }
+}
