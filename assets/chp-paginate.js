@@ -1,14 +1,8 @@
 /*
- * Shared "liquid glass" smooth pagination for the legal pages. Splits a
- * container into pages at each element matching `breakSelector`, then shows
- * one page at a time with a fixed glass dock (Prev / page count / Next) and
- * a fade+slide transition between pages. Works the same way for ToS, the
- * Privacy Policy, and the changelog - only the break selector differs.
- *
- * Deliberately DOM-based (group existing elements into pages at runtime)
- * rather than requiring the HTML to be hand-restructured into <section>
- * blocks - far less risk of accidentally altering the legal text while
- * adding pagination.
+ * CHP Management — Liquid Glass Paginator
+ * Splits a container into pages at each element matching `breakSelector`,
+ * animates transitions with spring-eased fade+slide, and shows a floating
+ * glass dock. Shared by ToS, Privacy Policy, and Changelog.
  */
 function initChpPaginator({ containerSelector, breakSelector, introLabel = "Overview" }) {
   const container = document.querySelector(containerSelector);
@@ -31,15 +25,16 @@ function initChpPaginator({ containerSelector, breakSelector, introLabel = "Over
   if (current && current.length) pages.push({ label: currentLabel, els: current });
   if (pages.length === 0) return;
 
-  // Wrap each page's elements in a .chp-page div, in place.
+  // Wrap each page's elements in a .chp-page div
   const pageDivs = pages.map((page) => {
     const div = document.createElement("div");
-    div.className = "chp-page chp-glass";
+    div.className = "chp-page chp-glass chp-glass-card";
     page.els.forEach((el) => div.appendChild(el));
     container.appendChild(div);
     return div;
   });
 
+  // Build dock
   const dock = document.createElement("div");
   dock.className = "chp-dock";
   dock.innerHTML = `
@@ -49,14 +44,33 @@ function initChpPaginator({ containerSelector, breakSelector, introLabel = "Over
   `;
   document.body.appendChild(dock);
 
-  const label = dock.querySelector(".chp-dock-label");
+  const label   = dock.querySelector(".chp-dock-label");
   const prevBtn = dock.querySelector(".chp-dock-prev");
   const nextBtn = dock.querySelector(".chp-dock-next");
 
   let index = 0;
+  let animating = false;
 
-  function render() {
-    pageDivs.forEach((div, i) => div.classList.toggle("is-active", i === index));
+  function render(newIndex, direction) {
+    if (animating) return;
+    animating = true;
+
+    const oldDiv = pageDivs[index];
+    const newDiv = pageDivs[newIndex];
+
+    // Animate out
+    oldDiv.classList.add("is-leaving");
+    oldDiv.addEventListener("animationend", () => {
+      oldDiv.classList.remove("is-active", "is-leaving");
+      oldDiv.style.display = "none";
+
+      // Animate in
+      newDiv.style.display = "block";
+      newDiv.classList.add("is-active");
+      animating = false;
+    }, { once: true });
+
+    index = newIndex;
     label.textContent = `${index + 1} / ${pageDivs.length}`;
     prevBtn.disabled = index === 0;
     nextBtn.disabled = index === pageDivs.length - 1;
@@ -64,16 +78,28 @@ function initChpPaginator({ containerSelector, breakSelector, introLabel = "Over
   }
 
   function goTo(i) {
-    index = Math.max(0, Math.min(pageDivs.length - 1, i));
-    render();
+    const newIndex = Math.max(0, Math.min(pageDivs.length - 1, i));
+    if (newIndex === index) return;
+    render(newIndex, newIndex > index ? 1 : -1);
   }
+
+  // Initial state
+  pageDivs[0].classList.add("is-active");
+  pageDivs[0].style.display = "block";
+  label.textContent = `1 / ${pageDivs.length}`;
+  prevBtn.disabled = true;
+  nextBtn.disabled = pageDivs.length === 1;
 
   prevBtn.addEventListener("click", () => goTo(index - 1));
   nextBtn.addEventListener("click", () => goTo(index + 1));
 
-  // Any in-page link that targets an element now living inside a page
-  // (e.g. the table-of-contents anchors) jumps straight to that page
-  // instead of doing a normal same-document scroll.
+  // Keyboard navigation
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") goTo(index + 1);
+    if (e.key === "ArrowLeft"  || e.key === "ArrowUp")   goTo(index - 1);
+  });
+
+  // In-page anchor links jump to the correct page
   document.querySelectorAll('a[href^="#"], button[data-chp-goto]').forEach((link) => {
     const targetId = link.getAttribute("data-chp-goto") || link.getAttribute("href").slice(1);
     link.addEventListener("click", (event) => {
@@ -86,6 +112,5 @@ function initChpPaginator({ containerSelector, breakSelector, introLabel = "Over
     });
   });
 
-  render();
   return { goTo, pageCount: pageDivs.length };
 }

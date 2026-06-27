@@ -1,53 +1,258 @@
 /*
-  Shared CHP black/gold "liquid glass" theme for the legal pages (Terms of
-  Service, Privacy Policy, Update Log). One stylesheet so all three pages
-  stay visually consistent and only need updating in one place.
-
-  The gold accent (#C9A66B) intentionally matches ORANGE_COLOR in
-  utils/constants.py, so the web pages and the bot's Discord embeds read as
-  the same brand rather than two different products.
+  CHP Management — Liquid Glass Design System
+  Black/gold palette. Gold (#C9A66B) matches ORANGE_COLOR in utils/constants.py
+  so web pages and Discord embeds read as one brand.
 */
 
+/* ─── Reset & root tokens ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 :root {
-  --chp-black: #0a0a0c;
-  --chp-black-soft: #121214;
-  --chp-gold: #c9a66b;
-  --chp-gold-bright: #e3c896;
-  --chp-text: #e9e6df;
-  --chp-muted: #9a958a;
-  --chp-glass-bg: rgba(255, 255, 255, 0.045);
-  --chp-glass-border: rgba(201, 166, 107, 0.28);
-  --chp-glass-highlight: rgba(255, 255, 255, 0.08);
+  --chp-black:        #08080b;
+  --chp-black-soft:   #111116;
+  --chp-gold:         #c9a66b;
+  --chp-gold-bright:  #e3c896;
+  --chp-gold-dim:     #8a6f41;
+  --chp-text:         #ede9e0;
+  --chp-text-muted:   #8a857a;
+  --chp-text-faint:   #4a4640;
+
+  /* Glass surface tokens */
+  --glass-bg:           rgba(255,255,255,0.004);
+  --glass-bg-hover:     rgba(255,255,255,0.012);
+  --glass-border:       rgba(255,255,255,0.035);
+  --glass-border-gold:  rgba(201,166,107,0.10);
+  --glass-highlight:    rgba(255,255,255,0.35);
+  --glass-blur:         blur(100px) saturate(240%); /* @kind other */
+  --glass-blur-heavy:   blur(120px) saturate(260%); /* @kind other */
+  --glass-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    inset 0 -1px 0 rgba(0,0,0,0.06),
+    0 8px 40px rgba(0,0,0,0.18),
+    0 2px 8px  rgba(0,0,0,0.10);
+  --glass-shadow-raised:
+    inset 0 1.5px 0 rgba(255,255,255,0.30),
+    inset 0 -1px  0 rgba(0,0,0,0.08),
+    0 20px 60px rgba(0,0,0,0.22),
+    0 4px  16px rgba(0,0,0,0.14),
+    0 0 0 1px rgba(255,255,255,0.03);
+
+  /* Easing */
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1); /* @kind other */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1); /* @kind other */
+  --ease-smooth:   cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
 }
 
-* { box-sizing: border-box; }
-
-html, body {
-  margin: 0;
-  background: radial-gradient(circle at 50% -10%, #1c1a14 0%, var(--chp-black) 55%);
+/* ─── Base ────────────────────────────────────────────────────────────── */
+html {
+  background: var(--chp-black);
   color: var(--chp-text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  font-size: 16px;
   line-height: 1.65;
-  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Faint static gold "badge" watermark in the background - swap the
-   background-image url() below for a real CHP shield/badge asset whenever
-   one is provided; this is deliberately subtle so text stays readable
-   even with a placeholder or no image at all. */
-body::before {
-  content: "";
+body {
+  min-height: 100vh;
+  background: radial-gradient(ellipse 100% 70% at 50% -5%, #2a1d00 0%, #0c0a08 50%, #08080b 100%);
+  overflow-x: hidden;
+}
+
+/* ─── Animated ambient background ────────────────────────────────────── */
+.chp-scene {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background-image: url("images/chp-wordmark.png");
-  background-repeat: no-repeat;
-  background-position: center 6%;
-  background-size: 480px;
-  opacity: 0.05;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% -5%, #2a1e00 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, #201500 0%, transparent 55%),
+    #08080b;
 }
 
+/* Sweeping gold beam — the signature accent */
+.chp-beam {
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  width: 2px;
+  height: 160%;
+  transform-origin: top center;
+  pointer-events: none;
+}
+
+.chp-beam::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 180px;
+  left: -90px;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(201,166,107,0.18) 20%,
+    rgba(201,166,107,0.08) 55%,
+    transparent 100%);
+  filter: blur(18px);
+  animation: beam-sweep 14s ease-in-out infinite;
+}
+
+.chp-beam::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 60px;
+  left: -30px;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(255,220,140,0.22) 20%,
+    rgba(201,166,107,0.10) 55%,
+    transparent 100%);
+  filter: blur(6px);
+  animation: beam-sweep 14s ease-in-out infinite;
+}
+
+@keyframes beam-sweep {
+  0%   { opacity: 0;    transform: rotate(-28deg); }
+  8%   { opacity: 1; }
+  45%  { opacity: 0.7;  transform: rotate(28deg); }
+  52%  { opacity: 0; }
+  100% { opacity: 0;    transform: rotate(-28deg); }
+}
+
+/* Second offset beam */
+.chp-beam-2::before { animation-delay: -7s; }
+.chp-beam-2::after  { animation-delay: -7s; }
+
+.chp-orb {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.chp-orb-1 {
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(160,100,0,0.90) 0%, transparent 65%);
+  filter: blur(90px);
+  top: -220px; left: -140px;
+  animation: orb-drift-1 20s ease-in-out infinite;
+}
+.chp-orb-2 {
+  width: 580px; height: 580px;
+  background: radial-gradient(circle, rgba(201,166,107,0.55) 0%, transparent 65%);
+  filter: blur(100px);
+  bottom: -140px; right: -100px;
+  animation: orb-drift-2 24s ease-in-out infinite;
+}
+.chp-orb-3 {
+  width: 420px; height: 420px;
+  background: radial-gradient(circle, rgba(20,30,80,0.85) 0%, transparent 65%);
+  filter: blur(70px);
+  top: 38%; left: 52%;
+  animation: orb-drift-3 28s ease-in-out infinite;
+}
+/* Extra warm gold bloom, center */
+.chp-orb-4 {
+  width: 800px; height: 300px;
+  background: radial-gradient(ellipse, rgba(180,110,10,0.50) 0%, transparent 70%);
+  filter: blur(80px);
+  top: 20%; left: 50%;
+  transform: translateX(-50%);
+  animation: orb-drift-4 32s ease-in-out infinite;
+}
+
+@keyframes orb-drift-1 {
+  0%,100% { transform: translate(0,0)       scale(1);    }
+  33%      { transform: translate(70px,-50px) scale(1.10); }
+  66%      { transform: translate(-40px,60px) scale(0.92); }
+}
+@keyframes orb-drift-2 {
+  0%,100% { transform: translate(0,0)        scale(1);    }
+  40%      { transform: translate(-60px,-70px) scale(1.12); }
+  70%      { transform: translate(50px, 35px)  scale(0.90); }
+}
+@keyframes orb-drift-3 {
+  0%,100% { transform: translate(0,0)         scale(1);    }
+  50%      { transform: translate(-90px, 50px) scale(1.14); }
+}
+@keyframes orb-drift-4 {
+  0%,100% { opacity: 0.60; transform: translateX(-50%) scaleX(1);    }
+  50%      { opacity: 0.90; transform: translateX(-50%) scaleX(1.15); }
+}
+
+/* ─── Glass surface ───────────────────────────────────────────────────── */
+.chp-glass {
+  position: relative;
+  background: rgba(255,255,255,0.000);
+  border: 1px solid rgba(255,255,255,0.028);
+  border-radius: 20px;
+  backdrop-filter: blur(120px) saturate(260%) brightness(1.06);
+  -webkit-backdrop-filter: blur(120px) saturate(260%) brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.24),
+    inset 0 -1px 0 rgba(0,0,0,0.04),
+    0 8px 40px rgba(0,0,0,0.12),
+    0 2px 8px rgba(0,0,0,0.07);
+  transition:
+    background 0.3s var(--ease-smooth),
+    border-color 0.3s var(--ease-smooth),
+    box-shadow 0.3s var(--ease-smooth),
+    transform 0.4s var(--ease-spring);
+}
+
+/* Top specular highlight — the key Apple liquid glass detail */
+.chp-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(135deg,
+      rgba(255,255,255,0.28) 0%,
+      rgba(255,255,255,0.07) 25%,
+      transparent 50%),
+    linear-gradient(to bottom,
+      rgba(255,255,255,0.12) 0%,
+      transparent 18%),
+    linear-gradient(to top,
+      rgba(0,0,0,0.04) 0%,
+      transparent 20%);
+  pointer-events: none;
+  z-index: 1;
+  animation: shimmer 8s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.70; }
+}
+
+/* Gold iridescent top edge */
+.chp-glass::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 16px; right: 16px;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(201,166,107,0.55) 30%,
+    rgba(255,255,255,0.35) 50%,
+    rgba(201,166,107,0.55) 70%,
+    transparent 100%);
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.chp-glass > * { position: relative; z-index: 3; }
+
+.chp-glass-raised {
+  box-shadow: var(--glass-shadow-raised);
+  border-color: rgba(255,255,255,0.13);
+}
+
+/* ─── Layout wrapper ─────────────────────────────────────────────────── */
 .chp-wrap {
   position: relative;
   z-index: 1;
@@ -56,200 +261,286 @@ body::before {
   padding: 56px 24px 160px;
 }
 
+/* ─── Page header ────────────────────────────────────────────────────── */
 .chp-header {
   display: flex;
   align-items: center;
-  gap: 18px;
-  border-bottom: 1px solid var(--chp-glass-border);
-  padding-bottom: 28px;
-  margin-bottom: 36px;
+  gap: 20px;
+  padding-bottom: 32px;
+  margin-bottom: 40px;
+  border-bottom: 1px solid var(--glass-border-gold);
+  animation: fade-up 0.7s var(--ease-out-expo) both;
 }
 
-/* The CHP star badge/insignia, rendered next to the page title. */
 .chp-badge {
-  width: 64px;
-  height: 64px;
+  width: 68px; height: 68px;
   object-fit: contain;
-  filter: drop-shadow(0 0 12px rgba(201, 166, 107, 0.35));
+  filter: drop-shadow(0 0 16px rgba(201,166,107,0.45));
+  transition: filter 0.4s var(--ease-smooth), transform 0.4s var(--ease-spring);
+}
+.chp-badge:hover {
+  filter: drop-shadow(0 0 28px rgba(201,166,107,0.70));
+  transform: scale(1.05) rotate(-2deg);
 }
 
 .chp-header h1 {
   font-size: 28px;
-  margin: 0 0 4px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: #fff;
+  margin-bottom: 4px;
+}
+.chp-subtitle {
+  color: var(--chp-text-muted);
+  font-size: 13.5px;
+}
+
+/* ─── Typography ─────────────────────────────────────────────────────── */
+h2 {
+  font-size: 18px;
+  font-weight: 650;
+  color: #fff;
+  letter-spacing: -0.01em;
+  margin-top: 0;
+  padding-left: 14px;
+  border-left: 2.5px solid var(--chp-gold);
+}
+h3 { font-size: 14.5px; font-weight: 600; color: rgba(255,255,255,0.88); margin-top: 20px; }
+p, li { font-size: 14.5px; color: var(--chp-text); }
+ul, ol { padding-left: 22px; }
+li { margin-bottom: 5px; }
+a { color: var(--chp-gold-bright); transition: color 0.2s; }
+a:hover { color: #fff; }
+strong { color: rgba(255,255,255,0.95); }
+code {
+  background: rgba(0,0,0,0.45);
+  border: 1px solid var(--glass-border-gold);
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-size: 12.5px;
+  font-family: "SF Mono", "JetBrains Mono", "Fira Code", monospace;
+  color: var(--chp-gold-bright);
+}
+
+/* ─── Glass card (content block) ─────────────────────────────────────── */
+.chp-glass.chp-glass-card {
+  padding: 28px 32px;
+  margin: 18px 0;
+  border-radius: 22px;
+  animation: fade-up 0.6s var(--ease-out-expo) both;
+}
+
+/* ─── Notice (gold-tinted info box) ─────────────────────────────────── */
+.chp-notice {
+  background: rgba(201,166,107,0.000);
+  border: 1px solid rgba(201,166,107,0.10);
+  border-radius: 16px;
+  padding: 16px 22px;
+  margin: 20px 0;
+  font-size: 14px;
+  line-height: 1.7;
+  animation: fade-up 0.5s var(--ease-out-expo) 0.1s both;
+  backdrop-filter: blur(80px) saturate(220%);
+  -webkit-backdrop-filter: blur(80px) saturate(220%);
+}
+
+/* ─── Panel (dark inset block) ──────────────────────────────────────── */
+.chp-panel {
+  background: rgba(0,0,0,0.03);
+  border: 1px solid rgba(201,166,107,0.08);
+  border-radius: 14px;
+  padding: 16px 22px;
+  margin: 14px 0;
+  backdrop-filter: blur(60px);
+  -webkit-backdrop-filter: blur(60px);
+}
+
+/* ─── Tables ─────────────────────────────────────────────────────────── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0 22px;
+  font-size: 13.5px;
+}
+th, td {
+  border: 1px solid rgba(201,166,107,0.18);
+  padding: 9px 14px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  background: rgba(201,166,107,0.10);
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
   letter-spacing: 0.01em;
 }
+tr:hover td { background: rgba(255,255,255,0.02); }
 
-.chp-subtitle { color: var(--chp-muted); font-size: 14px; }
-
-/* The "liquid glass" card - frosted, translucent, with a soft inner
-   highlight along the top edge to mimic a glossy glass surface. */
-.chp-glass {
-  position: relative;
-  background: var(--chp-glass-bg);
-  border: 1px solid var(--chp-glass-border);
-  border-radius: 20px;
-  padding: 28px 32px;
-  margin: 20px 0;
-  backdrop-filter: blur(22px) saturate(160%);
-  -webkit-backdrop-filter: blur(22px) saturate(160%);
-  box-shadow:
-    inset 0 1px 0 var(--chp-glass-highlight),
-    inset 0 0 40px rgba(201, 166, 107, 0.04),
-    0 8px 32px rgba(0, 0, 0, 0.45);
+/* ─── TOC ────────────────────────────────────────────────────────────── */
+.chp-toc {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 20px;
+  animation: fade-up 0.5s var(--ease-out-expo) 0.15s both;
+}
+.chp-toc strong {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--chp-text-muted);
+  padding: 0 4px 8px;
+  display: block;
+}
+.chp-toc a {
+  display: block;
+  padding: 7px 4px;
+  font-size: 13.5px;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(201,166,107,0.10);
+  color: var(--chp-text);
+  transition: color 0.2s, padding-left 0.25s var(--ease-spring);
+}
+.chp-toc a:hover {
+  color: var(--chp-gold-bright);
+  padding-left: 10px;
 }
 
-.chp-glass::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 24px; right: 24px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--chp-gold-bright), transparent);
-  opacity: 0.5;
-}
-
-h2 {
-  font-size: 19px;
-  color: #fff;
-  margin-top: 0;
-  border-left: 3px solid var(--chp-gold);
-  padding-left: 14px;
-}
-
-h3 { font-size: 15px; color: #fff; margin-top: 20px; }
-p, li { font-size: 15px; color: var(--chp-text); }
-ul, ol { padding-left: 22px; }
-li { margin-bottom: 6px; }
-a { color: var(--chp-gold-bright); }
-code {
-  background: rgba(0, 0, 0, 0.4);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 13px;
-  border: 1px solid var(--chp-glass-border);
-}
-
-.chp-notice {
-  background: rgba(201, 166, 107, 0.08);
-  border: 1px solid var(--chp-glass-border);
-  border-radius: 14px;
-  padding: 16px 20px;
-  margin: 16px 0;
-  font-size: 14px;
-}
-
-.chp-panel {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid var(--chp-glass-border);
-  border-radius: 14px;
-  padding: 16px 20px;
-  margin: 16px 0;
-}
-
-footer.chp-footer {
-  margin-top: 48px;
-  padding-top: 20px;
-  border-top: 1px solid var(--chp-glass-border);
-  color: var(--chp-muted);
-  font-size: 13px;
-}
-
-/* ---------------------------------------------------------------------- */
-/* Smooth "liquid glass" pagination - shared by ToS, PP, and the changelog */
-/* ---------------------------------------------------------------------- */
-
+/* ─── Pagination: page wrappers ─────────────────────────────────────── */
 .chp-page {
   display: none;
   opacity: 0;
-  transform: translateY(10px) scale(0.99);
-  transition: opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1), transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateY(14px) scale(0.985);
 }
-
 .chp-page.is-active {
   display: block;
-  opacity: 1;
-  transform: translateY(0) scale(1);
+  animation: page-in 0.42s var(--ease-out-expo) both;
+}
+.chp-page.is-leaving {
+  animation: page-out 0.28s var(--ease-smooth) forwards;
 }
 
-.chp-toc {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 8px;
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes page-out {
+  from { opacity: 1; transform: translateY(0)    scale(1); }
+  to   { opacity: 0; transform: translateY(-8px) scale(1.005); }
 }
 
-.chp-toc button {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid var(--chp-glass-border);
-  color: var(--chp-text);
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 13.5px;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.chp-toc button:hover {
-  background: rgba(201, 166, 107, 0.12);
-  border-color: var(--chp-gold);
-}
-
-/* The floating glass "dock" - prev/next + page counter, fixed to the
-   bottom of the viewport so paging never requires scrolling back up. */
+/* ─── Floating dock ─────────────────────────────────────────────────── */
 .chp-dock {
   position: fixed;
-  left: 50%;
-  bottom: 24px;
+  left: 50%; bottom: 28px;
   transform: translateX(-50%);
-  z-index: 10;
+  z-index: 100;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 10px 18px;
+  gap: 6px;
+  padding: 8px 12px;
   border-radius: 999px;
-  background: rgba(18, 18, 20, 0.55);
-  border: 1px solid var(--chp-glass-border);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  box-shadow: inset 0 1px 0 var(--chp-glass-highlight), 0 10px 30px rgba(0, 0, 0, 0.5);
+  background: rgba(8,8,11,0.35);
+  border: 1px solid rgba(255,255,255,0.07);
+  backdrop-filter: blur(60px) saturate(220%);
+  -webkit-backdrop-filter: blur(60px) saturate(220%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.16),
+    inset 0 -1px 0 rgba(0,0,0,0.15),
+    0 12px 40px rgba(0,0,0,0.35),
+    0 2px 8px rgba(0,0,0,0.20);
+  animation: dock-rise 0.7s var(--ease-spring) 0.3s both;
+}
+
+@keyframes dock-rise {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.chp-dock::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 20%; right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,166,107,0.50), transparent);
+  border-radius: 1px;
 }
 
 .chp-dock button {
   background: transparent;
   border: none;
   color: var(--chp-gold-bright);
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
   cursor: pointer;
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 999px;
-  transition: background 0.2s;
+  transition: background 0.2s var(--ease-smooth), transform 0.25s var(--ease-spring);
+  font-family: inherit;
 }
+.chp-dock button:hover:not(:disabled) {
+  background: rgba(201,166,107,0.14);
+  transform: scale(1.1);
+}
+.chp-dock button:active:not(:disabled) { transform: scale(0.92); }
+.chp-dock button:disabled { opacity: 0.25; cursor: default; }
 
-.chp-dock button:hover { background: rgba(201, 166, 107, 0.15); }
-.chp-dock button:disabled { opacity: 0.3; cursor: default; }
-.chp-dock button:disabled:hover { background: transparent; }
-
-.chp-dock .chp-dock-label {
-  font-size: 13px;
-  color: var(--chp-muted);
-  min-width: 64px;
+.chp-dock-label {
+  font-size: 12.5px;
+  color: var(--chp-text-muted);
+  min-width: 56px;
   text-align: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
 }
 
+/* ─── Badge tags (feature/fix labels) ───────────────────────────────── */
 .chp-badge-tag {
   display: inline-block;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10.5px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 2px 8px;
-  border-radius: 4px;
+  letter-spacing: 0.06em;
+  padding: 2px 9px;
+  border-radius: 999px;
   margin-right: 8px;
 }
+.chp-badge-tag.feature {
+  background: rgba(201,166,107,0.16);
+  color: var(--chp-gold-bright);
+  border: 1px solid rgba(201,166,107,0.30);
+}
+.chp-badge-tag.fix {
+  background: rgba(59,165,93,0.14);
+  color: #8fe0ab;
+  border: 1px solid rgba(59,165,93,0.28);
+}
 
-.chp-badge-tag.feature { background: rgba(201, 166, 107, 0.18); color: var(--chp-gold-bright); }
-.chp-badge-tag.fix { background: rgba(59, 165, 93, 0.18); color: #8fe0ab; }
+/* ─── Footer ─────────────────────────────────────────────────────────── */
+footer.chp-footer {
+  margin-top: 52px;
+  padding-top: 20px;
+  border-top: 1px solid var(--glass-border-gold);
+  color: var(--chp-text-faint);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
 
-.old-entry { opacity: 0.88; }
-.old-updates-header { border-top: 1px solid var(--chp-glass-border); padding-top: 16px; }
+/* ─── Entry animations ───────────────────────────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Staggered animation for glass cards */
+.chp-glass.chp-glass-card:nth-child(1) { animation-delay: 0.05s; }
+.chp-glass.chp-glass-card:nth-child(2) { animation-delay: 0.12s; }
+.chp-glass.chp-glass-card:nth-child(3) { animation-delay: 0.19s; }
+.chp-glass.chp-glass-card:nth-child(4) { animation-delay: 0.26s; }
+.chp-glass.chp-glass-card:nth-child(5) { animation-delay: 0.33s; }
+
+/* ─── Reduced-motion safety ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; }
+}
