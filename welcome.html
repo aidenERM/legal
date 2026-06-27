@@ -79,12 +79,12 @@
   <div class="chp-orb chp-orb-2"></div>
   <div class="chp-orb chp-orb-3"></div>
   <div class="chp-orb chp-orb-4"></div>
-<div class="chp-beam chp-beam-1"></div>
-<div class="chp-beam chp-beam-2"></div>
+  <div class="chp-beam"></div>
+  <div class="chp-beam chp-beam-2"></div>
 </div>
 
 <div class="chp-wrap">
-  <div class="chp-header chp-glass">
+  <div class="chp-header">
     <img class="chp-badge" src="assets/images/chp-badge.png" alt="CHP Badge">
     <div>
       <h1>Welcome to CHP Management</h1>
@@ -116,37 +116,37 @@
     <h2>Best Features</h2>
     <p>The highlights - if you only remember a handful of things about this bot, make it these.</p>
     <div class="chp-feature-grid">
-      <div class="chp-glass chp-glass-card">
+      <div class="chp-glass chp-feature-card">
         <span class="chp-feature-icon">&#x1F916;</span>
         <h3>/ask - AI Assistant</h3>
         <p>Ask anything about CHP - ranks, codes, policy, vehicles - and get an answer pulled straight from the
         official knowledge base, not a guess.</p>
       </div>
-      <div class="chp-glass chp-glass-card">
+      <div class="chp-glass chp-feature-card">
         <span class="chp-feature-icon">&#x1F4DD;</span>
         <h3>In-House Applications</h3>
         <p>A full DM-based application flow with AI-assisted review, AI detection, background checks, and
         history - all from one embed, no spreadsheets.</p>
       </div>
-      <div class="chp-glass chp-glass-card">
+      <div class="chp-glass chp-feature-card">
         <span class="chp-feature-icon">&#x2699;&#xFE0F;</span>
         <h3>/settings - Truly Personal</h3>
         <p>Timezone, accent color, notification timing, profile widgets - nobody but you can change your own
         settings, not even Command.</p>
       </div>
-      <div class="chp-glass chp-glass-card">
+      <div class="chp-glass chp-feature-card">
         <span class="chp-feature-icon">&#x1F396;&#xFE0F;</span>
         <h3>Automatic Promotions &amp; Discipline</h3>
         <p>Meeting quota can automatically move you up the rank ladder; missing it automatically escalates a
         Warning/Strike track - no manual role-juggling for Command.</p>
       </div>
-      <div class="chp-glass chp-glass-card">
+      <div class="chp-glass chp-feature-card">
         <span class="chp-feature-icon">&#x1F3C5;</span>
         <h3>Earned Badges on /profile</h3>
         <p>Medals, ribbons, service stripes, and Trooper of the Week all show up automatically on your profile
         the moment you earn them - no manual setup per badge.</p>
       </div>
-      <div class="chp-glass chp-glass-card">
+      <div class="chp-glass chp-feature-card">
         <span class="chp-feature-icon">&#x1F50D;</span>
         <h3>Universal Search</h3>
         <p>One search command to find a member's rank, duty status, applications, and RA history without
@@ -237,7 +237,7 @@
     version: faster, more reliable, and a lot of features ERM never had.</p>
 
     <div class="chp-vs">
-      <div class="chp-glass-card">
+      <div class="chp-glass">
         <h4>New, not in base ERM</h4>
         <ul>
           <li>The entire AI Assistant (<code>/ask</code>), AI application detector/summary, and background check tools.</li>
@@ -250,7 +250,7 @@
           <li><code>/myactions</code>, universal search, <code>/dashboard</code>, <code>/lookup</code>, <code>/practice</code>, <code>/info</code>.</li>
         </ul>
       </div>
-      <div class="chp-glass-card">
+      <div class="chp-glass">
         <h4>Fixed or hardened since launch</h4>
         <ul>
           <li>Startup speed: dependency cleanup, parallel extension loading, and a command-sync cache so
@@ -269,7 +269,7 @@
 
   <div class="chp-section" id="s-po">
     <h2>For Probationary Officers</h2>
-    <div class="chp-glass chp-glass-card">
+    <div class="chp-glass chp-role-card">
       <h3>What you can do</h3>
       <ul>
         <li>Request RA training with <code>/ra request</code> - this pings every FTO so you don't have to track
@@ -285,7 +285,7 @@
 
   <div class="chp-section" id="s-deputy">
     <h2>For Deputies</h2>
-    <div class="chp-glass chp-glass-card">
+    <div class="chp-glass chp-role-card">
       <h3>What you can do</h3>
       <ul>
         <li>Manage your own shifts end-to-end with <code>/duty manage</code> - clock on/off, take breaks, see
@@ -305,7 +305,7 @@
 
   <div class="chp-section" id="s-fto">
     <h2>For Field Training Officers</h2>
-    <div class="chp-glass chp-glass-card">
+    <div class="chp-glass chp-role-card">
       <h3>What you can do</h3>
       <ul>
         <li>Host individual or bulk RA sessions with <code>/ra host</code>, and submit pass/fail results with
@@ -323,7 +323,7 @@
 
   <div class="chp-section" id="s-hr">
     <h2>For High Ranks &amp; Command</h2>
-    <div class="chp-glass chp-glass-card">
+    <div class="chp-glass chp-role-card">
       <h3>What you can do</h3>
       <ul>
         <li>View any staff member's duty profile, time, and history - including someone with a Private Profile
@@ -341,7 +341,7 @@
 
   <div class="chp-section" id="s-ooc">
     <h2>For the Office of Commissioners</h2>
-    <div class="chp-glass chp-glass-card">
+    <div class="chp-glass chp-role-card">
       <h3>What you can do</h3>
       <ul>
         <li>Full access to <code>/config</code> and <code>/setup</code> - every role, channel, quota, and
@@ -365,11 +365,11 @@
 </div>
 <script src="assets/chp-paginate.js"></script>
 <script>
-initChpPaginator({
-  containerSelector: ".chp-wrap",
-  breakSelector: "h2",
-  introLabel: "Overview"
-});
+  initChpPaginator({
+    containerSelector: ".chp-wrap",
+    breakSelector: ".chp-section",
+    introLabel: "Welcome",
+  });
 </script>
 </body>
 </html>
