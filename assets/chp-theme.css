@@ -4,34 +4,37 @@
   --chp-gold:         #c9a66b;
   --chp-gold-bright:  #e3c896;
   --chp-gold-dim:     #8a6f41;
+  --chp-gold-soft:    rgba(201,166,107,0.85);
   --chp-text:         #ede9e0;
   --chp-text-muted:   #8a857a;
   --chp-text-faint:   #4a4640;
 
-  /* Glass surface tokens */
-  --glass-bg:           rgba(255,255,255,0.004);
-  --glass-bg-hover:     rgba(255,255,255,0.012);
-  --glass-border:       rgba(255,255,255,0.035);
-  --glass-border-gold:  rgba(201,166,107,0.10);
-  --glass-highlight:    rgba(255,255,255,0.35);
-  --glass-blur:         blur(100px) saturate(240%); /* @kind other */
-  --glass-blur-heavy:   blur(120px) saturate(260%); /* @kind other */
+  /* Liquid glass surface tokens — transparent + lensing, not a milky haze */
+  --glass-tint:         rgba(255,255,255,0.07);
+  --glass-tint-soft:    rgba(255,255,255,0.02);
+  --glass-bg:           rgba(255,255,255,0.05);
+  --glass-bg-hover:     rgba(255,255,255,0.08);
+  --glass-border:       rgba(255,255,255,0.14);
+  --glass-border-gold:  rgba(201,166,107,0.16);
+  --glass-highlight:    rgba(255,255,255,0.55);
+  --glass-blur:         blur(24px) saturate(180%);
+  --glass-blur-heavy:   blur(34px) saturate(200%);
   --glass-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.22),
-    inset 0 -1px 0 rgba(0,0,0,0.06),
-    0 8px 40px rgba(0,0,0,0.18),
-    0 2px 8px  rgba(0,0,0,0.10);
+    inset 0 1px 0 rgba(255,255,255,0.30),
+    inset 0 -1px 0 rgba(0,0,0,0.10),
+    0 8px 32px rgba(0,0,0,0.22),
+    0 2px 8px  rgba(0,0,0,0.12);
   --glass-shadow-raised:
-    inset 0 1.5px 0 rgba(255,255,255,0.30),
-    inset 0 -1px  0 rgba(0,0,0,0.08),
-    0 20px 60px rgba(0,0,0,0.22),
-    0 4px  16px rgba(0,0,0,0.14),
-    0 0 0 1px rgba(255,255,255,0.03);
+    inset 0 1.5px 0 rgba(255,255,255,0.38),
+    inset 0 -1px  0 rgba(0,0,0,0.12),
+    0 20px 50px rgba(0,0,0,0.28),
+    0 4px  16px rgba(0,0,0,0.16),
+    0 0 0 1px rgba(255,255,255,0.05);
 
-  /* Easing */
-  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1); /* @kind other */
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1); /* @kind other */
-  --ease-smooth:   cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
+  /* Easing — use these everywhere instead of one-off cubic-beziers */
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth:   cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ─── Base ────────────────────────────────────────────────────────────── */
@@ -39,9 +42,9 @@ html {
   background: var(--chp-black);
   color: var(--chp-text);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
-    font-size: 16px;
+  font-size: 16px;
   line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
@@ -49,6 +52,7 @@ body {
   background: radial-gradient(ellipse 100% 70% at 50% -5%, #2a1d00 0%, #0c0a08 50%, #08080b 100%);
   overflow-x: hidden;
 }
+
 .chp-scene {
   position: fixed;
   inset: 0;
@@ -109,27 +113,27 @@ body {
   52%  { opacity: 0; }
   100% { opacity: 0;    transform: rotate(-28deg); }
 }
+
+/* ─── Ambient orbs ────────────────────────────────────────────────────── */
 .chp-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.9;
+  filter: blur(90px);
+  opacity: 0.85;
   will-change: transform;
 }
 
 .chp-orb-1 {
-    width: 700px; height: 700px;
-  background: radial-gradient(circle, rgba(160,100,0,0.90) 0%, transparent 65%);
-  filter: blur(90px);
-  top: -220px; left: -140px;
-  animation: orb-drift-1 20s ease-in-out infinite;
+  width: 650px; height: 650px;
+  background: radial-gradient(circle, rgba(201,166,107,0.55) 0%, transparent 65%);
+  top: -220px; left: -160px;
+  animation: orb-drift-1 26s ease-in-out infinite;
 }
 .chp-orb-2 {
   width: 580px; height: 580px;
-  background: radial-gradient(circle, rgba(201,166,107,0.55) 0%, transparent 65%);
-  filter: blur(100px);
-  bottom: -140px; right: -100px;
-  animation: orb-drift-2 24s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(120,140,255,0.30) 0%, transparent 65%);
+  bottom: -180px; right: -140px;
+  animation: orb-drift-2 30s ease-in-out infinite;
 }
 .chp-orb-3 {
   width: 420px; height: 420px;
@@ -146,15 +150,15 @@ body {
   top: 20%; left: 50%;
   transform: translateX(-50%);
   animation: orb-drift-4 32s ease-in-out infinite;
-  }
+}
 
 @keyframes orb-drift-1 {
-  0%,100% { transform: translate(0,0)       scale(1);    }
-  33%      { transform: translate(70px,-50px) scale(1.10); }
-  66%      { transform: translate(-40px,60px) scale(0.92); }
+  0%,100% { transform: translate(0,0)         scale(1);    }
+  33%      { transform: translate(70px,-50px)  scale(1.10); }
+  66%      { transform: translate(-40px,60px)  scale(0.92); }
 }
 @keyframes orb-drift-2 {
-  0%,100% { transform: translate(0,0)        scale(1);    }
+  0%,100% { transform: translate(0,0)         scale(1);    }
   40%      { transform: translate(-60px,-70px) scale(1.12); }
   70%      { transform: translate(50px, 35px)  scale(0.90); }
 }
@@ -165,62 +169,65 @@ body {
 @keyframes orb-drift-4 {
   0%,100% { opacity: 0.60; transform: translateX(-50%) scaleX(1);    }
   50%      { opacity: 0.90; transform: translateX(-50%) scaleX(1.15); }
-  }
+}
+
+/* ─── Liquid glass surface ──────────────────────────────────────────────
+   Lower blur + visible tint so the scene reads *through* the glass, with
+   a pointer-driven specular highlight (--mx/--my, set by chp-paginate.js
+   and index.html) standing in for real-time refraction. */
 .chp-glass {
   position: relative;
+  --mx: 50%;
+  --my: 0%;
 
-  /* Multi-layer glass stack */
   background:
     linear-gradient(180deg, var(--glass-tint), var(--glass-tint-soft)),
-    radial-gradient(circle at top left, rgba(255,255,255,0.08), transparent 60%),
-    radial-gradient(circle at bottom right, rgba(0,0,0,0.08), transparent 55%);
+    radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,0.16), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(0,0,0,0.10), transparent 55%);
 
   border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    /* Apple-style layered blur */
+  border-radius: 20px;
+
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
 
-  /* Depth system */
-  box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.25),
-    inset 0 -1px 0 rgba(0,0,0,0.15),
-    0 10px 40px rgba(0,0,0,0.25);
+  box-shadow: var(--glass-shadow);
 
   transform: translateZ(0);
-  will-change: transform, background;
+  will-change: transform, background, box-shadow, border-color;
 
   transition:
     transform 0.4s var(--ease-spring),
     background 0.3s var(--ease-smooth),
-        border-color 0.3s var(--ease-smooth);
+    border-color 0.3s var(--ease-smooth),
+    box-shadow 0.3s var(--ease-smooth);
 }
 
+/* Specular sweep + grain, follows pointer via --mx/--my */
 .chp-glass::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background:
-    linear-gradient(135deg,
-      rgba(255,255,255,0.28) 0%,
-      rgba(255,255,255,0.07) 25%,
-      transparent 50%),
-    linear-gradient(to bottom,
-      rgba(255,255,255,0.12) 0%,
-      transparent 18%),
-    linear-gradient(to top,
-      rgba(0,0,0,0.04) 0%,
-      transparent 20%);
+    radial-gradient(circle at var(--mx) var(--my),
+      rgba(255,255,255,0.30) 0%,
+      rgba(255,255,255,0.08) 30%,
+      transparent 60%),
+    radial-gradient(circle at 10% 20%, rgba(255,255,255,0.04), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.03), transparent 45%);
   pointer-events: none;
   z-index: 1;
+  transition: background 0.2s var(--ease-smooth);
   animation: shimmer 8s ease-in-out infinite;
 }
 
 @keyframes shimmer {
   0%,100% { opacity: 1; }
-  50%      { opacity: 0.70; }
+  50%      { opacity: 0.75; }
+}
 
+/* Thin refracted-light rim along the top edge */
 .chp-glass::after {
   content: "";
   position: absolute;
@@ -228,26 +235,45 @@ body {
   height: 1px;
   background: linear-gradient(90deg,
     transparent 0%,
-    rgba(201,166,107,0.55) 30%,
-    rgba(255,255,255,0.35) 50%,
-    rgba(201,166,107,0.55) 70%,
+    rgba(201,166,107,0.45) 30%,
+    rgba(255,255,255,0.55) 50%,
+    rgba(201,166,107,0.45) 70%,
     transparent 100%);
   border-radius: 1px;
   pointer-events: none;
   z-index: 2;
 }
+
 .chp-glass > * { position: relative; z-index: 3; }
+
 .chp-glass-raised {
   box-shadow: var(--glass-shadow-raised);
-  border-color: rgba(255,255,255,0.13);
+  border-color: rgba(255,255,255,0.20);
 }
+
+/* Light response on hover — glass brightens and lifts, no harsh zoom */
+.chp-glass:hover {
+  border-color: rgba(201,166,107,0.30);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.36),
+    inset 0 -1px 0 rgba(0,0,0,0.08),
+    0 16px 46px rgba(0,0,0,0.26),
+    0 0 0 1px rgba(201,166,107,0.12);
+}
+
+.chp-glass.chp-glass-card:hover {
+  transform: translateY(-2px);
+}
+
+/* ─── Layout ──────────────────────────────────────────────────────────── */
 .chp-wrap {
   position: relative;
-    z-index: 2;
+  z-index: 2;
   max-width: 920px;
   margin: 0 auto;
   padding: 64px 22px 140px;
 }
+
 .chp-header {
   display: flex;
   align-items: center;
@@ -267,32 +293,12 @@ body {
 .chp-badge:hover {
   filter: drop-shadow(0 0 28px rgba(201,166,107,0.70));
   transform: scale(1.05) rotate(-2deg);
-  .chp-header {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding-bottom: 32px;
-  margin-bottom: 40px;
-  border-bottom: 1px solid var(--glass-border-gold);
-  animation: fade-up 0.7s var(--ease-out-expo) both;
 }
-  gap: 18px;
-
-.chp-badge {
-  width: 68px; height: 68px;
-  object-fit: contain;
-  filter: drop-shadow(0 0 16px rgba(201,166,107,0.45));
-  transition: filter 0.4s var(--ease-smooth), transform 0.4s var(--ease-spring);
-}
-.chp-badge:hover {
-  filter: drop-shadow(0 0 28px rgba(201,166,107,0.70));
-  transform: scale(1.05) rotate(-2deg);
-  }
 
 .chp-header h1 {
   font-size: 28px;
   font-weight: 700;
-    letter-spacing: -0.02em;
+  letter-spacing: -0.02em;
   color: #fff;
   margin-bottom: 4px;
 }
@@ -300,7 +306,9 @@ body {
 .chp-subtitle {
   color: var(--chp-text-muted);
   font-size: 13.5px;
-  h2 {
+}
+
+h2 {
   font-size: 18px;
   font-weight: 650;
   color: #fff;
@@ -313,10 +321,10 @@ h3 { font-size: 14.5px; font-weight: 600; color: rgba(255,255,255,0.88); margin-
 p, li { font-size: 14.5px; color: var(--chp-text); }
 ul, ol { padding-left: 22px; }
 li { margin-bottom: 5px; }
-a { color: var(--chp-gold-bright); transition: color 0.2s; }
+a { color: var(--chp-gold-bright); transition: color 0.2s var(--ease-smooth); }
 a:hover { color: #fff; }
 strong { color: rgba(255,255,255,0.95); }
-  code {
+code {
   background: rgba(0,0,0,0.45);
   border: 1px solid var(--glass-border-gold);
   border-radius: 5px;
@@ -324,60 +332,62 @@ strong { color: rgba(255,255,255,0.95); }
   font-size: 12.5px;
   font-family: "SF Mono", "JetBrains Mono", "Fira Code", monospace;
   color: var(--chp-gold-bright);
+}
 
-  .chp-glass.chp-glass-card {
+.chp-glass.chp-glass-card {
   padding: 28px 32px;
   margin: 16px 0;
-
   border-radius: 22px;
   animation: fade-up 0.6s var(--ease-out-expo) both;
+}
 
-    .chp-notice {
-  background: rgba(201,166,107,0.000);
-  border: 1px solid rgba(201,166,107,0.10);
-
+.chp-notice {
+  background: rgba(201,166,107,0.05);
+  border: 1px solid rgba(201,166,107,0.16);
   border-radius: 16px;
   padding: 16px 22px;
   margin: 20px 0;
   font-size: 14px;
   line-height: 1.7;
   animation: fade-up 0.5s var(--ease-out-expo) 0.1s both;
-  backdrop-filter: blur(80px) saturate(220%);
-  -webkit-backdrop-filter: blur(80px) saturate(220%);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
 
-    .chp-panel {
-  background: rgba(0,0,0,0.03);
-  border: 1px solid rgba(201,166,107,0.08);
+.chp-panel {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(201,166,107,0.10);
   border-radius: 14px;
   padding: 16px 18px;
   margin: 14px 0;
-  backdrop-filter: blur(60px);
-  -webkit-backdrop-filter: blur(60px);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
 }
 
-    table {
+table {
   width: 100%;
   border-collapse: collapse;
-        margin: 14px 0 20px;
+  margin: 14px 0 20px;
   font-size: 13.5px;
-        border-radius: 12px;
+  border-radius: 12px;
   overflow: hidden;
-    }
+}
 
-    th, td {
+th, td {
   border: 1px solid rgba(201,166,107,0.18);
   padding: 9px 14px;
   text-align: left;
   vertical-align: top;
-    }
-      th {
+}
+th {
   background: rgba(201,166,107,0.10);
-          color: #fff;
+  color: #fff;
   font-weight: 600;
   font-size: 13px;
   letter-spacing: 0.01em;
 }
-tr:hover td { background: rgba(255,255,255,0.02); }
+tr:hover td { background: rgba(255,255,255,0.03); transition: background 0.2s var(--ease-smooth); }
+
 .chp-toc {
   display: flex;
   flex-direction: column;
@@ -393,7 +403,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   color: var(--chp-text-muted);
   padding: 0 4px 8px;
   display: block;
-  }
+}
 
 .chp-toc a {
   display: block;
@@ -402,8 +412,8 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   text-decoration: none;
   border-bottom: 1px solid rgba(201,166,107,0.10);
   color: var(--chp-text);
-  transition: color 0.2s, padding-left 0.25s var(--ease-spring);
-  }
+  transition: color 0.25s var(--ease-smooth), padding-left 0.25s var(--ease-spring);
+}
 
 .chp-toc a:hover {
   padding-left: 10px;
@@ -418,11 +428,11 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 }
 .chp-page.is-active {
   display: block;
-  animation: page-in 0.42s var(--ease-out-expo) both;
+  animation: page-in 0.45s var(--ease-out-expo) both;
 }
 .chp-page.is-leaving {
-  animation: page-out 0.28s var(--ease-smooth) forwards;
-  }
+  animation: page-out 0.3s var(--ease-smooth) forwards;
+}
 
 @keyframes page-in {
   from { opacity: 0; transform: translateY(14px) scale(0.985); }
@@ -430,51 +440,43 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 }
 @keyframes page-out {
   from { opacity: 1; transform: translateY(0)    scale(1); }
-  to   { opacity: 0; transform: translateY(-8px) scale(1.005); }
+  to   { opacity: 0; transform: translateY(-10px) scale(1.01); }
+}
 
-      .chp-dock {
+/* ─── Floating pagination dock ───────────────────────────────────────── */
+.chp-dock {
   position: fixed;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
   left: 50%;
   bottom: 26px;
   transform: translateX(-50%);
   z-index: 100;
 
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
   padding: 10px 14px;
   border-radius: 999px;
-  background: rgba(8,8,11,0.35);
-  border: 1px solid rgba(255,255,255,0.07);
-  backdrop-filter: blur(60px) saturate(220%);
-  -webkit-backdrop-filter: blur(60px) saturate(220%);
-    background:
-    linear-gradient(180deg,
-      rgba(255,255,255,0.06),
-      rgba(0,0,0,0.25));
 
-  border: 1px solid rgba(255,255,255,0.08);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02)),
+    rgba(8,8,11,0.30);
+  border: 1px solid rgba(255,255,255,0.14);
 
-  backdrop-filter: blur(70px) saturate(200%);
-  -webkit-backdrop-filter: blur(70px) saturate(200%);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
 
   box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.18),
-    0 18px 60px rgba(0,0,0,0.45);
+    inset 0 1px 0 rgba(255,255,255,0.24),
+    0 16px 50px rgba(0,0,0,0.40);
 
   animation: dock-rise 0.9s var(--ease-spring);
+  transition: box-shadow 0.3s var(--ease-smooth), border-color 0.3s var(--ease-smooth);
 }
 
 @keyframes dock-rise {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
+  from { opacity: 0; transform: translateX(-50%) translateY(18px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* subtle gold horizon line */
@@ -485,36 +487,28 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   left: 18%;
   right: 18%;
   height: 1px;
-  
-  background: linear-gradient(
-    90deg,
+  background: linear-gradient(90deg,
     transparent,
     rgba(201,166,107,0.55),
-    transparent
-  );
+    transparent);
 }
 
 /* dock buttons */
 .chp-dock button {
   background: transparent;
   border: none;
-  
   color: var(--chp-gold-soft);
   font-size: 18px;
-
   padding: 6px 10px;
   border-radius: 999px;
-  
   cursor: pointer;
-
   transition:
     transform 0.25s var(--ease-spring),
     background 0.25s var(--ease-smooth);
 }
 
 .chp-dock button:hover:not(:disabled) {
-  background: rgba(201,166,107,0.12);
-
+  background: rgba(201,166,107,0.14);
   transform: translateY(-1px);
 }
 
@@ -522,126 +516,31 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   transform: scale(0.92);
 }
 
-    
 .chp-dock button:disabled {
   opacity: 0.3;
 }
 
 /* page indicator */
 .chp-dock-label {
-    font-size: 12px;
+  font-size: 12px;
   color: rgba(237,233,224,0.65);
   min-width: 60px;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
-      .chp-page {
-  display: none;
-  opacity: 0;
-  transform: translateY(10px) scale(0.99);
-}
-      
-.chp-page.is-active {
-  display: block;
-  animation: page-in 0.45s var(--ease-apple) both;
-}
-      
-.chp-page.is-leaving {
-  animation: page-out 0.28s var(--ease-smooth) forwards;
-}
 
-    @keyframes page-in {
-  from {
-    opacity: 0;
-    transform: translateY(14px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes page-out {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-10px) scale(1.01);
-  }
-}
-
-/* ───────────────────────────────────────────────
-   LIGHT-DRIVEN HOVER SYSTEM (NO HARSH SCALE)
-────────────────────────────────────────────── */
-.chp-glass,
-.chp-glass-card,
-.chp-panel,
-.chp-notice {
-  will-change: transform, box-shadow, border-color;
-}
-
-/* soft light response instead of zoom spam */
-.chp-glass:hover {
-  border-color: rgba(201,166,107,0.22);
-}
-
-/* cards respond like light shifting across surface */
-.chp-glass.chp-glass-card:hover {
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.28),
-    0 22px 70px rgba(0,0,0,0.4);
-
-  transform: translateY(-2px);
-}
-
-/* ───────────────────────────────────────────────
-   AMBIENT ORB MOTION (MORE NATURAL FLOAT)
-────────────────────────────────────────────── */
-.chp-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.85;
-  will-change: transform;
-}
-
-.chp-orb-1 {
-  width: 650px;
-  height: 650px;
-  background: radial-gradient(circle, rgba(201,166,107,0.55), transparent 65%);
-  top: -220px;
-  left: -160px;
-  animation: orb-drift-1 26s ease-in-out infinite;
-}
-      .chp-orb-2 {
-  width: 520px;
-  height: 520px;
-  background: radial-gradient(circle, rgba(120,140,255,0.30), transparent 65%);
-  bottom: -180px;
-  right: -140px;
-  animation: orb-drift-2 30s ease-in-out infinite;
-}
-
-@keyframes orb-drift-1 {
-  0%, 100% { transform: translate(0,0) scale(1); }
-  50% { transform: translate(60px,-40px) scale(1.08); }
-}
-
-    @supports not (backdrop-filter: blur(1px)) {
+/* ─── Fallbacks ───────────────────────────────────────────────────────── */
+@supports not (backdrop-filter: blur(1px)) {
   .chp-glass,
   .chp-dock,
-  .chp-header {
-    background: rgba(20,20,25,0.9);
+  .chp-header,
+  .chp-notice {
+    background: rgba(20,20,25,0.92);
     backdrop-filter: none;
   }
 }
-/* ───────────────────────────────────────────────
-   MOBILE OPTIMIZATION LAYER
-────────────────────────────────────────────── */
-@media (max-width: 768px) {
 
+@media (max-width: 768px) {
   .chp-wrap {
     padding: 48px 14px 120px;
   }
@@ -668,124 +567,48 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     min-width: 50px;
   }
 
-  h2 {
-    font-size: 16px;
-  }
-
-  p, li {
-    font-size: 14px;
-  }
+  h2 { font-size: 16px; }
+  p, li { font-size: 14px; }
 }
 
-/* ───────────────────────────────────────────────
-   LOW-END DEVICE PERFORMANCE MODE
-────────────────────────────────────────────── */
 @media (max-resolution: 1dppx) {
-
   .chp-glass,
   .chp-dock,
   .chp-header,
   .chp-notice {
-    backdrop-filter: blur(20px) saturate(120%);
-    -webkit-backdrop-filter: blur(20px) saturate(120%);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
   }
 }
 
-/* ───────────────────────────────────────────────
-   SAFARI / NO BACKDROP SUPPORT FALLBACK
-────────────────────────────────────────────── */
-@supports not (backdrop-filter: blur(1px)) {
-
-  .chp-glass {
-    background: rgba(20, 20, 25, 0.92);
-  }
-
-  .chp-dock {
-    background: rgba(10, 10, 14, 0.95);
-  }
-
-  .chp-header {
-    background: rgba(15, 15, 18, 0.92);
-  }
-}
-
-/* ───────────────────────────────────────────────
-   MICRO NOISE TEXTURE (LIQUID DEPTH REALISM)
-────────────────────────────────────────────── */
-.chp-glass::before {
-  /* adds subtle “liquid grain” layer on top of specular */
-  background-image:
-    radial-gradient(circle at 10% 20%, rgba(255,255,255,0.04), transparent 40%),
-    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.03), transparent 45%),
-    radial-gradient(circle at 40% 90%, rgba(0,0,0,0.03), transparent 50%);
-}
-
-/* ───────────────────────────────────────────────
-   FINAL LIQUID EDGE ENHANCEMENT
-────────────────────────────────────────────── */
-.chp-glass {
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.22),
-    inset 0 -1px 0 rgba(0,0,0,0.12),
-    0 10px 40px rgba(0,0,0,0.25),
-    0 2px 10px rgba(0,0,0,0.12);
-}
-
-/* subtle edge glow when hovered */
-.chp-glass:hover {
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.28),
-    inset 0 -1px 0 rgba(0,0,0,0.10),
-    0 18px 60px rgba(0,0,0,0.35),
-    0 0 0 1px rgba(201,166,107,0.10);
-}
-
-/* ───────────────────────────────────────────────
-   GLOBAL MOTION CONSISTENCY
-────────────────────────────────────────────── */
-* {
+/* ─── Global motion & polish ─────────────────────────────────────────── */
+html {
   scroll-behavior: smooth;
 }
 
-/* reduce layout shift flicker */
 img, video {
   transform: translateZ(0);
 }
 
-/* ───────────────────────────────────────────────
-   FINAL POLISH: LIGHT DEPTH LAYERING
-────────────────────────────────────────────── */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-
   background:
-    radial-gradient(circle at 50% 0%,
-      rgba(255,255,255,0.03),
-      transparent 60%),
-    radial-gradient(circle at 10% 100%,
-      rgba(201,166,107,0.04),
-      transparent 55%),
-    radial-gradient(circle at 90% 50%,
-      rgba(120,140,255,0.03),
-      transparent 60%);
-
+    radial-gradient(circle at 50% 0%, rgba(255,255,255,0.03), transparent 60%),
+    radial-gradient(circle at 10% 100%, rgba(201,166,107,0.04), transparent 55%),
+    radial-gradient(circle at 90% 50%, rgba(120,140,255,0.03), transparent 60%);
   mix-blend-mode: screen;
   opacity: 0.7;
 }
 
-/* ───────────────────────────────────────────────
-   FINAL SAFETY NET (NO OVERFLOW, NO GLITCH)
-────────────────────────────────────────────── */
 html, body {
   max-width: 100vw;
   overflow-x: hidden;
 }
 
-/* ensure glass always stacks correctly */
 .chp-glass,
 .chp-glass-card,
 .chp-header,
