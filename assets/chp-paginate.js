@@ -4,6 +4,25 @@
  * animates transitions with spring-eased fade+slide, and shows a floating
  * glass dock. Shared by ToS, Privacy Policy, and Changelog.
  */
+
+// Drives the --mx/--my specular highlight on .chp-glass surfaces so the
+// reflection tracks the pointer, like light moving across real glass.
+function initChpGlassHighlight() {
+  let raf = null;
+  document.addEventListener("pointermove", (e) => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = null;
+      const target = e.target.closest(".chp-glass, .latest-hero");
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      target.style.setProperty("--mx", `${((e.clientX - rect.left) / rect.width) * 100}%`);
+      target.style.setProperty("--my", `${((e.clientY - rect.top) / rect.height) * 100}%`);
+    });
+  });
+}
+initChpGlassHighlight();
+
 function initChpPaginator({ containerSelector, breakSelector, introLabel = "Overview" }) {
   const container = document.querySelector(containerSelector);
   if (!container) return;

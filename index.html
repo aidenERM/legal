@@ -27,35 +27,39 @@
     max-width: calc(100vw - 48px);
     padding: 44px 40px 40px;
     border-radius: 32px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.11);
-    backdrop-filter: blur(56px) saturate(190%);
-    -webkit-backdrop-filter: blur(56px) saturate(190%);
+    --mx: 50%;
+    --my: 0%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.16);
+    backdrop-filter: blur(10px) saturate(160%);
+    -webkit-backdrop-filter: blur(10px) saturate(160%);
     box-shadow:
-      inset 0 1.5px 0 rgba(255,255,255,0.18),
+      inset 0 1.5px 0 rgba(255,255,255,0.24),
       inset 0 -1px 0 rgba(0,0,0,0.3),
       0 32px 80px rgba(0,0,0,0.70),
       0 6px 20px rgba(0,0,0,0.45),
       0 0 0 1px rgba(255,255,255,0.05);
-    animation: hub-appear 0.9s cubic-bezier(0.22,1,0.36,1) both;
+    animation: hub-appear 0.9s var(--ease-smooth) both;
+    transition: border-color 0.3s var(--ease-smooth), box-shadow 0.3s var(--ease-smooth);
     transform-style: preserve-3d;
     will-change: transform;
     text-align: center;
   }
 
-  /* Top specular highlight */
+  /* Specular highlight, tracks the pointer */
   .hub::before {
     content: "";
     position: absolute;
     inset: 0;
     border-radius: inherit;
     background:
-      linear-gradient(140deg,
-        rgba(255,255,255,0.14) 0%,
-        rgba(255,255,255,0.04) 30%,
+      radial-gradient(circle at var(--mx) var(--my),
+        rgba(255,255,255,0.22) 0%,
+        rgba(255,255,255,0.06) 30%,
         transparent 60%);
     pointer-events: none;
     z-index: 0;
+    transition: background 0.2s var(--ease-smooth);
   }
 
   /* Gold top edge */
@@ -87,8 +91,8 @@
     height: 88px;
     object-fit: contain;
     filter: drop-shadow(0 0 20px rgba(201,166,107,0.50));
-    transition: filter 0.4s, transform 0.5s cubic-bezier(0.34,1.56,0.64,1);
-    animation: badge-drop 1.0s cubic-bezier(0.34,1.56,0.64,1) 0.15s both;
+    transition: filter 0.4s var(--ease-smooth), transform 0.5s var(--ease-spring);
+    animation: badge-drop 1.0s var(--ease-spring) 0.15s both;
     cursor: default;
   }
   .hub-badge:hover {
@@ -107,7 +111,7 @@
     margin: 18px auto 6px;
     opacity: 0.80;
     filter: invert(1) brightness(0.75) sepia(1) saturate(2) hue-rotate(0deg);
-    animation: fade-up 0.7s cubic-bezier(0.22,1,0.36,1) 0.25s both;
+    animation: fade-up 0.7s var(--ease-smooth) 0.25s both;
   }
 
   .hub-title {
@@ -117,14 +121,14 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
     margin-bottom: 6px;
-    animation: fade-up 0.7s cubic-bezier(0.22,1,0.36,1) 0.3s both;
+    animation: fade-up 0.7s var(--ease-smooth) 0.3s both;
   }
 
   .hub-desc {
     font-size: 13px;
     color: rgba(255,255,255,0.40);
     margin-bottom: 32px;
-    animation: fade-up 0.7s cubic-bezier(0.22,1,0.36,1) 0.35s both;
+    animation: fade-up 0.7s var(--ease-smooth) 0.35s both;
   }
 
   /* ── Nav links ── */
@@ -132,7 +136,7 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    animation: fade-up 0.7s cubic-bezier(0.22,1,0.36,1) 0.4s both;
+    animation: fade-up 0.7s var(--ease-smooth) 0.4s both;
   }
 
   .hub-link {
@@ -146,10 +150,10 @@
     text-decoration: none;
     color: var(--chp-text);
     transition:
-      background 0.25s cubic-bezier(0.22,1,0.36,1),
-      border-color 0.25s,
-      transform 0.35s cubic-bezier(0.34,1.56,0.64,1),
-      box-shadow 0.25s;
+      background 0.25s var(--ease-smooth),
+      border-color 0.25s var(--ease-smooth),
+      transform 0.35s var(--ease-spring),
+      box-shadow 0.25s var(--ease-smooth);
     position: relative;
     overflow: hidden;
     text-align: left;
@@ -161,7 +165,7 @@
     inset: 0;
     background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%);
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: opacity 0.3s var(--ease-smooth);
   }
 
   .hub-link:hover {
@@ -181,7 +185,7 @@
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     font-size: 17px;
-    transition: background 0.25s, transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    transition: background 0.25s var(--ease-smooth), transform 0.35s var(--ease-spring);
   }
   .hub-link:hover .hub-link-icon {
     background: rgba(201,166,107,0.20);
@@ -204,7 +208,7 @@
   .hub-link-arrow {
     font-size: 16px;
     color: rgba(201,166,107,0.45);
-    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), color 0.2s;
+    transition: transform 0.3s var(--ease-spring), color 0.2s var(--ease-smooth);
   }
   .hub-link:hover .hub-link-arrow {
     transform: translateX(4px);
@@ -216,7 +220,7 @@
     margin-top: 28px;
     font-size: 11.5px;
     color: rgba(255,255,255,0.20);
-    animation: fade-up 0.6s cubic-bezier(0.22,1,0.36,1) 0.55s both;
+    animation: fade-up 0.6s var(--ease-smooth) 0.55s both;
   }
 
   /* ── Orbs (reuse scene tokens from theme) ── */
@@ -237,8 +241,8 @@
 </div>
 
 <main class="hub" id="hub" role="main">
-  <img class="hub-badge" src="assets/images/chp-badge.png" alt="California Highway Patrol badge" draggable="false">
-  <img class="hub-wordmark" src="assets/images/chp-wordmark.png" alt="CHP wordmark">
+  <img class="hub-badge" src="assets/images/chp-badge.png" width="88" height="88" alt="California Highway Patrol badge" draggable="false">
+  <img class="hub-wordmark" src="assets/images/chp-wordmark.png" width="140" height="44" alt="CHP wordmark">
   <p class="hub-title">Management Bot</p>
   <p class="hub-desc">Discord bot for CHP roleplay community administration</p>
 
@@ -308,6 +312,18 @@
       raf = requestAnimationFrame(tick);
     }
   }
+
+  // Pointer-driven specular highlight, mirrors the .chp-glass effect
+  let highlightRaf = null;
+  hub.addEventListener("pointermove", (e) => {
+    if (highlightRaf) return;
+    highlightRaf = requestAnimationFrame(() => {
+      highlightRaf = null;
+      const rect = hub.getBoundingClientRect();
+      hub.style.setProperty("--mx", `${((e.clientX - rect.left) / rect.width) * 100}%`);
+      hub.style.setProperty("--my", `${((e.clientY - rect.top) / rect.height) * 100}%`);
+    });
+  });
 </script>
 </body>
 </html>
