@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Update Log — CHP Management</title>
-<link rel="icon" href="assets/images/chp-badge.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="assets/chp-theme.css">
+<link rel="icon" href="assets/images/chp-badge.png">
 <style>
-  /* Latest entry: full-width hero, no pagination wrapper */
+  /* Latest entry: full-width hero */
   .latest-hero {
     position: relative;
     --mx: 50%;
@@ -28,11 +28,10 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background:
-      radial-gradient(circle at var(--mx) var(--my),
-        rgba(255,255,255,0.26) 0%,
-        rgba(255,255,255,0.06) 30%,
-        transparent 60%);
+    background: radial-gradient(circle at var(--mx) var(--my),
+      rgba(255,255,255,0.26) 0%,
+      rgba(255,255,255,0.06) 30%,
+      transparent 60%);
     pointer-events: none;
     z-index: 0;
     transition: background 0.2s var(--ease-smooth);
@@ -60,7 +59,6 @@
     margin-bottom: 14px;
     flex-wrap: wrap;
   }
-
   .latest-label {
     font-size: 10px;
     font-weight: 700;
@@ -72,7 +70,6 @@
     padding: 3px 10px;
     border-radius: 999px;
   }
-
   .latest-hero h2 {
     font-size: 22px;
     font-weight: 700;
@@ -83,27 +80,47 @@
     margin: 0 0 6px;
     line-height: 1.3;
   }
+  .latest-hero .chp-subtitle { margin-bottom: 20px; }
 
-  .latest-hero .chp-subtitle {
-    margin-bottom: 20px;
+  /* Section labels inside latest-hero */
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: rgba(255,255,255,0.25);
+    margin: 30px 0 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(201,166,107,0.08);
+  }
+  .section-label::before {
+    content: "";
+    display: inline-block;
+    width: 3px;
+    height: 13px;
+    background: var(--chp-gold);
+    border-radius: 2px;
+    opacity: 0.7;
   }
 
-  /* Feature list grid */
+  /* Feature grid */
   .feature-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
-    margin-top: 18px;
+    margin-top: 10px;
   }
   @media (max-width: 600px) {
     .feature-grid { grid-template-columns: 1fr; }
   }
-
   .feature-item {
     display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    padding: 10px 12px;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
     border-radius: 12px;
     background: rgba(255,255,255,0.020);
     border: 1px solid rgba(255,255,255,0.035);
@@ -112,33 +129,76 @@
     line-height: 1.55;
     transition: background 0.2s var(--ease-smooth);
   }
-  .feature-item:hover {
-    background: rgba(255,255,255,0.040);
+  .feature-item:hover { background: rgba(255,255,255,0.040); }
+  .feature-item.highlight {
+    background: rgba(201,166,107,0.06);
+    border-color: rgba(201,166,107,0.18);
   }
-  .feature-item code {
-    font-size: 11.5px;
-    white-space: nowrap;
+  .feature-item strong {
+    color: #fff;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
   }
 
-  /* Older entries section */
+  /* Tag pills */
+  .tag-pill {
+    display: inline-block;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 1px 7px;
+    border-radius: 20px;
+  }
+  .tag-pill.new    { background: rgba(201,166,107,0.18); color: var(--chp-gold-bright); }
+  .tag-pill.auto   { background: rgba(59,130,246,0.18);  color: #93c5fd; }
+  .tag-pill.ai     { background: rgba(168,85,247,0.18);  color: #d8b4fe; }
+  .tag-pill.fix    { background: rgba(34,197,94,0.15);   color: #86efac; }
+  .tag-pill.ux     { background: rgba(236,72,153,0.15);  color: #f9a8d4; }
+
+  /* Summary banner */
+  .summary-banner {
+    background: linear-gradient(135deg, rgba(201,166,107,0.08) 0%, rgba(201,166,107,0.03) 100%);
+    border: 1px solid rgba(201,166,107,0.18);
+    border-radius: 14px;
+    padding: 15px 18px;
+    margin: 0 0 8px;
+    font-size: 14.5px;
+    color: var(--chp-text);
+    line-height: 1.65;
+  }
+
+  /* Stat chips */
+  .stat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 14px 0 4px;
+  }
+  .stat-chip {
+    background: rgba(0,0,0,0.28);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 12.5px;
+    color: var(--chp-text-muted);
+  }
+  .stat-chip strong { color: var(--chp-gold-bright); }
+
+  /* Older updates section */
   .older-header {
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.09em;
     text-transform: uppercase;
+    letter-spacing: 0.10em;
     color: rgba(255,255,255,0.25);
     margin: 36px 0 12px;
     padding-bottom: 10px;
     border-bottom: 1px solid rgba(201,166,107,0.08);
     animation: fade-up 0.6s var(--ease-smooth) 0.3s both;
-  }
-
-  .older-empty {
-    color: rgba(255,255,255,0.20);
-    font-size: 13.5px;
-    padding: 20px 0;
-    text-align: center;
-    animation: fade-up 0.5s var(--ease-smooth) 0.35s both;
   }
 </style>
 </head>
@@ -150,11 +210,9 @@
   <div class="chp-orb chp-orb-3"></div>
   <div class="chp-orb chp-orb-4"></div>
   <div class="chp-beam"></div>
-  <div class="chp-beam chp-beam-2"></div>
 </div>
 
 <div class="chp-wrap">
-
   <div class="chp-header">
     <a href="index.html" style="display:contents;">
       <img class="chp-badge" src="assets/images/chp-badge.png" width="68" height="68" alt="CHP Badge" title="Back to home">
@@ -165,47 +223,290 @@
     </div>
   </div>
 
-  <!-- ── Newest entry — always visible on load ── -->
+  <!-- ═══════════════════ UPDATE #2 ═══════════════════ -->
   <div class="latest-hero">
     <div class="latest-meta">
-      <span class="chp-badge-tag feature">New Feature</span>
-      <span class="latest-label">Update #1 &middot; 2026-06-26</span>
-      <span class="latest-label">Latest</span>
+      <span class="latest-label">Latest — Update #2</span>
+      <span class="chp-subtitle" style="font-size:12px;">2026-07-02</span>
     </div>
-    <h2>CHP Management Launch — Recruitment, Applications, /ask &amp; a Big QOL Pass</h2>
-    <div class="chp-subtitle">The first full release: automatic recruitment setup, a complete in-house application system with AI-assisted review, an AI assistant that knows CHP policy, a personal /settings command, Deputy-only tools, and a long QOL pass across shifts and applications.</div>
-    <div class="chp-subtitle"><a href="welcome.html">→ Read the full Welcome Guide</a> for a complete tour of every feature, what's new compared to base ERM, and what each rank can do.</div>
+    <h2>Subdivisions, RA Overhaul, Live Leaderboard, AI Tools &amp; Big UX Pass</h2>
 
-    <div class="feature-grid">
-      <div class="feature-item">Automatic Setup resolves Hicom, Officer, Probationary Officer, Denied &amp; Blacklisted roles, plus required channels — creating anything that's missing.</div>
-      <div class="feature-item">Passing an RA session now grants the Officer role and swaps PO→O in the trainee's nickname.</div>
-      <div class="feature-item"><code>/config</code> reorganized into focused pages (Roles, Channels &amp; Quotas, RA Training, Recruitment) with plain-language explanations.</div>
-      <div class="feature-item">New application system: DM-based pre-screening (privacy policy, background check, required reading, AI warning) + 23 questions, with auto-save on timeout.</div>
-      <div class="feature-item">Staff can Claim, Accept, or Decline applications, run an AI Detector &amp; Summary, check history, flag for priority, leave notes, and view a reapplication diff — all from the embed.</div>
-      <div class="feature-item"><code>/ask</code> — ask the bot anything about CHP (ranks, codes, policy, vehicles) using the official CHP knowledge base. Rate-limited to 1 req/30s bot-wide.</div>
-      <div class="feature-item"><code>/profile</code> — weekly hours vs quota, shift streak, RA pass rate, earned badges, promotion progress bar.</div>
-      <div class="feature-item"><code>/dashboard</code> — management overview combining shift, RA, and recruitment activity in one place.</div>
-      <div class="feature-item">Accepted applicants receive a step-by-step welcome guide instead of a plain acceptance message.</div>
-      <div class="feature-item">Automatic weekly report card DMs, quota reminders for anyone falling behind, and a weekly recruitment report.</div>
-      <div class="feature-item"><code>/settings</code> — personal settings: private profile, timezone, mobile-friendly embeds, opt-outs for inactivity nudges and the weekly report card.</div>
-      <div class="feature-item"><code>/myactions</code> — Deputy-only scoped view of your own recent application reviews and RA results, without full audit access.</div>
-      <div class="feature-item"><code>/info</code> — dropdown reference for 10 codes, penal/vehicle codes, loadout, vehicle regulations, and FAQ.</div>
-      <div class="feature-item"><code>/practice</code> — 5-question quiz pulled from codes and policy. Test yourself anytime.</div>
-      <div class="feature-item"><code>/lookup</code> — quickly check anyone's rank, badge number, on-duty status, and join date.</div>
-      <div class="feature-item">Gentler daily check-in DM for anyone inactive a few days, skips people busy training recruits.</div>
-      <div class="feature-item">Shift fixes: "already on duty" message, 16h+ crash auto-close, optional end-of-shift note, paginated shift history in <code>/duty time</code>.</div>
-      <div class="feature-item">Application fixes: review-and-confirm before submission, low-time warning mid-question, Apply Again if you accidentally decline the Privacy Policy step.</div>
+    <div class="summary-banner">
+      The second major release: full subdivision integration so officers only clock in once,
+      a completely rebuilt RA training system, a live auto-refreshing leaderboard, new AI tools
+      for management, ERLC presence detection, and dozens of quality-of-life improvements
+      across shifts, settings, and the bot's reliability.
     </div>
+
+    <div class="stat-row">
+      <div class="stat-chip"><strong>6</strong> major systems</div>
+      <div class="stat-chip"><strong>30+</strong> new features</div>
+      <div class="stat-chip"><strong>10+</strong> automation tasks</div>
+      <div class="stat-chip"><strong>100%</strong> custom emojis</div>
+    </div>
+
+    <!-- Subdivisions -->
+    <div class="section-label">Subdivision Integration</div>
+    <div class="feature-grid">
+      <div class="feature-item highlight">
+        <strong>One Clock-In, Two Guilds <span class="tag-pill new">New</span></strong>
+        Starting a shift in a subdivision server (e.g. SEU) automatically mirrors it to CHP as a linked shift. Officers never need to run two commands.
+      </div>
+      <div class="feature-item">
+        <strong>Mirror Confirmation</strong>
+        The shift embed shows a confirmation line when the CHP mirror succeeds, or a warning if the officer hasn't joined the CHP server yet.
+      </div>
+      <div class="feature-item">
+        <strong>Auto Linked Role <span class="tag-pill auto">Auto</span></strong>
+        The CHP linked role is assigned the moment a member gets their division role — or on their first shift. An hourly sweep catches anyone who slipped through.
+      </div>
+      <div class="feature-item">
+        <strong>Subdivision Roster</strong>
+        <code>&gt;subdivision roster</code> — live on-duty list with callsign sorting. "Show Full Roster" expands to all division-role holders.
+      </div>
+      <div class="feature-item">
+        <strong>Stats &amp; Leaderboard</strong>
+        <code>&gt;subdivision stats</code>, <code>&gt;subdivision lb</code>, and <code>&gt;subdivision compare</code> give management a full picture of cross-subdivision activity.
+      </div>
+      <div class="feature-item">
+        <strong>Audit &amp; Broadcast</strong>
+        <code>&gt;subdivision audit</code> flags role mismatches. <code>&gt;subdivision announce</code> broadcasts a message to every linked subdivision at once.
+      </div>
+      <div class="feature-item">
+        <strong>Inactivity Alerts <span class="tag-pill auto">Auto</span></strong>
+        A channel alert fires when a subdivision member goes 7 days without a shift.
+      </div>
+      <div class="feature-item">
+        <strong>Mid-Week Quota DMs <span class="tag-pill auto">Auto</span></strong>
+        Every Wednesday, members under 50% of their subdivision quota receive a DM with exactly how much time they need.
+      </div>
+    </div>
+
+    <!-- RA System -->
+    <div class="section-label">RA Training System</div>
+    <div class="feature-grid">
+      <div class="feature-item highlight">
+        <strong>RA Request <span class="tag-pill new">New</span></strong>
+        <code>/ra request</code> — Probationary Officers post a session request with optional availability. Available FTOs are pinged and can claim it with one click.
+      </div>
+      <div class="feature-item highlight">
+        <strong>RA Host — Individual &amp; Bulk <span class="tag-pill new">New</span></strong>
+        Individual mode: one trainee joins and the session auto-closes. Bulk mode: multiple trainees can join within a 10-minute window.
+      </div>
+      <div class="feature-item">
+        <strong>Results &amp; Auto-Promote</strong>
+        <code>/ra results</code> submits Pass or Fail. A Pass auto-grants Officer role, removes Probationary Officer, assigns the CHP role, and updates the rank tag in the trainee's nickname.
+      </div>
+      <div class="feature-item">
+        <strong>Anonymous FTO Feedback</strong>
+        <code>/ra feedback</code> — trainees rate their FTO 1–5 on communication, patience, and clarity. Scores are anonymous and visible on <code>/ra leaderboard</code>.
+      </div>
+      <div class="feature-item">
+        <strong>FTO Leaderboard</strong>
+        <code>/ra leaderboard</code> — sessions hosted, pass rate %, and average feedback score, ranked by period.
+      </div>
+      <div class="feature-item">
+        <strong>Fail Limit Tracking</strong>
+        When a trainee hits the configured fail limit, an alert is automatically posted to the review channel for management.
+      </div>
+      <div class="feature-item">
+        <strong>Cooldown Enforcement</strong>
+        6-hour claim cooldown between sessions. Server-wide request cooldown prevents spam. Both are management-clearable.
+      </div>
+      <div class="feature-item">
+        <strong>Session History</strong>
+        <code>/ra history</code> — full paginated log of completed sessions per FTO with results and performance notes.
+      </div>
+    </div>
+
+    <!-- Live Leaderboard -->
+    <div class="section-label">Live Leaderboard</div>
+    <div class="feature-grid">
+      <div class="feature-item highlight">
+        <strong>Auto-Refreshing Pinned LB <span class="tag-pill new">New</span></strong>
+        <code>&gt;duty livelb</code> posts and pins a leaderboard message that updates itself every 30 seconds — no one needs to run a command.
+      </div>
+      <div class="feature-item">
+        <strong>Browse View</strong>
+        A Browse button opens an ephemeral paginated leaderboard with a subdivision filter, showing on-duty indicators and quota badges.
+      </div>
+      <div class="feature-item">
+        <strong>Subdivision Grouping in Active <span class="tag-pill ux">UX</span></strong>
+        <code>&gt;duty active</code> has a new "Grouped by unit" sort mode — officers split into CHP, SEU, and other sections instead of one flat mixed list.
+      </div>
+      <div class="feature-item">
+        <strong>Category Filtering</strong>
+        <code>&gt;duty active</code> now supports Whole Department, CHP Only, or per-subdivision views selectable from a dropdown.
+      </div>
+    </div>
+
+    <!-- AI Tools -->
+    <div class="section-label">AI Tools</div>
+    <div class="feature-grid">
+      <div class="feature-item highlight">
+        <strong>/ask — Image Vision <span class="tag-pill ai">AI</span></strong>
+        Attach a screenshot or photo to <code>/ask</code> and the AI can analyze it — useful for uniform checks, rank insignia, and in-game situations.
+      </div>
+      <div class="feature-item">
+        <strong>Community Knowledge Index <span class="tag-pill auto">Auto</span></strong>
+        The bot automatically indexes your server's channels every 30 minutes and feeds that knowledge into <code>/ask</code> responses.
+      </div>
+      <div class="feature-item">
+        <strong>Infraction Memory <span class="tag-pill ai">AI</span></strong>
+        <code>/ask</code> is aware of past infraction records and factors them into relevant answers.
+      </div>
+      <div class="feature-item">
+        <strong>/ai detect <span class="tag-pill ai">AI</span></strong>
+        Analyzes text for AI-generated content and returns a 0–100 confidence score with reasoning.
+      </div>
+      <div class="feature-item">
+        <strong>/ai summarize <span class="tag-pill ai">AI</span></strong>
+        Condenses long write-ups or reports to their key points in seconds.
+      </div>
+      <div class="feature-item">
+        <strong>/ai rewrite &amp; /ai tone <span class="tag-pill ai">AI</span></strong>
+        Rewrite polishes text to be professional. Tone flags conduct concerns and unprofessional language.
+      </div>
+    </div>
+
+    <!-- Shift UX -->
+    <div class="section-label">Shift UX Improvements</div>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <strong>Welcome-Back Line <span class="tag-pill ux">UX</span></strong>
+        Every shift start embed now shows: "Last shift: 2d ago · This week: 3h 22m logged."
+      </div>
+      <div class="feature-item">
+        <strong>Loading Progress Embeds <span class="tag-pill ux">UX</span></strong>
+        Slow commands show live step-by-step progress instead of a silent spinner — <code>/ask</code>, <code>&gt;duty recap</code>, <code>&gt;duty leaderboard</code>, all <code>/ai</code> tools, <code>&gt;app stats</code>.
+      </div>
+      <div class="feature-item">
+        <strong>Rotating Bot Status <span class="tag-pill auto">Auto</span></strong>
+        The bot's presence cycles every 30s: officers on duty → shifts today → officers on LOA — always live counts.
+      </div>
+      <div class="feature-item">
+        <strong>Shift Streak Counter</strong>
+        The shift-end DM now tracks consecutive weeks with quota met and celebrates streaks of 2+.
+      </div>
+    </div>
+
+    <!-- User Settings -->
+    <div class="section-label">User Settings</div>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <strong>Accent Color</strong>
+        Pick from 9 color choices that apply to your personal embeds and report cards.
+      </div>
+      <div class="feature-item">
+        <strong>Mobile-Friendly Embeds</strong>
+        Toggle a compact layout optimized for phone screens.
+      </div>
+      <div class="feature-item">
+        <strong>Weekly Digest Customization</strong>
+        Set your own day and hour for the weekly report card DM instead of the server default.
+      </div>
+      <div class="feature-item">
+        <strong>Shift Duration Reminder</strong>
+        Opt into DMs every N minutes while on shift — never forget you're clocked in.
+      </div>
+      <div class="feature-item">
+        <strong>Deputy Tools</strong>
+        Default shift type (skips the picker), quota reminder scheduling, confirm-before-ending-long-shifts, auto-end shift threshold, and auto-toggle RA availability on duty.
+      </div>
+      <div class="feature-item">
+        <strong>FTO Tools</strong>
+        Default max-trainee cap (skips the prompt when hosting bulk sessions) and DM alerts when your trainees receive a Pass/Fail verdict.
+      </div>
+    </div>
+
+    <!-- Automation -->
+    <div class="section-label">Background Automation</div>
+    <div class="feature-grid">
+      <div class="feature-item highlight">
+        <strong>ERLC Presence Detection <span class="tag-pill auto">Auto</span></strong>
+        The bot monitors when you join or leave ER:LC. Prompts a shift start on join, opens a break after 5 min away, and auto-ends the shift after 60 min away.
+      </div>
+      <div class="feature-item">
+        <strong>Stale Shift Auto-Close <span class="tag-pill auto">Auto</span></strong>
+        Shifts left open for 16+ hours are automatically closed to prevent ghost entries corrupting the leaderboard.
+      </div>
+      <div class="feature-item">
+        <strong>Service Stripe Badges <span class="tag-pill auto">Auto</span></strong>
+        Milestones at 10, 25, 50, and 100 total shifts are tracked and celebrated in your shift-end DM.
+      </div>
+      <div class="feature-item">
+        <strong>Smart Inactivity Nudge <span class="tag-pill auto">Auto</span></strong>
+        A friendly daily nudge after 4 days of inactivity — smart enough to skip members who've been hosting RA sessions instead of logging shifts.
+      </div>
+      <div class="feature-item">
+        <strong>Quota Reminder DMs <span class="tag-pill auto">Auto</span></strong>
+        Automated DMs on Friday (customizable) to anyone under their weekly quota, with exactly how much time they still need.
+      </div>
+      <div class="feature-item">
+        <strong>LOA Auto-Expiry <span class="tag-pill auto">Auto</span></strong>
+        LOA roles are removed automatically when the period expires, with a DM sent to the member. LOA members are excluded from quota enforcement while away.
+      </div>
+    </div>
+
+    <!-- Audit & Privacy -->
+    <div class="section-label">#bot-logs Audit Channel &amp; Privacy</div>
+    <div class="feature-grid">
+      <div class="feature-item highlight">
+        <strong>#bot-logs Channel <span class="tag-pill new">New</span></strong>
+        A dedicated channel now receives a structured log entry for every significant bot action: commands used, shift events, LOA decisions, RA results, infraction records, role syncs, and errors.
+      </div>
+      <div class="feature-item">
+        <strong>Command Usage Log</strong>
+        Every prefix and slash command invocation is logged with the user, channel, and arguments for full audit trails.
+      </div>
+      <div class="feature-item">
+        <strong>Profile Visibility</strong>
+        Officers can set their profile to Everyone, Staff only, or Command Team only via <code>/settings</code>.
+      </div>
+      <div class="feature-item">
+        <strong>Override Audit Logging</strong>
+        When management uses an admin override to view a locked profile, the access is automatically logged to the server's audit channel.
+      </div>
+    </div>
+
+    <!-- Reliability -->
+    <div class="section-label">Reliability &amp; Polish <span class="tag-pill fix" style="margin-left:4px;">Fixes</span></div>
+    <ul style="margin-top:8px;">
+      <li>Single-instance enforcement — only one bot process can ever run at a time, even after a restart.</li>
+      <li>Slash commands no longer throw "already responded" errors on any command across the bot.</li>
+      <li>MongoDB connectivity issues no longer crash the prefix message handler.</li>
+      <li>Every embed, button, and message across the entire bot now uses your custom emojis — nothing hardcoded.</li>
+      <li>All hybrid commands work correctly as both prefix and slash commands with no errors.</li>
+    </ul>
   </div>
 
-  <!-- ── Older entries (paginated) ── -->
-  <div class="older-header">Past updates</div>
+  <!-- ═══════════════════ OLD UPDATES ═══════════════════ -->
+  <div class="older-header">Previous Releases</div>
 
-  <div id="older-wrap">
-    <div class="older-empty">No previous updates yet — check back after the next release.</div>
+  <div class="chp-panel">
+    <h2>CHP Management Launch — Recruitment, Applications, /ask &amp; a Big QOL Pass</h2>
+    <div class="chp-subtitle" style="margin-bottom:12px;">Update #1 &middot; 2026-06-26</div>
+    <p>The first full release: automatic recruitment setup, a complete in-house application system with AI-assisted review, an AI assistant that knows CHP policy, a personal /settings command, an extra layer of tools for Deputies, and a long list of quality-of-life improvements across shifts and applications.</p>
+    <p><a href="welcome.html">&#8594; Read the full Welcome Guide</a> for a complete tour of every feature.</p>
+    <ul>
+      <li>Automatic Setup resolves the Hicom, Officer, Probationary Officer, Denied, and Blacklisted roles, plus the applications-log, apply, hicom-announcements, and recruitment-report channels — creating anything that's missing.</li>
+      <li>New application system: a DM-based pre-screening flow followed by 23 application questions, with progress automatically saved if you time out mid-application.</li>
+      <li>Staff can Claim, Accept, or Decline applications, run an AI Detector and Summary, check applicant history, flag for priority review, leave notes, and view a reapplication diff — all from one embed.</li>
+      <li>/ask — ask the bot anything about CHP (ranks, codes, policy, vehicles) and it answers using the official CHP knowledge base.</li>
+      <li>/profile — shows your weekly hours vs quota, shift streak, RA pass rate, and earned badges.</li>
+      <li>/dashboard — a management overview combining shift, RA, and recruitment activity in one place.</li>
+      <li>/settings — profile visibility, timezone, mobile-friendly embeds, and notification opt-outs. Deputies get a full extra tier of personal controls.</li>
+      <li>/myactions — a Deputy-only view of your own recent application reviews and RA results.</li>
+      <li>/info — dropdown reference for 10 codes, penal/vehicle codes, loadout, vehicle regulations, and FAQ.</li>
+      <li>/practice — a 5-question quiz pulled from codes and policy to test yourself anytime.</li>
+      <li>/lookup — quickly check anyone's rank, badge number, on-duty status, and join date.</li>
+      <li>Automatic weekly report card DMs, quota reminders, and a weekly recruitment report.</li>
+      <li>Passing an RA session now also grants the Officer role and swaps PO → O in the trainee's nickname.</li>
+      <li>/config reorganized into focused pages (Roles, Channels &amp; Quotas, RA Training, Recruitment) with plain-language explanations.</li>
+    </ul>
   </div>
 
 </div>
-
+<script src="assets/chp-paginate.js"></script>
 </body>
 </html>
