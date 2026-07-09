@@ -198,6 +198,18 @@
     z-index: 2;
   }
 
+  .login-status {
+    margin: 0 0 14px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(220,90,90,0.10);
+    border: 1px solid rgba(220,90,90,0.25);
+    color: rgba(255,180,180,0.9);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: center;
+  }
+
   .login-card-title {
     font-family: "Manrope", sans-serif;
     font-size: clamp(24px, 3vw, 28px);
@@ -503,6 +515,8 @@
   <div class="login-card" id="loginCard">
     <div class="login-card-edge" aria-hidden="true"></div>
 
+    <p class="login-status" id="loginStatus" hidden></p>
+
     <div class="field-row">
       <div class="field-row-text">
         <span class="field-row-label">Server</span>
@@ -580,13 +594,43 @@
 
   loginBtn.href = authorizeUrl;
 
-  // If Discord just redirected back here with ?code=, show a processing
-  // state. The actual code -> session exchange happens once the Cloudflare
-  // Worker backend exists; for now this is a visual placeholder.
+  // If Discord just redirected back here with ?code=, exchange it with the
+  // Worker for a real session, then head into the dashboard.
+  const WORKER_URL = "https://chp-dashboard-api.aidenspearb.workers.dev";
   const params = new URLSearchParams(window.location.search);
+
   if (params.has("code")) {
     loginBtn.classList.add("hidden");
     loginProcessing.classList.add("active");
+
+    fetch(`${WORKER_URL}/auth/callback`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ code: params.get("code") }),
+    })
+      .then(async (response) => {
+        const body = await response.json();
+        if (body.ok) {
+          window.location.href = "app.html";
+        } else if (response.status === 403) {
+          window.location.href = "index.html?denied=1";
+        } else {
+          window.location.href = "index.html?error=1";
+        }
+      })
+      .catch(() => {
+        window.location.href = "index.html?error=1";
+      });
+  }
+
+  const loginStatus = document.getElementById("loginStatus");
+  if (params.has("denied")) {
+    loginStatus.textContent = "You don't have staff access on the CHP server.";
+    loginStatus.hidden = false;
+  } else if (params.has("error")) {
+    loginStatus.textContent = "Something went wrong signing you in — please try again.";
+    loginStatus.hidden = false;
   }
 
   // Smooth 3-D parallax tilt + specular highlight on the login card
