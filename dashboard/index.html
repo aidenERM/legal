@@ -44,74 +44,78 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* ── Brand block ── */
-  .brand {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: clamp(10px, 1.6vh, 16px);
+  /* ── Giant background insignia — sits behind the hero + card ── */
+  .badge-backdrop {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: clamp(340px, 48vh, 620px);
+    height: clamp(340px, 48vh, 620px);
+    transform: translate(-50%, -46%);
+    z-index: 1;
+    object-fit: contain;
+    opacity: 0.16;
+    filter: drop-shadow(0 0 60px rgba(201,166,107,0.35));
+    pointer-events: none;
+    animation: badge-backdrop-in 1.4s var(--ease-smooth) both;
+  }
+
+  @keyframes badge-backdrop-in {
+    from { opacity: 0; transform: translate(-50%, -46%) scale(0.9); }
+    to   { opacity: 0.16; transform: translate(-50%, -46%) scale(1); }
+  }
+
+  /* ── Hero — "CHP" is the headline ── */
+  .hero {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    margin-bottom: clamp(14px, 2.4vh, 24px);
     animation: fade-up 0.8s var(--ease-smooth) both;
   }
 
-  .brand-badge {
-    width: clamp(34px, 4vh, 44px);
-    height: clamp(34px, 4vh, 44px);
-    object-fit: contain;
-    filter: drop-shadow(0 0 16px rgba(201,166,107,0.50));
-    transition: filter 0.4s var(--ease-smooth), transform 0.5s var(--ease-spring);
-    animation: badge-drop 1.0s var(--ease-spring) 0.1s both;
-  }
-  .brand-badge:hover {
-    filter: drop-shadow(0 0 26px rgba(201,166,107,0.80));
-    transform: scale(1.06) rotate(-3deg);
-  }
-
-  @keyframes badge-drop {
-    from { opacity: 0; transform: scale(0.6) translateY(-10px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); }
-  }
-
-  .brand-wordmark {
-    width: clamp(70px, 8vh, 96px);
-    opacity: 0.82;
-    filter: invert(1) brightness(0.75) sepia(1) saturate(2) hue-rotate(0deg);
-  }
-
-  .brand-tag {
-    text-align: center;
+  .hero-title {
+    margin: 0;
     font-family: "Manrope", sans-serif;
-    font-weight: 700;
-    font-size: clamp(19px, 2.6vh, 26px);
-    letter-spacing: -0.01em;
-    line-height: 1.15;
-    color: #fff;
-  }
-
-  .brand-sub {
-    margin-top: 6px;
-    max-width: 340px;
-    text-align: center;
-    font-size: 12.5px;
-    line-height: 1.45;
-    color: rgba(255,255,255,0.40);
-  }
-
-  .brand-tag span {
-    background: linear-gradient(120deg, var(--chp-gold-bright) 0%, var(--chp-gold) 60%, var(--chp-gold-dim) 100%);
+    font-weight: 800;
+    font-size: clamp(48px, 9vh, 84px);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    background: linear-gradient(120deg, var(--chp-gold-bright) 0%, var(--chp-gold) 45%, #fff 60%, var(--chp-gold) 78%, var(--chp-gold-dim) 100%);
+    background-size: 220% 100%;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    animation: hero-sheen 6s linear infinite;
+  }
+
+  @keyframes hero-sheen {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 220% 50%; }
+  }
+
+  .hero-sub {
+    margin-top: 10px;
+    font-family: "Manrope", sans-serif;
+    font-size: clamp(13px, 2vh, 15px);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: rgba(255,255,255,0.45);
+  }
+
+  .hero-sub span {
+    color: var(--chp-gold-bright);
   }
 
   /* ── Login section — visually distinct card ── */
   .login-card {
     position: relative;
-    width: min(380px, 100%);
+    z-index: 10;
+    width: min(440px, 100%);
     max-height: 100%;
     overflow-y: auto;
-    padding: clamp(18px, 3vh, 28px) clamp(20px, 3.4vw, 30px);
-    border-radius: 24px;
+    padding: clamp(24px, 4vh, 38px) clamp(26px, 4.4vw, 40px);
+    border-radius: 28px;
     text-align: center;
     background: rgba(255,255,255,0.045);
     border: 1px solid rgba(255,255,255,0.14);
@@ -170,12 +174,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 9px 14px;
-    border-radius: 13px;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 16px;
     background: rgba(255,255,255,0.045);
     border: 1px solid rgba(255,255,255,0.09);
-    margin-bottom: 8px;
+    margin-bottom: 14px;
     text-align: left;
   }
 
@@ -208,23 +212,23 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 34px;
+    height: 34px;
     flex-shrink: 0;
-    border-radius: 8px;
+    border-radius: 10px;
     background: rgba(201,166,107,0.12);
     border: 1px solid rgba(201,166,107,0.22);
     color: var(--chp-gold-bright);
   }
-  .field-row-icon svg { width: 14px; height: 14px; }
+  .field-row-icon svg { width: 16px; height: 16px; }
 
   /* ── Remember + help row ── */
   .field-row-meta {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin: 4px 0 14px;
-    font-size: 12px;
+    margin: 6px 0 22px;
+    font-size: 12.5px;
   }
 
   .remember {
@@ -274,8 +278,8 @@
   .help-link:hover { color: var(--chp-gold-bright); }
 
   .login-card-foot {
-    margin: 14px 0 0;
-    font-size: 12px;
+    margin: 20px 0 0;
+    font-size: 12.5px;
     color: rgba(255,255,255,0.32);
   }
   .login-card-foot a {
@@ -289,10 +293,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 11px;
     width: 100%;
-    padding: 13px 24px;
-    border-radius: 14px;
+    padding: 16px 26px;
+    border-radius: 15px;
     background: linear-gradient(160deg, #5865F2 0%, #4752c4 100%);
     border: 1px solid rgba(255,255,255,0.18);
     text-decoration: none;
@@ -423,12 +427,12 @@
 
   /* Tablet */
   @media (min-width: 641px) and (max-width: 1024px) {
-    .login-card { width: 400px; }
+    .login-card { width: 440px; }
   }
 
   /* Desktop */
   @media (min-width: 1025px) {
-    .login-card { width: 420px; }
+    .login-card { width: 460px; }
   }
 </style>
 </head>
@@ -444,15 +448,14 @@
 </div>
 
 <main class="page">
+  <img class="badge-backdrop" src="../assets/images/chp-badge.png" alt="" aria-hidden="true" draggable="false">
+
+  <div class="hero">
+    <h1 class="hero-title">CHP</h1>
+    <p class="hero-sub" id="brandSub">Welcome to your <span>Dashboard</span></p>
+  </div>
+
   <div class="login-card" id="loginCard">
-    <div class="brand">
-      <img class="brand-badge" src="../assets/images/chp-badge.png" alt="California Highway Patrol badge" draggable="false">
-      <img class="brand-wordmark" src="../assets/images/chp-wordmark.png" alt="CHP wordmark">
-    </div>
-
-    <h1 class="brand-tag" id="brandTag">Welcome to your <span>Dashboard</span></h1>
-    <p class="brand-sub" id="brandSub">Sign in to check your duty time, rank progress, and everything else on your record.</p>
-
     <div class="field-row">
       <div class="field-row-text">
         <span class="field-row-label">Server</span>
@@ -468,7 +471,7 @@
     <div class="field-row">
       <div class="field-row-text">
         <span class="field-row-label">Access Level</span>
-        <span class="field-row-value">Staff Verification Required</span>
+        <span class="field-row-value">Officers &amp; Command Staff</span>
       </div>
       <span class="field-row-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -530,18 +533,15 @@
 
   loginBtn.href = authorizeUrl;
 
-  // Warmer, personalized headline depending on whether this browser has
+  // Warmer, personalized subtext depending on whether this browser has
   // visited before (best-effort — just a local flag, not tied to identity).
-  const brandTag = document.getElementById("brandTag");
   const brandSub = document.getElementById("brandSub");
   const hasVisited = localStorage.getItem("chp_dashboard_visited");
 
   if (hasVisited) {
-    brandTag.innerHTML = 'Welcome <span>back</span>';
-    brandSub.textContent = "Sign in with Discord to pick up right where you left off.";
+    brandSub.innerHTML = 'Welcome <span>back</span> — sign in to pick up where you left off.';
   } else {
-    brandTag.innerHTML = 'Welcome to the <span>CHP Dashboard</span>';
-    brandSub.textContent = "This is where your duty time, rank progress, and record live. Sign in with Discord to see it for the first time.";
+    brandSub.innerHTML = 'Welcome to your <span>Dashboard</span> — sign in to see it for the first time.';
     localStorage.setItem("chp_dashboard_visited", "1");
   }
 
