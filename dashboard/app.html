@@ -23,9 +23,13 @@
       <img src="../assets/images/chp-badge.png" alt="" width="28" height="28">
       <span>CHP Dashboard</span>
     </div>
-    <button class="nav-item active" data-section="overview">Overview</button>
-    <button class="nav-item" data-section="shifts">Shifts</button>
-    <button class="nav-item" data-section="leaderboard">Leaderboard</button>
+    <div class="nav-group">
+      <p class="nav-category">Officers</p>
+      <button class="nav-item active" data-section="overview">Overview</button>
+      <button class="nav-item" data-section="shifts">Shifts</button>
+      <button class="nav-item" data-section="leaderboard">Leaderboard</button>
+      <button class="nav-item" data-section="history">History</button>
+    </div>
   </nav>
 
   <main class="content" id="content">
@@ -37,6 +41,7 @@
       <div class="welcome-hero" id="welcomeHero" hidden>
         <img class="welcome-avatar" id="welcomeAvatar" src="" alt="">
         <h1 class="welcome-title">Welcome, <span id="welcomeName"></span></h1>
+        <p class="access-badge" id="accessBadge"></p>
         <p class="welcome-intro">
           This is your CHP dashboard — check your duty time, see where you rank on
           the leaderboard, and keep track of everything tied to your record, all in
@@ -58,6 +63,22 @@
       <h1>Leaderboard</h1>
       <div class="skeleton" id="leaderboardSkeleton"></div>
       <ol class="leaderboard-list" id="leaderboardList" hidden></ol>
+    </section>
+
+    <section class="panel" id="panel-history">
+      <h1>History</h1>
+      <div class="skeleton" id="historySkeleton"></div>
+      <ol class="history-list" id="historyList" hidden></ol>
+    </section>
+
+    <section class="panel" id="panel-lookup">
+      <h1>Member Lookup</h1>
+      <div class="lookup-search-row">
+        <input type="text" class="lookup-search-input" id="lookupSearchInput" placeholder="Search by username...">
+        <button class="lookup-search-btn" id="lookupSearchBtn">Search</button>
+      </div>
+      <div id="lookupResultsWrap"></div>
+      <div id="lookupDetailWrap"></div>
     </section>
   </main>
 </div>
