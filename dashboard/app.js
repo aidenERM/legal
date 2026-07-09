@@ -321,33 +321,101 @@ async function loadShifts() {
   `;
 }
 
-async function loadLeaderboard() {
-  const leaderboard = await apiGet("/api/leaderboard");
-  if (!leaderboard) return;
+let currentLeaderboardPeriod = "weekly";
+let customRangeValues = null; // { start, end } unix seconds, set once "Apply" is clicked
 
-  document.getElementById("leaderboardSkeleton").hidden = true;
-  const list = document.getElementById("leaderboardList");
-  list.hidden = false;
-
-  if (leaderboard.entries.length === 0) {
-    list.innerHTML = `<li class="empty-state">No leaderboard data yet.</li>`;
-    return;
+function renderLeaderboardRows(entries, period) {
+  if (entries.length === 0) {
+    return `<li class="empty-state">No leaderboard data yet.</li>`;
   }
-
-  list.innerHTML = leaderboard.entries
+  return entries
     .map((entry, index) => {
       const avatarUrl = avatarUrlFor(entry.userId, entry.avatar, 64);
+      const rankTitle = entry.rank
+        ? `<span class="leaderboard-rank-title">${entry.rank}</span>`
+        : `<span class="leaderboard-rank-title unranked">Unranked</span>`;
+      const liveBadge = period === "live" ? `<span class="live-badge">LIVE</span>` : "";
       return `
-        <li class="leaderboard-row">
+        <li class="leaderboard-row" style="animation-delay: ${Math.min(index, 20) * 0.02}s">
           <span class="leaderboard-rank">${index + 1}</span>
           <img class="leaderboard-avatar" src="${avatarUrl}" alt="" width="32" height="32">
-          <span class="leaderboard-name">${entry.username}</span>
-          <span class="leaderboard-time">${formatDuration(entry.totalSeconds)}</span>
+          <span class="leaderboard-identity">
+            <span class="leaderboard-name">${entry.username}</span>
+            ${rankTitle}
+          </span>
+          <span class="leaderboard-time">${liveBadge}${formatDuration(entry.totalSeconds)}</span>
         </li>
       `;
     })
     .join("");
 }
+
+function leaderboardQueryFor(period) {
+  if (period !== "custom") return `/api/leaderboard?period=${period}`;
+  if (!customRangeValues) return null;
+  return `/api/leaderboard?period=custom&start=${customRangeValues.start}&end=${customRangeValues.end}`;
+}
+
+async function loadLeaderboard(period) {
+  if (period) currentLeaderboardPeriod = period;
+  const path = leaderboardQueryFor(currentLeaderboardPeriod);
+  if (!path) return; // custom period selected but no range applied yet
+
+  const skeleton = document.getElementById("leaderboardSkeleton");
+  const list = document.getElementById("leaderboardList");
+
+  // Smooth transition: fade the existing list out, fetch, then fade+slide the
+  // fresh rows in (extends the .panel-in / .leaderboard-row animation pattern
+  // already used elsewhere rather than introducing a new one).
+  if (!list.hidden) {
+    list.classList.add("is-loading");
+    skeleton.hidden = false;
+  }
+
+  const leaderboard = await apiGet(path);
+  skeleton.hidden = true;
+  list.classList.remove("is-loading");
+  list.hidden = false;
+
+  if (!leaderboard) {
+    list.innerHTML = `<li class="empty-state">Failed to load leaderboard. Try again.</li>`;
+    return;
+  }
+
+  list.innerHTML = renderLeaderboardRows(leaderboard.entries, currentLeaderboardPeriod);
+}
+
+document.querySelectorAll(".period-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const period = btn.dataset.period;
+    document.querySelectorAll(".period-btn").forEach((b) => b.classList.toggle("active", b === btn));
+
+    const customRow = document.getElementById("customRangeRow");
+    if (period === "custom") {
+      customRow.hidden = false;
+      return; // wait for "Apply" before fetching
+    }
+    customRow.hidden = true;
+    loadLeaderboard(period);
+  });
+});
+
+// "Live" gets a small pulsing dot baked into its button label.
+document.querySelector('.period-btn[data-period="live"]').insertAdjacentHTML(
+  "afterbegin",
+  `<span class="live-dot"></span>`
+);
+
+document.getElementById("customRangeApply").addEventListener("click", () => {
+  const startInput = document.getElementById("customRangeStart").value;
+  const endInput = document.getElementById("customRangeEnd").value;
+  if (!startInput || !endInput) return;
+  customRangeValues = {
+    start: Math.floor(new Date(startInput).getTime() / 1000),
+    end: Math.floor(new Date(endInput).getTime() / 1000) + 86399, // include the whole end day
+  };
+  loadLeaderboard("custom");
+});
 
 document.querySelectorAll(".nav-item").forEach((item) => {
   item.addEventListener("click", () => {

@@ -61,6 +61,25 @@
 
     <section class="panel" id="panel-leaderboard">
       <h1>Leaderboard</h1>
+      <div class="period-selector" id="periodSelector">
+        <button class="period-btn" data-period="live">Live</button>
+        <button class="period-btn" data-period="daily">Daily</button>
+        <button class="period-btn active" data-period="weekly">Weekly</button>
+        <button class="period-btn" data-period="monthly">Monthly</button>
+        <button class="period-btn" data-period="alltime">All-Time</button>
+        <button class="period-btn" data-period="custom">Custom</button>
+      </div>
+      <div class="custom-range-row" id="customRangeRow" hidden>
+        <div class="field-row">
+          <label for="customRangeStart">Start</label>
+          <input type="date" id="customRangeStart">
+        </div>
+        <div class="field-row">
+          <label for="customRangeEnd">End</label>
+          <input type="date" id="customRangeEnd">
+        </div>
+        <button class="lookup-search-btn" id="customRangeApply">Apply</button>
+      </div>
       <div class="skeleton" id="leaderboardSkeleton"></div>
       <ol class="leaderboard-list" id="leaderboardList" hidden></ol>
     </section>

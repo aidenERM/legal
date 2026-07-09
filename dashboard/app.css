@@ -212,6 +212,86 @@ html, body {
 .stat-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.4); }
 .stat-card .value { font-family: "Manrope", sans-serif; font-weight: 800; font-size: 22px; color: #fff; margin-top: 6px; }
 
+/* ── Leaderboard period selector ── */
+.period-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px;
+  margin-bottom: 18px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.10);
+  width: fit-content;
+}
+.period-btn {
+  padding: 9px 16px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.55);
+  font-family: "Manrope", sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.period-btn:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.period-btn.active { background: rgba(201,166,107,0.16); color: var(--chp-gold-bright); }
+
+.period-btn[data-period="live"] .live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e05a5a;
+  box-shadow: 0 0 6px rgba(224,90,90,0.7);
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.75); }
+}
+
+.custom-range-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  margin: -6px 0 18px;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  flex-wrap: wrap;
+}
+.field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field-row label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.4);
+  font-family: "Manrope", sans-serif;
+  font-weight: 700;
+}
+.field-row input[type="date"] {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: #fff;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  color-scheme: dark;
+}
+.field-row input[type="date"]:focus { outline: none; border-color: rgba(201,166,107,0.4); }
+
 .leaderboard-list {
   list-style: none;
   margin: 0;
@@ -219,7 +299,10 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  transition: opacity 0.2s ease;
 }
+.leaderboard-list.is-loading { opacity: 0; }
+
 .leaderboard-row {
   display: flex;
   align-items: center;
@@ -228,11 +311,36 @@ html, body {
   border-radius: 14px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.09);
+  animation: leaderboard-row-in 0.35s var(--ease-smooth, ease) both;
 }
+
+@keyframes leaderboard-row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .leaderboard-rank { font-family: "Manrope", sans-serif; font-weight: 700; color: var(--chp-gold-bright); width: 24px; }
-.leaderboard-avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.1); }
-.leaderboard-name { flex: 1; font-size: 13.5px; color: #fff; }
-.leaderboard-time { font-size: 13px; color: rgba(255,255,255,0.5); font-weight: 600; }
+.leaderboard-avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.1); flex-shrink: 0; }
+.leaderboard-identity { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.leaderboard-name { font-size: 13.5px; color: #fff; font-weight: 600; }
+.leaderboard-rank-title { font-size: 11.5px; color: rgba(255,255,255,0.4); }
+.leaderboard-rank-title.unranked { font-style: italic; color: rgba(255,255,255,0.28); }
+.leaderboard-time { font-size: 13px; color: rgba(255,255,255,0.5); font-weight: 600; flex-shrink: 0; }
+.leaderboard-time .live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(224,90,90,0.14);
+  border: 1px solid rgba(224,90,90,0.3);
+  color: rgba(255,180,180,0.9);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
 
 /* ── Shifts ── */
 .shifts-body {
