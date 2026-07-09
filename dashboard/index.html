@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHP Dashboard</title>
+<link rel="icon" href="../assets/images/chp-badge.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/chp-theme.css">
+<style>
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: radial-gradient(ellipse 100% 80% at 50% 0%, #1c1708 0%, #08080b 55%);
+  }
+
+  main.page {
+    position: relative;
+    z-index: 10;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(28px, 6vw, 64px) 24px;
+    gap: clamp(36px, 6vh, 64px);
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Brand block ── */
+  .brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    animation: fade-up 0.8s var(--ease-smooth) both;
+  }
+
+  .brand-badge {
+    width: clamp(72px, 10vw, 108px);
+    height: clamp(72px, 10vw, 108px);
+    object-fit: contain;
+    filter: drop-shadow(0 0 24px rgba(201,166,107,0.50));
+    transition: filter 0.4s var(--ease-smooth), transform 0.5s var(--ease-spring);
+    animation: badge-drop 1.0s var(--ease-spring) 0.1s both;
+  }
+  .brand-badge:hover {
+    filter: drop-shadow(0 0 38px rgba(201,166,107,0.80));
+    transform: scale(1.06) rotate(-3deg);
+  }
+
+  @keyframes badge-drop {
+    from { opacity: 0; transform: scale(0.6) translateY(-10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .brand-wordmark {
+    width: clamp(120px, 14vw, 168px);
+    margin-top: clamp(16px, 2.4vw, 24px);
+    opacity: 0.82;
+    filter: invert(1) brightness(0.75) sepia(1) saturate(2) hue-rotate(0deg);
+  }
+
+  .brand-tag {
+    margin-top: 14px;
+    font-family: "Manrope", sans-serif;
+    font-weight: 700;
+    font-size: clamp(26px, 3.4vw, 38px);
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    color: #fff;
+  }
+
+  .brand-sub {
+    margin-top: 10px;
+    max-width: 360px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: rgba(255,255,255,0.42);
+  }
+
+  .brand-tag span {
+    background: linear-gradient(120deg, var(--chp-gold-bright) 0%, var(--chp-gold) 60%, var(--chp-gold-dim) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* ── Login section — visually distinct card ── */
+  .login-card {
+    position: relative;
+    width: min(380px, 100%);
+    padding: clamp(28px, 4vw, 38px) clamp(24px, 4vw, 34px);
+    border-radius: 26px;
+    text-align: center;
+    background: rgba(255,255,255,0.045);
+    border: 1px solid rgba(255,255,255,0.14);
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,0.22),
+      inset 0 -1px 0 rgba(0,0,0,0.3),
+      0 28px 70px rgba(0,0,0,0.65),
+      0 6px 18px rgba(0,0,0,0.4);
+    animation: fade-up 0.8s var(--ease-smooth) 0.15s both;
+    --mx: 50%;
+    --my: 0%;
+  }
+
+  .login-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+      radial-gradient(circle at var(--mx) var(--my),
+        rgba(255,255,255,0.20) 0%,
+        rgba(255,255,255,0.05) 30%,
+        transparent 60%);
+    pointer-events: none;
+  }
+
+  .login-card::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 18%; right: 18%;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(201,166,107,0.65) 30%,
+      rgba(255,255,255,0.45) 50%,
+      rgba(201,166,107,0.65) 70%,
+      transparent);
+    pointer-events: none;
+  }
+
+  .login-card > * { position: relative; z-index: 1; }
+
+  .login-card-title {
+    font-family: "Manrope", sans-serif;
+    font-size: clamp(24px, 3vw, 28px);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: #fff;
+    margin: 0 0 24px;
+  }
+
+  /* ── Decorative field rows (server / access level) ── */
+  .field-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 16px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.045);
+    border: 1px solid rgba(255,255,255,0.09);
+    margin-bottom: 12px;
+    text-align: left;
+  }
+
+  .field-row-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .field-row-label {
+    font-family: "Manrope", sans-serif;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.32);
+  }
+
+  .field-row-value {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.82);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .field-row-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 9px;
+    background: rgba(201,166,107,0.12);
+    border: 1px solid rgba(201,166,107,0.22);
+    color: var(--chp-gold-bright);
+  }
+  .field-row-icon svg { width: 16px; height: 16px; }
+
+  /* ── Remember + help row ── */
+  .field-row-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 4px 0 22px;
+    font-size: 12.5px;
+  }
+
+  .remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255,255,255,0.55);
+    cursor: pointer;
+    user-select: none;
+  }
+  .remember input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+  .remember-box {
+    width: 15px;
+    height: 15px;
+    border-radius: 5px;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.04);
+    flex-shrink: 0;
+    position: relative;
+    transition: background 0.2s var(--ease-smooth), border-color 0.2s var(--ease-smooth);
+  }
+  .remember input:checked + .remember-box {
+    background: var(--chp-gold);
+    border-color: var(--chp-gold);
+  }
+  .remember input:checked + .remember-box::after {
+    content: "";
+    position: absolute;
+    left: 4px; top: 1px;
+    width: 4px; height: 8px;
+    border: solid #08080b;
+    border-width: 0 2px 2px 0;
+    transform: rotate(40deg);
+  }
+
+  .help-link {
+    color: rgba(201,166,107,0.75);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s var(--ease-smooth);
+  }
+  .help-link:hover { color: var(--chp-gold-bright); }
+
+  .login-card-foot {
+    margin: 20px 0 0;
+    font-size: 12.5px;
+    color: rgba(255,255,255,0.32);
+  }
+  .login-card-foot a {
+    color: var(--chp-gold-bright);
+    text-decoration: none;
+    font-weight: 700;
+  }
+  .login-card-foot a:hover { text-decoration: underline; }
+
+  .login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 11px;
+    width: 100%;
+    padding: 15px 30px;
+    border-radius: 15px;
+    background: linear-gradient(160deg, #5865F2 0%, #4752c4 100%);
+    border: 1px solid rgba(255,255,255,0.18);
+    text-decoration: none;
+    color: #fff;
+    font-family: "Manrope", sans-serif;
+    font-size: 15.5px;
+    font-weight: 700;
+    letter-spacing: 0.005em;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.35),
+      inset 0 -2px 6px rgba(0,0,0,0.25),
+      0 10px 28px rgba(88,101,242,0.35),
+      0 4px 12px rgba(0,0,0,0.35);
+    transition:
+      transform 0.35s var(--ease-spring),
+      box-shadow 0.3s var(--ease-smooth),
+      filter 0.3s var(--ease-smooth);
+  }
+
+  .login-btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.20) 0%, transparent 55%);
+    opacity: 0;
+    transition: opacity 0.3s var(--ease-smooth);
+  }
+
+  .login-btn:hover {
+    transform: translateY(-2px) scale(1.015);
+    filter: brightness(1.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.4),
+      inset 0 -2px 6px rgba(0,0,0,0.25),
+      0 16px 38px rgba(88,101,242,0.50),
+      0 6px 16px rgba(0,0,0,0.4);
+  }
+  .login-btn:hover::before { opacity: 1; }
+  .login-btn:active { transform: translateY(0) scale(0.98); transition-duration: 0.15s; }
+
+  .login-btn svg {
+    width: 21px;
+    height: 21px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+  }
+
+  .login-processing {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 15px 22px;
+    border-radius: 15px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: rgba(255,255,255,0.55);
+    font-family: "Manrope", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .login-processing.active { display: flex; }
+  .login-btn.hidden { display: none; }
+
+  .spinner {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.20);
+    border-top-color: rgba(201,166,107,0.85);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Footer nav — separate strip, not part of the login card ── */
+  .site-links {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 18px 24px calc(18px + env(safe-area-inset-bottom, 0px));
+    animation: fade-up 0.8s var(--ease-smooth) 0.3s both;
+  }
+
+  .site-link {
+    font-family: "Inter", sans-serif;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.36);
+    text-decoration: none;
+    padding: 7px 12px;
+    border-radius: 8px;
+    transition: color 0.2s var(--ease-smooth), background 0.2s var(--ease-smooth);
+  }
+  .site-link:hover {
+    color: var(--chp-gold-bright);
+    background: rgba(201,166,107,0.08);
+  }
+
+  .site-link-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.16);
+    flex-shrink: 0;
+  }
+
+  .chp-orb-1 { opacity: 0.55; }
+  .chp-orb-2 { opacity: 0.50; }
+  .chp-orb-3 { opacity: 0.38; }
+
+  /* ── Responsive tiers ── */
+
+  /* Phone */
+  @media (max-width: 640px) {
+    main.page { gap: 40px; padding-top: 10vh; justify-content: flex-start; }
+    .brand-tag { font-size: 24px; }
+    .login-card { width: 100%; border-radius: 22px; }
+    .login-btn { width: 100%; }
+    .site-links { gap: 2px 0; }
+    .site-link { font-size: 12px; padding: 8px 10px; }
+  }
+
+  /* Tablet */
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .login-card { width: 400px; }
+  }
+
+  /* Desktop */
+  @media (min-width: 1025px) {
+    main.page { gap: 56px; }
+    .login-card { width: 420px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="chp-scene" aria-hidden="true">
+  <div class="chp-orb chp-orb-1"></div>
+  <div class="chp-orb chp-orb-2"></div>
+  <div class="chp-orb chp-orb-3"></div>
+  <div class="chp-orb chp-orb-4"></div>
+  <div class="chp-beam"></div>
+  <div class="chp-beam chp-beam-2"></div>
+</div>
+
+<main class="page">
+  <div class="brand">
+    <img class="brand-badge" src="../assets/images/chp-badge.png" alt="California Highway Patrol badge" draggable="false">
+    <img class="brand-wordmark" src="../assets/images/chp-wordmark.png" alt="CHP wordmark">
+    <h1 class="brand-tag" id="brandTag">Welcome to your <span>Dashboard</span></h1>
+    <p class="brand-sub" id="brandSub">Sign in to check your duty time, rank progress, and everything else on your record.</p>
+  </div>
+
+  <div class="login-card" id="loginCard">
+    <h2 class="login-card-title">Login</h2>
+
+    <div class="field-row">
+      <div class="field-row-text">
+        <span class="field-row-label">Server</span>
+        <span class="field-row-value">California Highway Patrol</span>
+      </div>
+      <span class="field-row-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+        </svg>
+      </span>
+    </div>
+
+    <div class="field-row">
+      <div class="field-row-text">
+        <span class="field-row-label">Access Level</span>
+        <span class="field-row-value">Staff Verification Required</span>
+      </div>
+      <span class="field-row-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4.5" y="10.5" width="15" height="10" rx="2.2"></rect>
+          <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"></path>
+        </svg>
+      </span>
+    </div>
+
+    <div class="field-row-meta">
+      <label class="remember">
+        <input type="checkbox" id="rememberMe">
+        <span class="remember-box" aria-hidden="true"></span>
+        Stay signed in
+      </label>
+      <a class="help-link" href="https://discord.gg/7fyPz8fMq6" target="_blank" rel="noopener noreferrer">Trouble logging in?</a>
+    </div>
+
+    <a class="login-btn" id="loginBtn" href="#" aria-label="Log in with Discord">
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+      </svg>
+      <span>Continue with Discord</span>
+    </a>
+
+    <div class="login-processing" id="loginProcessing">
+      <span class="spinner"></span>
+      <span>Signing you in&hellip;</span>
+    </div>
+
+    <p class="login-card-foot">Not on the roster? <a href="https://discord.gg/7fyPz8fMq6" target="_blank" rel="noopener noreferrer">Request staff access</a></p>
+  </div>
+</main>
+
+<nav class="site-links" aria-label="Resource links">
+  <a class="site-link" href="../index.html">Home</a>
+  <span class="site-link-dot" aria-hidden="true"></span>
+  <a class="site-link" href="../pp.html">Privacy Policy</a>
+  <span class="site-link-dot" aria-hidden="true"></span>
+  <a class="site-link" href="../tos.html">Terms of Service</a>
+  <span class="site-link-dot" aria-hidden="true"></span>
+  <a class="site-link" href="https://discord.gg/7fyPz8fMq6" target="_blank" rel="noopener noreferrer">Discord</a>
+</nav>
+
+<script>
+  const CLIENT_ID    = "1518718432101535854";
+  const REDIRECT_URI = "https://aidenerm.github.io/legal/dashboard/";
+  const SCOPES       = "identify guilds.members.read";
+
+  const loginBtn        = document.getElementById("loginBtn");
+  const loginProcessing = document.getElementById("loginProcessing");
+
+  const authorizeUrl =
+    "https://discord.com/api/oauth2/authorize" +
+    "?client_id=" + encodeURIComponent(CLIENT_ID) +
+    "&redirect_uri=" + encodeURIComponent(REDIRECT_URI) +
+    "&response_type=code" +
+    "&scope=" + encodeURIComponent(SCOPES);
+
+  loginBtn.href = authorizeUrl;
+
+  // Warmer, personalized headline depending on whether this browser has
+  // visited before (best-effort — just a local flag, not tied to identity).
+  const brandTag = document.getElementById("brandTag");
+  const brandSub = document.getElementById("brandSub");
+  const hasVisited = localStorage.getItem("chp_dashboard_visited");
+
+  if (hasVisited) {
+    brandTag.innerHTML = 'Welcome <span>back</span>';
+    brandSub.textContent = "Sign in with Discord to pick up right where you left off.";
+  } else {
+    brandTag.innerHTML = 'Welcome to the <span>CHP Dashboard</span>';
+    brandSub.textContent = "This is where your duty time, rank progress, and record live. Sign in with Discord to see it for the first time.";
+    localStorage.setItem("chp_dashboard_visited", "1");
+  }
+
+  // If Discord just redirected back here with ?code=, show a processing
+  // state. The actual code -> session exchange happens once the Cloudflare
+  // Worker backend exists; for now this is a visual placeholder.
+  const params = new URLSearchParams(window.location.search);
+  if (params.has("code")) {
+    loginBtn.classList.add("hidden");
+    loginProcessing.classList.add("active");
+  }
+
+  // Smooth 3-D parallax tilt + specular highlight on the login card
+  const card = document.getElementById("loginCard");
+  let raf = null;
+  let tx = 0, ty = 0, cx = 0, cy = 0;
+
+  document.addEventListener("mousemove", (e) => {
+    const mx = (e.clientX / window.innerWidth  - 0.5) * 2;
+    const my = (e.clientY / window.innerHeight - 0.5) * 2;
+    tx = mx * 8;
+    ty = my * -8;
+    if (!raf) raf = requestAnimationFrame(tick);
+  });
+
+  document.addEventListener("mouseleave", () => {
+    tx = 0; ty = 0;
+    if (!raf) raf = requestAnimationFrame(tick);
+  });
+
+  function tick() {
+    raf = null;
+    cx += (tx - cx) * 0.10;
+    cy += (ty - cy) * 0.10;
+    card.style.transform = `perspective(900px) rotateY(${cx}deg) rotateX(${cy}deg)`;
+    if (Math.abs(tx - cx) > 0.05 || Math.abs(ty - cy) > 0.05) {
+      raf = requestAnimationFrame(tick);
+    }
+  }
+
+  let highlightRaf = null;
+  card.addEventListener("pointermove", (e) => {
+    if (highlightRaf) return;
+    highlightRaf = requestAnimationFrame(() => {
+      highlightRaf = null;
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty("--mx", `${((e.clientX - rect.left) / rect.width) * 100}%`);
+      card.style.setProperty("--my", `${((e.clientY - rect.top) / rect.height) * 100}%`);
+    });
+  });
+</script>
+</body>
+</html>
