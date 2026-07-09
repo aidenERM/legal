@@ -51,6 +51,7 @@ const TIER_BADGE_COPY = {
   staff: "CHP Patrol Operations",
   admin: "CHP Human Resources & Command",
   management: "Board of Commissioners",
+  developer: "Developer Access",
 };
 
 function formatDate(unixSeconds) {
@@ -143,8 +144,9 @@ async function loadOverview() {
     <div class="stat-card"><div class="label">Shifts logged</div><div class="value">${shifts.shiftCount}</div></div>
   `;
 
-  if (me.tier === "admin" || me.tier === "management") {
-    const categoryLabel = me.tier === "management" ? "Board of Commissioners" : "High Ranks";
+  if (me.tier === "admin" || me.tier === "management" || me.tier === "developer") {
+    const categoryLabel =
+      me.tier === "developer" ? "Developer" : me.tier === "management" ? "Board of Commissioners" : "High Ranks";
     const sidebar = document.getElementById("sidebar");
     const group = document.createElement("div");
     group.className = "nav-group";
