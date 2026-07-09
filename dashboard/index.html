@@ -49,25 +49,26 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* ── Giant background insignia — sits behind the hero + card, raised up ── */
+  /* ── Giant background insignia — fixed to viewport so it's never clipped,
+       centered on the horizontal middle, raised toward the top ── */
   .badge-backdrop {
-    position: absolute;
-    top: 6%;
+    position: fixed;
+    top: 2vh;
     left: 50%;
-    width: clamp(300px, 42vh, 560px);
-    height: clamp(300px, 42vh, 560px);
-    transform: translate(-50%, 0);
+    width: clamp(360px, 62vh, 760px);
+    height: clamp(360px, 62vh, 760px);
+    transform: translateX(-50%);
     z-index: 1;
     object-fit: contain;
-    opacity: 0.14;
-    filter: drop-shadow(0 0 70px rgba(201,166,107,0.40));
+    opacity: 0.16;
+    filter: drop-shadow(0 0 90px rgba(201,166,107,0.45));
     pointer-events: none;
     animation: badge-backdrop-in 1.4s var(--ease-smooth) both;
   }
 
   @keyframes badge-backdrop-in {
-    from { opacity: 0; transform: translate(-50%, 0) scale(0.9); }
-    to   { opacity: 0.14; transform: translate(-50%, 0) scale(1); }
+    from { opacity: 0; transform: translateX(-50%) scale(0.92); }
+    to   { opacity: 0.16; transform: translateX(-50%) scale(1); }
   }
 
   /* ── Hero — "CHP Dashboard" is the headline ── */
@@ -112,7 +113,10 @@
     color: var(--chp-gold-bright);
   }
 
-  /* ── Login section — visually distinct card ── */
+  /* ── Login section — liquid glass, not frosted glass ──
+       Less blur (so it stays clear, not foggy), higher saturation (colors
+       bleeding through stay vivid), and multiple soft pooled highlights
+       that drift slowly, plus one that tracks the pointer. ── */
   .login-card {
     position: relative;
     z-index: 10;
@@ -120,15 +124,19 @@
     max-height: 100%;
     overflow-y: auto;
     padding: clamp(24px, 4vh, 38px) clamp(26px, 4.4vw, 40px);
-    border-radius: 28px;
+    border-radius: 32px;
     text-align: center;
-    background: rgba(255,255,255,0.045);
-    border: 1px solid rgba(255,255,255,0.14);
-    backdrop-filter: blur(12px) saturate(160%);
-    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    background:
+      radial-gradient(circle at 18% 12%, rgba(255,255,255,0.16) 0%, transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(201,166,107,0.12) 0%, transparent 45%),
+      rgba(255,255,255,0.035);
+    border: 1px solid rgba(255,255,255,0.22);
+    backdrop-filter: blur(6px) saturate(220%) brightness(1.05);
+    -webkit-backdrop-filter: blur(6px) saturate(220%) brightness(1.05);
     box-shadow:
-      inset 0 1.5px 0 rgba(255,255,255,0.22),
-      inset 0 -1px 0 rgba(0,0,0,0.3),
+      inset 0 1.5px 0 rgba(255,255,255,0.35),
+      inset 0 -1.5px 0 rgba(0,0,0,0.25),
+      inset 0 0 40px rgba(255,255,255,0.03),
       0 28px 70px rgba(0,0,0,0.65),
       0 6px 18px rgba(0,0,0,0.4);
     animation: fade-up 0.8s var(--ease-smooth) 0.15s both;
@@ -143,27 +151,52 @@
     border-radius: inherit;
     background:
       radial-gradient(circle at var(--mx) var(--my),
-        rgba(255,255,255,0.20) 0%,
-        rgba(255,255,255,0.05) 30%,
+        rgba(255,255,255,0.28) 0%,
+        rgba(255,255,255,0.08) 30%,
         transparent 60%);
+    mix-blend-mode: overlay;
     pointer-events: none;
+    transition: background 0.15s var(--ease-smooth);
   }
 
   .login-card::after {
     content: "";
     position: absolute;
-    top: 0; left: 18%; right: 18%;
-    height: 1px;
-    background: linear-gradient(90deg,
-      transparent,
-      rgba(201,166,107,0.65) 30%,
-      rgba(255,255,255,0.45) 50%,
-      rgba(201,166,107,0.65) 70%,
-      transparent);
+    inset: 0;
+    border-radius: inherit;
+    background:
+      linear-gradient(115deg,
+        rgba(255,255,255,0.16) 0%,
+        transparent 22%,
+        transparent 60%,
+        rgba(201,166,107,0.10) 85%,
+        rgba(255,255,255,0.10) 100%);
+    background-size: 250% 250%;
+    animation: liquid-drift 10s ease-in-out infinite;
     pointer-events: none;
   }
 
+  @keyframes liquid-drift {
+    0%   { background-position: 0% 0%; }
+    50%  { background-position: 100% 60%; }
+    100% { background-position: 0% 0%; }
+  }
+
   .login-card > * { position: relative; z-index: 1; }
+
+  .login-card-edge {
+    position: absolute;
+    top: 0; left: 16%; right: 16%;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(201,166,107,0.7) 30%,
+      rgba(255,255,255,0.55) 50%,
+      rgba(201,166,107,0.7) 70%,
+      transparent);
+    pointer-events: none;
+    z-index: 2;
+  }
 
   .login-card-title {
     font-family: "Manrope", sans-serif;
@@ -468,6 +501,8 @@
   </div>
 
   <div class="login-card" id="loginCard">
+    <div class="login-card-edge" aria-hidden="true"></div>
+
     <div class="field-row">
       <div class="field-row-text">
         <span class="field-row-label">Server</span>
