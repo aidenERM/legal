@@ -23,7 +23,12 @@
     display: flex;
     flex-direction: column;
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-    background: radial-gradient(ellipse 100% 80% at 50% 0%, #1c1708 0%, #08080b 55%);
+    background:
+      radial-gradient(ellipse 90% 60% at 50% -8%, rgba(201,166,107,0.22) 0%, transparent 60%),
+      radial-gradient(ellipse 70% 50% at 85% 100%, rgba(140,100,30,0.16) 0%, transparent 55%),
+      radial-gradient(ellipse 70% 50% at 10% 95%, rgba(80,60,20,0.14) 0%, transparent 55%),
+      linear-gradient(165deg, #1c1708 0%, #100d06 40%, #08080b 100%);
+    background-attachment: fixed;
   }
 
   main.page {
@@ -44,28 +49,28 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* ── Giant background insignia — sits behind the hero + card ── */
+  /* ── Giant background insignia — sits behind the hero + card, raised up ── */
   .badge-backdrop {
     position: absolute;
-    top: 50%;
+    top: 6%;
     left: 50%;
-    width: clamp(340px, 48vh, 620px);
-    height: clamp(340px, 48vh, 620px);
-    transform: translate(-50%, -46%);
+    width: clamp(300px, 42vh, 560px);
+    height: clamp(300px, 42vh, 560px);
+    transform: translate(-50%, 0);
     z-index: 1;
     object-fit: contain;
-    opacity: 0.16;
-    filter: drop-shadow(0 0 60px rgba(201,166,107,0.35));
+    opacity: 0.14;
+    filter: drop-shadow(0 0 70px rgba(201,166,107,0.40));
     pointer-events: none;
     animation: badge-backdrop-in 1.4s var(--ease-smooth) both;
   }
 
   @keyframes badge-backdrop-in {
-    from { opacity: 0; transform: translate(-50%, -46%) scale(0.9); }
-    to   { opacity: 0.16; transform: translate(-50%, -46%) scale(1); }
+    from { opacity: 0; transform: translate(-50%, 0) scale(0.9); }
+    to   { opacity: 0.14; transform: translate(-50%, 0) scale(1); }
   }
 
-  /* ── Hero — "CHP" is the headline ── */
+  /* ── Hero — "CHP Dashboard" is the headline ── */
   .hero {
     position: relative;
     z-index: 10;
@@ -78,15 +83,15 @@
     margin: 0;
     font-family: "Manrope", sans-serif;
     font-weight: 800;
-    font-size: clamp(48px, 9vh, 84px);
+    font-size: clamp(32px, 6.4vh, 58px);
     letter-spacing: -0.02em;
-    line-height: 1;
-    background: linear-gradient(120deg, var(--chp-gold-bright) 0%, var(--chp-gold) 45%, #fff 60%, var(--chp-gold) 78%, var(--chp-gold-dim) 100%);
-    background-size: 220% 100%;
+    line-height: 1.05;
+    background: linear-gradient(120deg, var(--chp-gold-bright) 0%, var(--chp-gold) 30%, #fff 48%, var(--chp-gold) 68%, var(--chp-gold-dim) 90%, var(--chp-gold-bright) 100%);
+    background-size: 250% 100%;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    animation: hero-sheen 6s linear infinite;
+    animation: hero-sheen 7s linear infinite;
   }
 
   @keyframes hero-sheen {
@@ -179,9 +184,20 @@
     border-radius: 16px;
     background: rgba(255,255,255,0.045);
     border: 1px solid rgba(255,255,255,0.09);
+    transition: background 0.25s var(--ease-smooth), border-color 0.25s var(--ease-smooth), transform 0.3s var(--ease-spring);
+    animation: fade-up 0.6s var(--ease-smooth) both;
     margin-bottom: 14px;
     text-align: left;
   }
+
+  .field-row:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(201,166,107,0.22);
+    transform: translateY(-1px);
+  }
+
+  .field-row:nth-of-type(1) { animation-delay: 0.05s; }
+  .field-row:nth-of-type(2) { animation-delay: 0.12s; }
 
   .field-row-text {
     display: flex;
@@ -229,6 +245,7 @@
     justify-content: space-between;
     margin: 6px 0 22px;
     font-size: 12.5px;
+    animation: fade-up 0.6s var(--ease-smooth) 0.18s both;
   }
 
   .remember {
@@ -281,6 +298,7 @@
     margin: 20px 0 0;
     font-size: 12.5px;
     color: rgba(255,255,255,0.32);
+    animation: fade-up 0.6s var(--ease-smooth) 0.3s both;
   }
   .login-card-foot a {
     color: var(--chp-gold-bright);
@@ -297,6 +315,7 @@
     width: 100%;
     padding: 16px 26px;
     border-radius: 15px;
+    animation: fade-up 0.6s var(--ease-smooth) 0.24s both;
     background: linear-gradient(160deg, #5865F2 0%, #4752c4 100%);
     border: 1px solid rgba(255,255,255,0.18);
     text-decoration: none;
@@ -412,17 +431,19 @@
     flex-shrink: 0;
   }
 
-  .chp-orb-1 { opacity: 0.55; }
-  .chp-orb-2 { opacity: 0.50; }
-  .chp-orb-3 { opacity: 0.38; }
-
   /* ── Responsive tiers ── */
 
   /* Phone */
   @media (max-width: 640px) {
     .login-card { width: 100%; border-radius: 20px; }
+    .hero-title { font-size: clamp(28px, 8vw, 44px); }
     .site-links { gap: 2px 0; }
     .site-link { font-size: 12px; padding: 6px 10px; }
+  }
+
+  @media (max-width: 360px) {
+    .hero-title { font-size: 26px; }
+    .hero-sub { font-size: 12px; }
   }
 
   /* Tablet */
@@ -438,21 +459,12 @@
 </head>
 <body>
 
-<div class="chp-scene" aria-hidden="true">
-  <div class="chp-orb chp-orb-1"></div>
-  <div class="chp-orb chp-orb-2"></div>
-  <div class="chp-orb chp-orb-3"></div>
-  <div class="chp-orb chp-orb-4"></div>
-  <div class="chp-beam"></div>
-  <div class="chp-beam chp-beam-2"></div>
-</div>
-
 <main class="page">
   <img class="badge-backdrop" src="../assets/images/chp-badge.png" alt="" aria-hidden="true" draggable="false">
 
   <div class="hero">
-    <h1 class="hero-title">CHP</h1>
-    <p class="hero-sub" id="brandSub">Welcome to your <span>Dashboard</span></p>
+    <h1 class="hero-title">CHP Dashboard</h1>
+    <p class="hero-sub">Welcome to the <span>CHP Dashboard</span> — sign in to find out everything about you.</p>
   </div>
 
   <div class="login-card" id="loginCard">
@@ -471,7 +483,7 @@
     <div class="field-row">
       <div class="field-row-text">
         <span class="field-row-label">Access Level</span>
-        <span class="field-row-value">Officers &amp; Command Staff</span>
+        <span class="field-row-value">Officer Rank &amp; Above</span>
       </div>
       <span class="field-row-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -532,18 +544,6 @@
     "&scope=" + encodeURIComponent(SCOPES);
 
   loginBtn.href = authorizeUrl;
-
-  // Warmer, personalized subtext depending on whether this browser has
-  // visited before (best-effort — just a local flag, not tied to identity).
-  const brandSub = document.getElementById("brandSub");
-  const hasVisited = localStorage.getItem("chp_dashboard_visited");
-
-  if (hasVisited) {
-    brandSub.innerHTML = 'Welcome <span>back</span> — sign in to pick up where you left off.';
-  } else {
-    brandSub.innerHTML = 'Welcome to your <span>Dashboard</span> — sign in to see it for the first time.';
-    localStorage.setItem("chp_dashboard_visited", "1");
-  }
 
   // If Discord just redirected back here with ?code=, show a processing
   // state. The actual code -> session exchange happens once the Cloudflare
