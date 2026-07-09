@@ -30,7 +30,20 @@
 
   <main class="content" id="content">
     <section class="panel active" id="panel-overview">
-      <h1>Overview</h1>
+      <div class="welcome-skeleton" id="welcomeSkeleton">
+        <div class="skeleton skeleton-avatar"></div>
+        <div class="skeleton skeleton-line"></div>
+      </div>
+      <div class="welcome-hero" id="welcomeHero" hidden>
+        <img class="welcome-avatar" id="welcomeAvatar" src="" alt="">
+        <h1 class="welcome-title">Welcome, <span id="welcomeName"></span></h1>
+        <p class="welcome-intro">
+          This is your CHP dashboard — check your duty time, see where you rank on
+          the leaderboard, and keep track of everything tied to your record, all in
+          one place.
+        </p>
+      </div>
+
       <div class="skeleton" id="overviewSkeleton"></div>
       <div class="card-grid" id="overviewCards" hidden></div>
     </section>
@@ -38,7 +51,7 @@
     <section class="panel" id="panel-shifts">
       <h1>Shifts</h1>
       <div class="skeleton" id="shiftsSkeleton"></div>
-      <div class="card-grid" id="shiftsCards" hidden></div>
+      <div class="shifts-body" id="shiftsBody" hidden></div>
     </section>
 
     <section class="panel" id="panel-leaderboard">

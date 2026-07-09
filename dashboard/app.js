@@ -6,6 +6,22 @@ function formatDuration(totalSeconds) {
   return `${hours}h ${minutes}m`;
 }
 
+// Guild nicknames follow "HP-XXX | XX | Username" (callsign | rank code | name) -
+// the display name is whatever comes after the last "|". Falls back to the
+// Discord username if the member has no guild nickname set.
+function displayNameFor(me) {
+  if (!me.nick) return me.username;
+  const parts = me.nick.split("|");
+  const last = parts[parts.length - 1].trim();
+  return last || me.username;
+}
+
+function avatarUrlFor(userId, avatarHash, size) {
+  return avatarHash
+    ? `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.png?size=${size}`
+    : `https://cdn.discordapp.com/embed/avatars/0.png`;
+}
+
 async function apiGet(path) {
   const response = await fetch(`${WORKER_URL}${path}`, { credentials: "include" });
   if (response.status === 401) {
@@ -29,11 +45,15 @@ async function loadOverview() {
   const shifts = await apiGet("/api/shifts");
   if (!me || !shifts) return;
 
+  document.getElementById("welcomeSkeleton").hidden = true;
+  document.getElementById("welcomeAvatar").src = avatarUrlFor(me.userId, me.avatar, 96);
+  document.getElementById("welcomeName").textContent = displayNameFor(me);
+  document.getElementById("welcomeHero").hidden = false;
+
   document.getElementById("overviewSkeleton").hidden = true;
   const cards = document.getElementById("overviewCards");
   cards.hidden = false;
   cards.innerHTML = `
-    <div class="stat-card"><div class="label">Signed in as</div><div class="value">${me.username}</div></div>
     <div class="stat-card"><div class="label">Access tier</div><div class="value">${me.tier}</div></div>
     <div class="stat-card"><div class="label">Total duty time</div><div class="value">${formatDuration(shifts.totalSeconds)}</div></div>
     <div class="stat-card"><div class="label">Shifts logged</div><div class="value">${shifts.shiftCount}</div></div>
@@ -45,19 +65,47 @@ async function loadShifts() {
   if (!shifts) return;
 
   document.getElementById("shiftsSkeleton").hidden = true;
-  const cards = document.getElementById("shiftsCards");
-  cards.hidden = false;
+  const body = document.getElementById("shiftsBody");
+  body.hidden = false;
 
   if (shifts.byType.length === 0) {
-    cards.innerHTML = `<div class="empty-state">No completed shifts logged yet.</div>`;
+    body.innerHTML = `<div class="empty-state">No completed shifts logged yet.</div>`;
     return;
   }
 
-  cards.innerHTML = shifts.byType
-    .map((row) => `
-      <div class="stat-card"><div class="label">${row.type}</div><div class="value">${formatDuration(row.seconds)}</div></div>
-    `)
+  const maxSeconds = Math.max(...shifts.byType.map((row) => row.seconds));
+
+  const typeRows = shifts.byType
+    .map((row) => {
+      const pct = maxSeconds > 0 ? Math.round((row.seconds / maxSeconds) * 100) : 0;
+      return `
+        <div class="shifts-type-row">
+          <span class="shifts-type-name">${row.type}</span>
+          <span class="shifts-type-bar-track"><span class="shifts-type-bar-fill" style="width: ${pct}%"></span></span>
+          <span class="shifts-type-time">${formatDuration(row.seconds)}</span>
+        </div>
+      `;
+    })
     .join("");
+
+  body.innerHTML = `
+    <div class="shifts-summary">
+      <div class="shifts-summary-stat">
+        <div class="label">Total duty time</div>
+        <div class="value">${formatDuration(shifts.totalSeconds)}</div>
+      </div>
+      <div class="shifts-summary-divider"></div>
+      <div class="shifts-summary-stat">
+        <div class="label">Shifts logged</div>
+        <div class="value">${shifts.shiftCount}</div>
+      </div>
+    </div>
+
+    <div>
+      <p class="shifts-type-heading">By shift type</p>
+      <div class="shifts-type-list">${typeRows}</div>
+    </div>
+  `;
 }
 
 async function loadLeaderboard() {
@@ -75,9 +123,7 @@ async function loadLeaderboard() {
 
   list.innerHTML = leaderboard.entries
     .map((entry, index) => {
-      const avatarUrl = entry.avatar
-        ? `https://cdn.discordapp.com/avatars/${entry.userId}/${entry.avatar}.png?size=64`
-        : `https://cdn.discordapp.com/embed/avatars/0.png`;
+      const avatarUrl = avatarUrlFor(entry.userId, entry.avatar, 64);
       return `
         <li class="leaderboard-row">
           <span class="leaderboard-rank">${index + 1}</span>
