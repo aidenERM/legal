@@ -10,8 +10,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
 <style>
+  * {
+    box-sizing: border-box;
+  }
+
   html, body {
     height: 100%;
+    overflow: hidden;
   }
 
   body {
@@ -29,8 +34,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: clamp(28px, 6vw, 64px) 24px;
-    gap: clamp(36px, 6vh, 64px);
+    min-height: 0;
+    padding: clamp(10px, 2vh, 20px) 20px;
+    overflow: hidden;
   }
 
   @keyframes fade-up {
@@ -41,22 +47,23 @@
   /* ── Brand block ── */
   .brand {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    text-align: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: clamp(10px, 1.6vh, 16px);
     animation: fade-up 0.8s var(--ease-smooth) both;
   }
 
   .brand-badge {
-    width: clamp(72px, 10vw, 108px);
-    height: clamp(72px, 10vw, 108px);
+    width: clamp(34px, 4vh, 44px);
+    height: clamp(34px, 4vh, 44px);
     object-fit: contain;
-    filter: drop-shadow(0 0 24px rgba(201,166,107,0.50));
+    filter: drop-shadow(0 0 16px rgba(201,166,107,0.50));
     transition: filter 0.4s var(--ease-smooth), transform 0.5s var(--ease-spring);
     animation: badge-drop 1.0s var(--ease-spring) 0.1s both;
   }
   .brand-badge:hover {
-    filter: drop-shadow(0 0 38px rgba(201,166,107,0.80));
+    filter: drop-shadow(0 0 26px rgba(201,166,107,0.80));
     transform: scale(1.06) rotate(-3deg);
   }
 
@@ -66,28 +73,28 @@
   }
 
   .brand-wordmark {
-    width: clamp(120px, 14vw, 168px);
-    margin-top: clamp(16px, 2.4vw, 24px);
+    width: clamp(70px, 8vh, 96px);
     opacity: 0.82;
     filter: invert(1) brightness(0.75) sepia(1) saturate(2) hue-rotate(0deg);
   }
 
   .brand-tag {
-    margin-top: 14px;
+    text-align: center;
     font-family: "Manrope", sans-serif;
     font-weight: 700;
-    font-size: clamp(26px, 3.4vw, 38px);
+    font-size: clamp(19px, 2.6vh, 26px);
     letter-spacing: -0.01em;
     line-height: 1.15;
     color: #fff;
   }
 
   .brand-sub {
-    margin-top: 10px;
-    max-width: 360px;
-    font-size: 14px;
-    line-height: 1.55;
-    color: rgba(255,255,255,0.42);
+    margin-top: 6px;
+    max-width: 340px;
+    text-align: center;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: rgba(255,255,255,0.40);
   }
 
   .brand-tag span {
@@ -101,8 +108,10 @@
   .login-card {
     position: relative;
     width: min(380px, 100%);
-    padding: clamp(28px, 4vw, 38px) clamp(24px, 4vw, 34px);
-    border-radius: 26px;
+    max-height: 100%;
+    overflow-y: auto;
+    padding: clamp(18px, 3vh, 28px) clamp(20px, 3.4vw, 30px);
+    border-radius: 24px;
     text-align: center;
     background: rgba(255,255,255,0.045);
     border: 1px solid rgba(255,255,255,0.14);
@@ -162,11 +171,11 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 13px 16px;
-    border-radius: 14px;
+    padding: 9px 14px;
+    border-radius: 13px;
     background: rgba(255,255,255,0.045);
     border: 1px solid rgba(255,255,255,0.09);
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     text-align: left;
   }
 
@@ -199,23 +208,23 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     flex-shrink: 0;
-    border-radius: 9px;
+    border-radius: 8px;
     background: rgba(201,166,107,0.12);
     border: 1px solid rgba(201,166,107,0.22);
     color: var(--chp-gold-bright);
   }
-  .field-row-icon svg { width: 16px; height: 16px; }
+  .field-row-icon svg { width: 14px; height: 14px; }
 
   /* ── Remember + help row ── */
   .field-row-meta {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin: 4px 0 22px;
-    font-size: 12.5px;
+    margin: 4px 0 14px;
+    font-size: 12px;
   }
 
   .remember {
@@ -265,8 +274,8 @@
   .help-link:hover { color: var(--chp-gold-bright); }
 
   .login-card-foot {
-    margin: 20px 0 0;
-    font-size: 12.5px;
+    margin: 14px 0 0;
+    font-size: 12px;
     color: rgba(255,255,255,0.32);
   }
   .login-card-foot a {
@@ -280,10 +289,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 11px;
+    gap: 10px;
     width: 100%;
-    padding: 15px 30px;
-    border-radius: 15px;
+    padding: 13px 24px;
+    border-radius: 14px;
     background: linear-gradient(160deg, #5865F2 0%, #4752c4 100%);
     border: 1px solid rgba(255,255,255,0.18);
     text-decoration: none;
@@ -371,7 +380,8 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 4px;
-    padding: 18px 24px calc(18px + env(safe-area-inset-bottom, 0px));
+    flex-shrink: 0;
+    padding: 10px 24px calc(10px + env(safe-area-inset-bottom, 0px));
     animation: fade-up 0.8s var(--ease-smooth) 0.3s both;
   }
 
@@ -406,12 +416,9 @@
 
   /* Phone */
   @media (max-width: 640px) {
-    main.page { gap: 40px; padding-top: 10vh; justify-content: flex-start; }
-    .brand-tag { font-size: 24px; }
-    .login-card { width: 100%; border-radius: 22px; }
-    .login-btn { width: 100%; }
+    .login-card { width: 100%; border-radius: 20px; }
     .site-links { gap: 2px 0; }
-    .site-link { font-size: 12px; padding: 8px 10px; }
+    .site-link { font-size: 12px; padding: 6px 10px; }
   }
 
   /* Tablet */
@@ -421,7 +428,6 @@
 
   /* Desktop */
   @media (min-width: 1025px) {
-    main.page { gap: 56px; }
     .login-card { width: 420px; }
   }
 </style>
@@ -438,15 +444,14 @@
 </div>
 
 <main class="page">
-  <div class="brand">
-    <img class="brand-badge" src="../assets/images/chp-badge.png" alt="California Highway Patrol badge" draggable="false">
-    <img class="brand-wordmark" src="../assets/images/chp-wordmark.png" alt="CHP wordmark">
+  <div class="login-card" id="loginCard">
+    <div class="brand">
+      <img class="brand-badge" src="../assets/images/chp-badge.png" alt="California Highway Patrol badge" draggable="false">
+      <img class="brand-wordmark" src="../assets/images/chp-wordmark.png" alt="CHP wordmark">
+    </div>
+
     <h1 class="brand-tag" id="brandTag">Welcome to your <span>Dashboard</span></h1>
     <p class="brand-sub" id="brandSub">Sign in to check your duty time, rank progress, and everything else on your record.</p>
-  </div>
-
-  <div class="login-card" id="loginCard">
-    <h2 class="login-card-title">Login</h2>
 
     <div class="field-row">
       <div class="field-row-text">
