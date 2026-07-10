@@ -342,6 +342,152 @@ html, body {
   vertical-align: middle;
 }
 
+/* ── Leaderboard toolbar (period + shift-type filter + on-duty badge) ── */
+.leaderboard-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.leaderboard-toolbar .period-selector { margin-bottom: 0; }
+
+.shift-type-selector {
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.10);
+  width: fit-content;
+}
+.shift-type-filter-btn {
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.55);
+  font-family: "Manrope", sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.shift-type-filter-btn:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.shift-type-filter-btn.active { background: rgba(201,166,107,0.16); color: var(--chp-gold-bright); }
+
+.on-duty-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(90,224,120,0.10);
+  border: 1px solid rgba(90,224,120,0.28);
+  color: rgba(180,255,200,0.92);
+  font-family: "Manrope", sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.on-duty-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5ae078;
+  box-shadow: 0 0 6px rgba(90,224,120,0.7);
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+
+.panel-subtitle {
+  color: rgba(255,255,255,0.5);
+  font-size: 13px;
+  margin: -6px 0 18px;
+}
+
+/* ── Recognized Officers ── */
+.officer-of-week-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(201,166,107,0.14), rgba(255,255,255,0.03));
+  border: 1px solid rgba(201,166,107,0.30);
+}
+.officer-of-week-label {
+  font-family: "Manrope", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--chp-gold-bright);
+}
+.officer-of-week-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tenure-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(201,166,107,0.14);
+  border: 1px solid rgba(201,166,107,0.3);
+  color: var(--chp-gold-bright);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  vertical-align: middle;
+}
+
+/* ── Department Feed ── */
+.department-feed-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.department-feed-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  animation: leaderboard-row-in 0.35s var(--ease-smooth, ease) both;
+}
+.department-feed-icon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+.department-feed-icon-promotion {
+  background: rgba(201,166,107,0.16);
+  border: 1px solid rgba(201,166,107,0.35);
+  color: var(--chp-gold-bright);
+}
+.department-feed-icon-application_accepted {
+  background: rgba(90,180,224,0.14);
+  border: 1px solid rgba(90,180,224,0.3);
+  color: rgba(170,220,255,0.9);
+}
+.department-feed-desc { flex: 1; font-size: 13px; color: rgba(255,255,255,0.85); min-width: 0; }
+.department-feed-name { font-weight: 700; color: #fff; }
+.department-feed-date { font-size: 12px; color: rgba(255,255,255,0.4); flex-shrink: 0; }
+
 /* ── Shifts ── */
 .shifts-body {
   display: flex;
@@ -995,4 +1141,74 @@ html, body {
 
 @media (max-width: 480px) {
   .ai-panel { width: 100vw; }
+}
+
+/* Developer tools (Phase 6) */
+.dev-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.dev-tab {
+  box-sizing: border-box;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(201,166,107,0.25);
+  background: rgba(255,255,255,0.03);
+  color: inherit;
+  cursor: pointer;
+}
+.dev-tab.active { background: rgba(201,166,107,0.16); border-color: var(--chp-gold-bright); }
+.dev-panel { display: none; }
+.dev-panel.active { display: block; }
+.dev-health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.dev-health-card {
+  box-sizing: border-box;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.dev-health-card.ok { border-color: rgba(80,200,120,0.5); }
+.dev-health-card.down { border-color: rgba(220,80,80,0.6); }
+.dev-diagnostics-warning { color: var(--chp-gold-bright); margin-bottom: 12px; }
+.dev-diagnostics-form { display: flex; flex-direction: column; gap: 8px; max-width: 560px; }
+.dev-diagnostics-form select,
+.dev-diagnostics-form input,
+.dev-diagnostics-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.2);
+  color: inherit;
+  font-family: inherit;
+}
+#diagResult {
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.25);
+  max-height: 400px;
+  overflow: auto;
+}
+.dev-kill-switch-row, .dev-tester-row {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 8px;
+}
+.dev-testers-add-row { display: flex; gap: 8px; margin-bottom: 16px; max-width: 480px; }
+.dev-testers-add-row input {
+  box-sizing: border-box;
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.2);
+  color: inherit;
 }

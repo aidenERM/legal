@@ -1,4 +1,4 @@
-const WORKER_URL = "https://chp-dashboard-api.aidenspearb.workers.dev";
+﻿const WORKER_URL = "https://chp-dashboard-api.aidenspearb.workers.dev";
 
 function formatDuration(totalSeconds) {
   const hours = Math.floor(totalSeconds / 3600);
@@ -169,6 +169,30 @@ async function bootMe() {
     const lookupBtn = group.querySelector(".nav-item");
     lookupBtn.addEventListener("click", () => showPanel("lookup"));
 
+    // Phase 4 - High Ranks tier (admin/management/developer): LOA Management,
+    // Transfer Requests, RA Oversight, Promotion Quota, and the new Officers
+    // roster/action panel. All sit in this same admin+ nav group - it's a
+    // management action surface, not confidential-only, so it's visible to
+    // High Ranks and above (not gated further like the BOC group below).
+    const phase4Items = [
+      { section: "officers-mgmt", label: "Officers", onOpen: loadOfficersRoster },
+      { section: "loa-mgmt", label: "LOA Management", onOpen: loadLoaManagement },
+      { section: "transfers", label: "Transfer Requests", onOpen: loadTransfersQueue },
+      { section: "ra-oversight", label: "RA Oversight", onOpen: loadRaOversight },
+      { section: "promotion-quota", label: "Promotion Quota", onOpen: loadPromotionQuota },
+    ];
+    phase4Items.forEach(({ section, label, onOpen }) => {
+      const btn = document.createElement("button");
+      btn.className = "nav-item";
+      btn.dataset.section = section;
+      btn.textContent = label;
+      btn.addEventListener("click", () => {
+        showPanel(section);
+        onOpen();
+      });
+      group.appendChild(btn);
+    });
+
     // Phase 5 - Board of Commissioners tier: management/developer only.
     // "High Ranks" (admin tier) never sees this nav item exists at all.
     if (me.tier === "management" || me.tier === "developer") {
@@ -304,9 +328,10 @@ async function loadLookupDetail(userId) {
   const detailWrap = document.getElementById("lookupDetailWrap");
   detailWrap.innerHTML = `<div class="skeleton" style="height: 120px; margin-top: 20px;"></div>`;
 
-  const [shifts, history] = await Promise.all([
+  const [shifts, history, roblox] = await Promise.all([
     apiGet(`/api/lookup/${userId}/shifts`),
     apiGet(`/api/lookup/${userId}/history`),
+    apiGet(`/api/lookup/${userId}/roblox`),
   ]);
 
   if (!shifts || !history) {
@@ -314,9 +339,21 @@ async function loadLookupDetail(userId) {
     return;
   }
 
+  // Phase 4: linked-Roblox display, wrapping utils/bloxlink.py via the bot
+  // proxy - shown as best-effort (linked/unavailable), never blocking the
+  // rest of the detail panel if Bloxlink itself is down.
+  let robloxHtml = `<div class="empty-state">Roblox link status unavailable right now.</div>`;
+  if (roblox && roblox.ok) {
+    robloxHtml = roblox.linked
+      ? `<div class="badge-card">Linked Roblox ID: <code>${roblox.robloxId}</code></div>`
+      : `<div class="empty-state">No linked Roblox account found.</div>`;
+  }
+
   detailWrap.innerHTML = `
     <h2 class="lookup-detail-heading">Shifts</h2>
     ${renderShiftsSummaryHtml(shifts)}
+    <h2 class="lookup-detail-heading" style="margin-top: 22px;">Linked Roblox</h2>
+    ${robloxHtml}
     <h2 class="lookup-detail-heading" style="margin-top: 22px;">History</h2>
     <ol class="history-list">${renderHistoryEntries(history.entries)}</ol>
     <div class="lookup-actions">
@@ -1491,6 +1528,481 @@ async function loadBocSettings() {
 
   body.hidden = false;
   body.textContent = res.settings ? JSON.stringify(res.settings, null, 2) : "No settings document found.";
+}
+
+
+// ── Developer Tools (Phase 6) ──
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+document.querySelectorAll(".dev-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".dev-tab").forEach((t) => t.classList.toggle("active", t === tab));
+    document.querySelectorAll(".dev-panel").forEach((p) => p.classList.remove("active"));
+    document.getElementById(`devPanel-${tab.dataset.devTab}`).classList.add("active");
+
+    if (tab.dataset.devTab === "kill-switches") loadDevKillSwitches();
+    if (tab.dataset.devTab === "system-health") loadDevSystemHealth();
+    if (tab.dataset.devTab === "deployment-info") loadDevDeploymentInfo();
+    if (tab.dataset.devTab === "testers") loadDevTesters();
+  });
+});
+
+async function loadDevKillSwitches() {
+  const skeleton = document.getElementById("killSwitchesSkeleton");
+  const list = document.getElementById("killSwitchesList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await apiGet("/api/dev/kill-switches");
+  skeleton.hidden = true;
+  list.hidden = false;
+
+  if (!res || !res.ok) {
+    list.innerHTML = `<div class="empty-state">Failed to load kill switches.</div>`;
+    return;
+  }
+
+  list.innerHTML = res.sections
+    .map(
+      (s) => `
+    <div class="dev-kill-switch-row" data-key="${escapeHtml(s.key)}">
+      <span>${escapeHtml(s.key)}</span>
+      <button class="dev-kill-switch-toggle" data-enabled="${s.enabled}">${s.enabled ? "Enabled" : "Disabled"}</button>
+    </div>
+  `
+    )
+    .join("");
+
+  list.querySelectorAll(".dev-kill-switch-toggle").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const row = btn.closest(".dev-kill-switch-row");
+      const key = row.dataset.key;
+      const nextEnabled = btn.dataset.enabled !== "true";
+      btn.disabled = true;
+      const res = await apiPost("/api/dev/kill-switches", { key, enabled: nextEnabled });
+      btn.disabled = false;
+      if (res && res.ok) {
+        btn.dataset.enabled = String(nextEnabled);
+        btn.textContent = nextEnabled ? "Enabled" : "Disabled";
+      }
+    });
+  });
+}
+
+async function loadDevSystemHealth() {
+  const skeleton = document.getElementById("systemHealthSkeleton");
+  const grid = document.getElementById("systemHealthGrid");
+  skeleton.hidden = false;
+  grid.hidden = true;
+
+  const res = await apiGet("/api/dev/system-health");
+  skeleton.hidden = true;
+  grid.hidden = false;
+
+  if (!res || !res.ok) {
+    grid.innerHTML = `<div class="empty-state">Failed to load system health.</div>`;
+    return;
+  }
+
+  grid.innerHTML = Object.values(res.checks)
+    .map(
+      (check) => `
+    <div class="dev-health-card ${check.ok ? "ok" : "down"}">
+      <div class="label">${escapeHtml(check.name)}</div>
+      <div class="value">${check.ok ? "Healthy" : "Down"}</div>
+      ${check.latencyMs != null ? `<div class="dev-health-latency">${check.latencyMs}ms</div>` : ""}
+    </div>
+  `
+    )
+    .join("");
+}
+
+async function runDevDiagnosticsQuery() {
+  const op = document.getElementById("diagOp").value;
+  const collection = document.getElementById("diagCollection").value.trim();
+  const rawBody = document.getElementById("diagBody").value.trim();
+  const resultEl = document.getElementById("diagResult");
+
+  if (!collection) {
+    resultEl.textContent = "Collection name is required.";
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = rawBody ? JSON.parse(rawBody) : op === "aggregate" ? [] : {};
+  } catch {
+    resultEl.textContent = "Invalid JSON.";
+    return;
+  }
+
+  const payload = { op, collection };
+  if (op === "findOne") payload.filter = parsed;
+  else payload.pipeline = parsed;
+
+  resultEl.textContent = "Running...";
+  const res = await apiPost("/api/dev/diagnostics/query", payload);
+  if (!res || !res.ok) {
+    resultEl.textContent = `Error: ${res?.data?.reason || "request failed"}`;
+    return;
+  }
+  resultEl.textContent = JSON.stringify(res.data, null, 2);
+}
+
+document.getElementById("diagRunBtn").addEventListener("click", runDevDiagnosticsQuery);
+
+async function loadDevDeploymentInfo() {
+  const skeleton = document.getElementById("deploymentInfoSkeleton");
+  const body = document.getElementById("deploymentInfoBody");
+  skeleton.hidden = false;
+  body.hidden = true;
+
+  const [info, versionRes] = await Promise.all([
+    apiGet("/api/dev/deployment-info"),
+    fetch("version.json").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+  ]);
+
+  skeleton.hidden = true;
+  body.hidden = false;
+
+  if (!info || !info.ok) {
+    body.innerHTML = `<div class="empty-state">Failed to load deployment info.</div>`;
+    return;
+  }
+
+  body.innerHTML = `
+    <div class="dev-kill-switch-row"><span>Worker version</span><span>${escapeHtml(info.workerVersionId || "unknown")}</span></div>
+    <div class="dev-kill-switch-row"><span>Bridge git hash</span><span>${escapeHtml(info.bridgeGitHash || "unknown")}</span></div>
+    <div class="dev-kill-switch-row"><span>Frontend commit</span><span>${escapeHtml((versionRes && versionRes.commit) || "unknown")}</span></div>
+  `;
+}
+
+async function loadDevTesters() {
+  const skeleton = document.getElementById("testersSkeleton");
+  const list = document.getElementById("testersList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await apiGet("/api/dev/testers");
+  skeleton.hidden = true;
+  list.hidden = false;
+
+  if (!res || !res.ok) {
+    list.innerHTML = `<div class="empty-state">Failed to load testers.</div>`;
+    return;
+  }
+
+  const testers = res.testers || [];
+  list.innerHTML = testers.length
+    ? testers
+        .map(
+          (t) => `
+    <div class="dev-tester-row" data-user-id="${escapeHtml(t._id)}">
+      <span>${escapeHtml(t._id)} (added by ${escapeHtml(t.added_by || "unknown")})</span>
+      <button class="dev-tester-remove-btn">Remove</button>
+    </div>
+  `
+        )
+        .join("")
+    : `<div class="empty-state">No testers enrolled.</div>`;
+
+  list.querySelectorAll(".dev-tester-remove-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const row = btn.closest(".dev-tester-row");
+      const userId = row.dataset.userId;
+      btn.disabled = true;
+      const res = await apiDelete("/api/dev/testers", { userId });
+      if (res && res.ok) loadDevTesters();
+      else btn.disabled = false;
+    });
+  });
+}
+
+document.getElementById("testerAddBtn").addEventListener("click", async () => {
+  const input = document.getElementById("testerAddInput");
+  const userId = input.value.trim();
+  if (!userId) return;
+  const res = await apiPost("/api/dev/testers", { userId });
+  if (res && res.ok) {
+    input.value = "";
+    loadDevTesters();
+  }
+});
+
+// ── Phase 4: High Ranks tier - LOA Management, Transfer Requests,
+// RA Oversight, Promotion Quota, and the Officers roster/action panel. ──
+
+function renderLoaRow(item, { withActions } = {}) {
+  const started = item.started_at ? formatDate(item.started_at) : "?";
+  const ends = item.expiry ? formatDate(item.expiry) : "?";
+  const actions = withActions
+    ? `
+      <div class="lookup-actions">
+        <button class="lookup-action-btn" data-loa-id="${item._id}" data-decision="accept">Accept</button>
+        <button class="lookup-action-btn" data-loa-id="${item._id}" data-decision="deny">Deny</button>
+      </div>
+    `
+    : "";
+  return `
+    <li class="loa-history-row">
+      <span class="history-desc">${item.type || "LOA"} — user <code>${item.user_id}</code>: ${item.reason || "No reason given."}</span>
+      <span class="history-date">${started} → ${ends}</span>
+      ${actions}
+    </li>
+  `;
+}
+
+async function loadLoaManagement() {
+  const pendingSkeleton = document.getElementById("loaPendingSkeleton");
+  const pendingList = document.getElementById("loaPendingList");
+  const activeSkeleton = document.getElementById("loaActiveSkeleton");
+  const activeList = document.getElementById("loaActiveList");
+
+  const [pending, active] = await Promise.all([
+    apiGet("/api/hr/loa/pending"),
+    apiGet("/api/hr/loa/active"),
+  ]);
+
+  pendingSkeleton.hidden = true;
+  pendingList.hidden = false;
+  if (!pending || !pending.entries || pending.entries.length === 0) {
+    pendingList.innerHTML = `<li class="empty-state">No pending requests.</li>`;
+  } else {
+    pendingList.innerHTML = pending.entries.map((item) => renderLoaRow(item, { withActions: true })).join("");
+    pendingList.querySelectorAll(".lookup-action-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        const res = await apiPost("/api/hr/loa/decide", { loaId: btn.dataset.loaId, decision: btn.dataset.decision });
+        if (res && res.ok && res.data && res.data.ok) loadLoaManagement();
+        else btn.disabled = false;
+      });
+    });
+  }
+
+  activeSkeleton.hidden = true;
+  activeList.hidden = false;
+  activeList.innerHTML = !active || !active.entries || active.entries.length === 0
+    ? `<li class="empty-state">No active LOAs/RAs.</li>`
+    : active.entries.map((item) => renderLoaRow(item)).join("");
+}
+
+// ── Transfer Requests ──
+
+async function loadTransfersQueue() {
+  const skeleton = document.getElementById("transfersQueueSkeleton");
+  const list = document.getElementById("transfersQueueList");
+  const queue = await apiGet("/api/hr/transfers/queue");
+  skeleton.hidden = true;
+  list.hidden = false;
+  if (!queue || !queue.entries || queue.entries.length === 0) {
+    list.innerHTML = `<li class="empty-state">No pending transfer requests.</li>`;
+    return;
+  }
+  list.innerHTML = queue.entries
+    .map(
+      (t) => `
+      <li class="loa-history-row">
+        <span class="history-desc">${t.direction || "?"} transfer — user <code>${t.discord_id}</code> (${t.department || "?"}), status: ${t.status}</span>
+        <div class="lookup-actions">
+          <button class="lookup-action-btn transfer-deny-btn" data-id="${t._id}">Deny</button>
+        </div>
+      </li>
+    `
+    )
+    .join("");
+  // Accept requires a calculated rank string the reviewer must supply (the
+  // bot's do_accept mirrors the same department role ladder the review
+  // buttons use) - kept as a prompt() rather than a full rank picker for
+  // this phase; denies need no extra input so get a one-click button.
+  list.querySelectorAll(".transfer-deny-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const reason = prompt("Deny reason (short category):", "policy");
+      if (reason === null) return;
+      btn.disabled = true;
+      const res = await apiPost("/api/hr/transfers/decide", { transferId: btn.dataset.id, decision: "deny", reason });
+      if (res && res.ok && res.data && res.data.ok) loadTransfersQueue();
+      else btn.disabled = false;
+    });
+  });
+}
+
+// ── RA Oversight ──
+
+let currentRaOversightTab = "sessions";
+
+function renderRaOversightRow(entry) {
+  const label = entry.session_id ? `Session #${entry.session_id}` : entry._id;
+  return `
+    <li class="loa-history-row">
+      <span class="history-desc">${label} — type: ${entry.type || "?"}, status: ${entry.status || "?"}, FTO: <code>${entry.fto_id ?? "unassigned"}</code></span>
+      <span class="history-date">${entry.created_at ? formatDate(entry.created_at) : ""}</span>
+    </li>
+  `;
+}
+
+async function loadRaOversight(tab) {
+  if (tab) currentRaOversightTab = tab;
+  document.querySelectorAll('[data-ra-tab]').forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.raTab === currentRaOversightTab);
+  });
+  const skeleton = document.getElementById("raOversightSkeleton");
+  const list = document.getElementById("raOversightList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const paths = {
+    sessions: "/api/hr/ra/sessions",
+    leaderboard: "/api/hr/ra/leaderboard",
+    history: "/api/hr/ra/history",
+    results: "/api/hr/ra/results",
+  };
+  const data = await apiGet(paths[currentRaOversightTab] || paths.sessions);
+  skeleton.hidden = true;
+  list.hidden = false;
+
+  const entries = (data && data.entries) || [];
+  if (entries.length === 0) {
+    list.innerHTML = `<li class="empty-state">No data for this view.</li>`;
+    return;
+  }
+  if (currentRaOversightTab === "leaderboard") {
+    list.innerHTML = entries
+      .map((e) => `<li class="loa-history-row"><span class="history-desc">FTO <code>${e._id}</code></span><span class="history-date">${e.sessions} session(s)</span></li>`)
+      .join("");
+  } else {
+    list.innerHTML = entries.map(renderRaOversightRow).join("");
+  }
+}
+
+document.getElementById("raOversightTabs")?.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-ra-tab]");
+  if (btn) loadRaOversight(btn.dataset.raTab);
+});
+
+// ── Promotion Quota (read-only) ──
+
+async function loadPromotionQuota() {
+  const skeleton = document.getElementById("promotionQuotaSkeleton");
+  const cards = document.getElementById("promotionQuotaCards");
+  const data = await apiGet("/api/hr/promotion-quota");
+  skeleton.hidden = true;
+  cards.hidden = false;
+  if (!data) {
+    cards.innerHTML = `<div class="empty-state">Failed to load promotion quota settings.</div>`;
+    return;
+  }
+  const roleQuotaRows = (data.roleQuotas || [])
+    .map((rq) => `<div class="badge-card">Role <code>${rq.role}</code>: ${rq.quota}s</div>`)
+    .join("") || `<div class="empty-state">No per-role overrides configured.</div>`;
+  cards.innerHTML = `
+    <div class="stat-card"><div class="label">Weekly promotion quota</div><div class="value">${data.weeklyPromotionQuota != null ? formatDuration(data.weeklyPromotionQuota) : "Not set"}</div></div>
+    <div class="stat-card"><div class="label">Weekly shift quota</div><div class="value">${data.quota != null ? formatDuration(data.quota) : "Not set"}</div></div>
+    <div class="stat-card"><div class="label">Period start</div><div class="value">${data.periodStart ? formatDate(data.periodStart) : "Not set"}</div></div>
+    ${roleQuotaRows}
+  `;
+}
+
+// ── Officers roster + per-officer action panel ──
+
+async function loadOfficersRoster() {
+  const skeleton = document.getElementById("officersRosterSkeleton");
+  const list = document.getElementById("officersRosterList");
+  document.getElementById("officerDetailWrap").innerHTML = "";
+  const res = await apiGet("/api/hr/officers/roster");
+  skeleton.hidden = true;
+  list.hidden = false;
+  if (!res || !res.ok || !res.officers || res.officers.length === 0) {
+    list.innerHTML = `<li class="empty-state">No officers found (or the staff role isn't configured).</li>`;
+    return;
+  }
+  list.innerHTML = res.officers
+    .map(
+      (o) => `
+      <li class="lookup-result-row" data-user-id="${o.userId}">
+        <span class="lookup-result-name">${o.displayName}</span>
+        <span class="lookup-result-nick">${o.topRole || ""}${o.onDuty ? " · On duty" : ""}</span>
+      </li>
+    `
+    )
+    .join("");
+  list.querySelectorAll(".lookup-result-row").forEach((row) => {
+    row.addEventListener("click", () => openOfficerDetail(row.dataset.userId));
+  });
+}
+
+let officerDetailUserId = null;
+
+function openOfficerDetail(userId) {
+  officerDetailUserId = userId;
+  const wrap = document.getElementById("officerDetailWrap");
+  wrap.innerHTML = `
+    <h2 class="lookup-detail-heading" style="margin-top: 22px;">Manage officer <code>${userId}</code></h2>
+    <div class="lookup-actions">
+      <button class="lookup-action-btn" data-kind="shift_end">End Shift</button>
+      <button class="lookup-action-btn" data-kind="loa_create">File LOA (7d)</button>
+      <button class="lookup-action-btn" data-kind="promote">Log Promotion Eligible</button>
+    </div>
+    <div class="field-row" style="margin-top: 12px;">
+      <textarea id="officerDmMessage" rows="3" placeholder="DM message to this officer..." style="flex: 1;"></textarea>
+      <button class="lookup-action-btn" id="officerDmSendBtn">Send DM</button>
+    </div>
+    <div id="officerActionMessage"></div>
+  `;
+  wrap.querySelectorAll(".lookup-action-btn[data-kind]").forEach((btn) => {
+    btn.addEventListener("click", () => handleOfficerActionClick(btn));
+  });
+  document.getElementById("officerDmSendBtn").addEventListener("click", () => sendOfficerDm());
+}
+
+function handleOfficerActionClick(btn) {
+  if (!btn.classList.contains("confirming")) {
+    btn.classList.add("confirming");
+    const original = btn.textContent;
+    btn.dataset.originalLabel = original;
+    btn.textContent = "Are you sure? Click again to confirm";
+    setTimeout(() => {
+      if (btn.classList.contains("confirming")) {
+        btn.classList.remove("confirming");
+        btn.textContent = btn.dataset.originalLabel;
+      }
+    }, 4000);
+    return;
+  }
+  btn.classList.remove("confirming");
+  btn.textContent = btn.dataset.originalLabel;
+  fireOfficerAction(btn.dataset.kind);
+}
+
+async function fireOfficerAction(kind) {
+  const messageEl = document.getElementById("officerActionMessage");
+  const body = { targetUserId: officerDetailUserId, kind };
+  if (kind === "loa_create") {
+    body.requestType = "loa";
+    body.durationSeconds = 7 * 86400;
+    body.reason = "Filed via Officers panel.";
+  }
+  const res = await apiPost("/api/hr/officers/action", body);
+  if (!res || !res.ok || !res.data || !res.data.ok) {
+    messageEl.innerHTML = `<div class="lookup-action-message error">Action failed${res && res.data && res.data.error ? `: ${res.data.error}` : ""}.</div>`;
+    return;
+  }
+  messageEl.innerHTML = `<div class="lookup-action-message success">Action completed successfully.</div>`;
+}
+
+async function sendOfficerDm() {
+  const messageEl = document.getElementById("officerActionMessage");
+  const message = document.getElementById("officerDmMessage").value.trim();
+  if (!message) return;
+  const res = await apiPost("/api/hr/officers/action", { targetUserId: officerDetailUserId, kind: "dm", message });
+  if (!res || !res.ok || !res.data || !res.data.ok) {
+    messageEl.innerHTML = `<div class="lookup-action-message error">DM failed to send.</div>`;
+    return;
+  }
+  messageEl.innerHTML = `<div class="lookup-action-message success">DM sent.</div>`;
+  document.getElementById("officerDmMessage").value = "";
 }
 
 bootMe().then(() => loadShiftManagement());

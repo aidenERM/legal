@@ -231,6 +231,48 @@
       <div id="lookupDetailWrap"></div>
     </section>
 
+    <section class="panel" id="panel-officers-mgmt">
+      <h1>Officers</h1>
+      <p class="panel-subtitle">All staff, highest rank to lowest. Click an officer to manage their shift, LOA/RA, promotion, or send a DM.</p>
+      <div class="skeleton" id="officersRosterSkeleton"></div>
+      <ul class="lookup-results-list" id="officersRosterList" hidden></ul>
+      <div id="officerDetailWrap"></div>
+    </section>
+
+    <section class="panel" id="panel-loa-mgmt">
+      <h1>LOA Management</h1>
+      <h2 class="lookup-detail-heading">Pending Requests</h2>
+      <div class="skeleton" id="loaPendingSkeleton"></div>
+      <ol class="loa-history-list" id="loaPendingList" hidden></ol>
+      <h2 class="lookup-detail-heading" style="margin-top: 26px;">Active LOAs / RAs</h2>
+      <div class="skeleton" id="loaActiveSkeleton"></div>
+      <ol class="loa-history-list" id="loaActiveList" hidden></ol>
+    </section>
+
+    <section class="panel" id="panel-transfers">
+      <h1>Transfer Requests</h1>
+      <div class="skeleton" id="transfersQueueSkeleton"></div>
+      <ol class="loa-history-list" id="transfersQueueList" hidden></ol>
+    </section>
+
+    <section class="panel" id="panel-ra-oversight">
+      <h1>RA Oversight</h1>
+      <div class="period-selector" id="raOversightTabs">
+        <button class="period-btn active" data-ra-tab="sessions">Sessions</button>
+        <button class="period-btn" data-ra-tab="leaderboard">Leaderboard</button>
+        <button class="period-btn" data-ra-tab="history">History</button>
+        <button class="period-btn" data-ra-tab="results">Results</button>
+      </div>
+      <div class="skeleton" id="raOversightSkeleton"></div>
+      <ol class="loa-history-list" id="raOversightList" hidden></ol>
+    </section>
+
+    <section class="panel" id="panel-promotion-quota">
+      <h1>Promotion Quota</h1>
+      <div class="skeleton" id="promotionQuotaSkeleton"></div>
+      <div class="card-grid" id="promotionQuotaCards" hidden></div>
+    </section>
+
     <section class="panel" id="panel-boc">
       <h1>Board of Commissioners</h1>
       <p class="panel-subtitle">Confidential - visible only to management/developer tier, and never to testers.</p>
