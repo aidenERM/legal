@@ -584,6 +584,7 @@
 
   const loginBtn        = document.getElementById("loginBtn");
   const loginProcessing = document.getElementById("loginProcessing");
+  const rememberMe      = document.getElementById("rememberMe");
 
   const authorizeUrl =
     "https://discord.com/api/oauth2/authorize" +
@@ -607,7 +608,7 @@
       method: "POST",
       headers: { "content-type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ code: params.get("code") }),
+      body: JSON.stringify({ code: params.get("code"), remember: !!(rememberMe && rememberMe.checked) }),
     })
       .then(async (response) => {
         const body = await response.json();
