@@ -925,11 +925,18 @@ async function loadShiftManagement() {
   document.getElementById("shiftMgmtSkeleton").hidden = true;
   document.getElementById("shiftMgmtBody").hidden = false;
 
-  await refreshCurrentShift();
-  loadMiniLeaderboard();
-  loadQuotaRing();
-  loadQuickStats();
-  loadOnDutyCard();
+  // Await every sub-load together, not just the first one - previously only
+  // refreshCurrentShift() was awaited, so the returned promise resolved (and
+  // withLoadingOverlay hid its spinner) long before the slower loads below
+  // (in particular the leaderboard-backed mini leaderboard) had actually
+  // finished, decoupling the overlay from real page-load state.
+  await Promise.allSettled([
+    refreshCurrentShift(),
+    loadMiniLeaderboard(),
+    loadQuotaRing(),
+    loadQuickStats(),
+    loadOnDutyCard(),
+  ]);
 
   if (shiftPollInterval) clearInterval(shiftPollInterval);
   shiftPollInterval = setInterval(() => {
