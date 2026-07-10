@@ -1765,6 +1765,17 @@ body.reduce-motion .loading-overlay-spinner { animation-duration: 0.01s; }
 @keyframes loading-overlay-spin {
   to { transform: rotate(360deg); }
 }
+.loading-overlay-status {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #f2e6cc;
+}
+.loading-overlay-elapsed {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(224,191,128,0.7);
+}
 .loading-overlay-tip {
   margin: 0;
   font-size: 13px;

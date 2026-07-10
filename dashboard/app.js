@@ -1484,6 +1484,45 @@ const LOADING_TIPS = [
 ];
 let loadingOverlayTimer = null;
 let loadingOverlayTipInterval = null;
+let loadingOverlayElapsedInterval = null;
+let loadingOverlayStartedAt = null;
+let loadingOverlayPending = new Set();
+
+// Friendly names for whatever's still in-flight, shown in the status line
+// instead of a mystery spinner. Falls back to the raw name if unlisted.
+const LOAD_LABELS = {
+  loadShiftManagement: "your shift, quota, and leaderboard",
+  refreshCurrentShift: "your current shift",
+  loadMiniLeaderboard: "this week's leaderboard",
+  loadQuotaRing: "your quota progress",
+  loadQuickStats: "your quick stats",
+  loadOnDutyCard: "who's on duty",
+  loadLeaderboard: "the leaderboard",
+  loadLoa: "your LOA/RA history",
+  loadRa: "the RA page",
+  loadHistory: "your shift history",
+  loadProfile: "your profile",
+  loadSettings: "your settings",
+  loadSessionInfo: "session info",
+  loadRecognizedOfficers: "recognized officers",
+  loadDepartmentFeed: "the department feed",
+};
+
+function _updateLoadingOverlayStatus() {
+  const statusEl = document.getElementById("loadingOverlayStatus");
+  if (!statusEl) return;
+  const names = [...loadingOverlayPending].map((n) => LOAD_LABELS[n] || n);
+  statusEl.textContent = names.length ? `Loading ${names.join(", ")}...` : "Loading...";
+}
+
+function _updateLoadingOverlayElapsed() {
+  const elapsedEl = document.getElementById("loadingOverlayElapsed");
+  if (!elapsedEl || !loadingOverlayStartedAt) return;
+  const seconds = Math.max(0, Math.round((Date.now() - loadingOverlayStartedAt) / 1000));
+  // Not a precise ETA (network conditions vary too much to promise one) -
+  // gives the user a sense of "still working, not frozen" instead.
+  elapsedEl.textContent = seconds < 8 ? `${seconds}s elapsed` : `${seconds}s elapsed - hang tight, this one's slow`;
+}
 
 function showLoadingOverlay() {
   const overlay = document.getElementById("loadingOverlay");
@@ -1493,15 +1532,22 @@ function showLoadingOverlay() {
     tipEl.textContent = LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)];
   };
   pickTip();
+  _updateLoadingOverlayStatus();
+  loadingOverlayStartedAt = Date.now();
+  _updateLoadingOverlayElapsed();
   overlay.hidden = false;
   clearInterval(loadingOverlayTipInterval);
+  clearInterval(loadingOverlayElapsedInterval);
   loadingOverlayTipInterval = setInterval(pickTip, 4000);
+  loadingOverlayElapsedInterval = setInterval(_updateLoadingOverlayElapsed, 1000);
 }
 
 function hideLoadingOverlay() {
   clearTimeout(loadingOverlayTimer);
   clearInterval(loadingOverlayTipInterval);
+  clearInterval(loadingOverlayElapsedInterval);
   loadingOverlayTimer = null;
+  loadingOverlayStartedAt = null;
   const overlay = document.getElementById("loadingOverlay");
   if (overlay) overlay.hidden = true;
 }
@@ -1509,16 +1555,26 @@ function hideLoadingOverlay() {
 // Runs `loadFns` (one or more load* functions, called immediately, may be
 // async or fire-and-forget) and shows the overlay only if they're still
 // running after SLOW_LOAD_THRESHOLD_MS. Safe to call with functions that
-// don't return a promise - Promise.resolve() normalizes them.
+// don't return a promise - Promise.resolve() normalizes them. Tracks each
+// individually so the overlay's status line can name exactly what's still
+// pending, and drops items off that list as they finish rather than only
+// showing a generic spinner until everything settles at once.
 function withLoadingOverlay(...loadFns) {
   clearTimeout(loadingOverlayTimer);
+  loadingOverlayPending = new Set(loadFns.map((fn) => fn.name || "data"));
   loadingOverlayTimer = setTimeout(showLoadingOverlay, SLOW_LOAD_THRESHOLD_MS);
   const results = loadFns.map((fn) => {
+    const name = fn.name || "data";
+    let promise;
     try {
-      return Promise.resolve(fn());
+      promise = Promise.resolve(fn());
     } catch (err) {
-      return Promise.reject(err);
+      promise = Promise.reject(err);
     }
+    return promise.finally(() => {
+      loadingOverlayPending.delete(name);
+      _updateLoadingOverlayStatus();
+    });
   });
   Promise.allSettled(results).then(hideLoadingOverlay);
 }
