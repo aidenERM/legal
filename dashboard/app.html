@@ -36,6 +36,8 @@
     <div class="nav-group">
       <p class="nav-category">Officers</p>
       <button class="nav-item" data-section="leaderboard">Leaderboard</button>
+      <button class="nav-item" data-section="recognized-officers">Recognized Officers</button>
+      <button class="nav-item" data-section="department-feed">Department Feed</button>
     </div>
   </nav>
 
@@ -164,13 +166,24 @@
 
     <section class="panel" id="panel-leaderboard">
       <h1>Leaderboard</h1>
-      <div class="period-selector" id="periodSelector">
-        <button class="period-btn" data-period="live">Live</button>
-        <button class="period-btn" data-period="daily">Daily</button>
-        <button class="period-btn active" data-period="weekly">Weekly</button>
-        <button class="period-btn" data-period="monthly">Monthly</button>
-        <button class="period-btn" data-period="alltime">All-Time</button>
-        <button class="period-btn" data-period="custom">Custom</button>
+      <div class="leaderboard-toolbar">
+        <div class="period-selector" id="periodSelector">
+          <button class="period-btn" data-period="live">Live</button>
+          <button class="period-btn" data-period="daily">Daily</button>
+          <button class="period-btn active" data-period="weekly">Weekly</button>
+          <button class="period-btn" data-period="monthly">Monthly</button>
+          <button class="period-btn" data-period="alltime">All-Time</button>
+          <button class="period-btn" data-period="custom">Custom</button>
+        </div>
+        <div class="shift-type-selector" id="leaderboardShiftTypeSelector">
+          <button class="shift-type-filter-btn active" data-shift-type="all">All</button>
+          <button class="shift-type-filter-btn" data-shift-type="chp">CHP</button>
+          <button class="shift-type-filter-btn" data-shift-type="seu">SEU</button>
+        </div>
+        <div class="on-duty-badge" id="onDutyBadge" hidden>
+          <span class="on-duty-dot"></span>
+          <span id="onDutyCount">0</span> on duty now
+        </div>
       </div>
       <div class="custom-range-row" id="customRangeRow" hidden>
         <div class="field-row">
@@ -187,6 +200,27 @@
       <ol class="leaderboard-list" id="leaderboardList" hidden></ol>
     </section>
 
+    <section class="panel" id="panel-recognized-officers">
+      <h1>Recognized Officers</h1>
+      <p class="panel-subtitle">Officers with 100+ total duty hours and 6+ months of tenure.</p>
+
+      <div class="officer-of-week-card" id="officerOfWeekCard" hidden>
+        <div class="officer-of-week-label">Officer of the Week</div>
+        <div class="officer-of-week-body" id="officerOfWeekBody"></div>
+      </div>
+
+      <div class="skeleton" id="recognizedOfficersSkeleton"></div>
+      <ol class="leaderboard-list recognized-officers-list" id="recognizedOfficersList" hidden></ol>
+    </section>
+
+    <section class="panel" id="panel-department-feed">
+      <h1>Department Feed</h1>
+      <p class="panel-subtitle">Recent promotions and accepted applications, newest first.</p>
+
+      <div class="skeleton" id="departmentFeedSkeleton"></div>
+      <ol class="department-feed-list" id="departmentFeedList" hidden></ol>
+    </section>
+
     <section class="panel" id="panel-lookup">
       <h1>Member Lookup</h1>
       <div class="lookup-search-row">
@@ -195,6 +229,148 @@
       </div>
       <div id="lookupResultsWrap"></div>
       <div id="lookupDetailWrap"></div>
+    </section>
+
+    <section class="panel" id="panel-boc">
+      <h1>Board of Commissioners</h1>
+      <p class="panel-subtitle">Confidential - visible only to management/developer tier, and never to testers.</p>
+
+      <div class="dev-tabs" id="bocTabs">
+        <button class="dev-tab active" data-boc-tab="quota-enforcement">Quota Enforcement</button>
+        <button class="dev-tab" data-boc-tab="hr-review">HR Promotion Review</button>
+        <button class="dev-tab" data-boc-tab="applications">Applications</button>
+        <button class="dev-tab" data-boc-tab="audit-log">Audit Log</button>
+        <button class="dev-tab" data-boc-tab="dm-officers">DM Officers</button>
+        <button class="dev-tab" data-boc-tab="announcement">Announcement</button>
+        <button class="dev-tab" data-boc-tab="ra-stats">RA Program Stats</button>
+        <button class="dev-tab" data-boc-tab="settings">Settings</button>
+      </div>
+
+      <div id="bocDenied" class="empty-state" hidden></div>
+
+      <div class="dev-panel active" id="bocPanel-quota-enforcement">
+        <div class="skeleton" id="bocQuotaSkeleton"></div>
+        <div id="bocQuotaList" hidden></div>
+      </div>
+
+      <div class="dev-panel" id="bocPanel-hr-review">
+        <div class="dev-tabs" id="bocHrSubTabs">
+          <button class="dev-tab active" data-boc-hr-tab="promotion-list">Promotion List</button>
+          <button class="dev-tab" data-boc-hr-tab="review">5-Period Review</button>
+        </div>
+        <div class="dev-panel active" id="bocHrPanel-promotion-list">
+          <div class="skeleton" id="bocPromotionSkeleton"></div>
+          <div id="bocPromotionList" hidden></div>
+        </div>
+        <div class="dev-panel" id="bocHrPanel-review">
+          <div class="skeleton" id="bocHrReviewSkeleton"></div>
+          <div id="bocHrReviewList" hidden></div>
+        </div>
+      </div>
+
+      <div class="dev-panel" id="bocPanel-applications">
+        <div class="skeleton" id="bocApplicationsSkeleton"></div>
+        <div id="bocApplicationsBody" hidden></div>
+      </div>
+
+      <div class="dev-panel" id="bocPanel-audit-log">
+        <div class="lookup-search-row">
+          <input type="text" id="bocAuditActionFilter" placeholder="Filter by action/command...">
+          <button id="bocAuditFilterBtn">Filter</button>
+        </div>
+        <div class="skeleton" id="bocAuditSkeleton"></div>
+        <div id="bocAuditList" hidden></div>
+      </div>
+
+      <div class="dev-panel" id="bocPanel-dm-officers">
+        <div class="dev-diagnostics-form">
+          <select id="bocDmTargetType">
+            <option value="all">All staff</option>
+            <option value="role">Role</option>
+            <option value="user">Single user</option>
+          </select>
+          <input type="text" id="bocDmTargetId" placeholder="Role ID / User ID (if applicable)">
+          <textarea id="bocDmMessage" rows="4" placeholder="Message to send..."></textarea>
+          <button id="bocDmPreviewBtn">Preview</button>
+          <button id="bocDmSendBtn">Send</button>
+        </div>
+        <div class="ai-panel-preview" id="bocDmPreview" hidden></div>
+        <div id="bocDmResult"></div>
+      </div>
+
+      <div class="dev-panel" id="bocPanel-announcement">
+        <div class="dev-diagnostics-form">
+          <input type="text" id="bocAnnChannelId" placeholder="Channel ID">
+          <input type="text" id="bocAnnTitle" placeholder="Title">
+          <textarea id="bocAnnDescription" rows="4" placeholder="Announcement body..."></textarea>
+          <input type="text" id="bocAnnPingRole" placeholder="Ping role ID (optional)">
+          <button id="bocAnnPreviewBtn">Preview</button>
+          <button id="bocAnnSendBtn">Post</button>
+        </div>
+        <div class="ai-panel-preview" id="bocAnnPreview" hidden></div>
+        <div id="bocAnnResult"></div>
+      </div>
+
+      <div class="dev-panel" id="bocPanel-ra-stats">
+        <div class="skeleton" id="bocRaStatsSkeleton"></div>
+        <div id="bocRaStatsBody" hidden></div>
+      </div>
+
+      <div class="dev-panel" id="bocPanel-settings">
+        <div class="skeleton" id="bocSettingsSkeleton"></div>
+        <pre id="bocSettingsBody" hidden></pre>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-developer">
+      <h1>Developer Tools</h1>
+      <p class="panel-subtitle">Visible only to the Developer tier.</p>
+
+      <div class="dev-tabs" id="devTabs">
+        <button class="dev-tab active" data-dev-tab="kill-switches">Kill Switches</button>
+        <button class="dev-tab" data-dev-tab="system-health">System Health</button>
+        <button class="dev-tab" data-dev-tab="diagnostics">Diagnostics</button>
+        <button class="dev-tab" data-dev-tab="deployment-info">Deployment Info</button>
+        <button class="dev-tab" data-dev-tab="testers">Testers</button>
+      </div>
+
+      <div class="dev-panel active" id="devPanel-kill-switches">
+        <div class="skeleton" id="killSwitchesSkeleton"></div>
+        <div id="killSwitchesList" hidden></div>
+      </div>
+
+      <div class="dev-panel" id="devPanel-system-health">
+        <div class="skeleton" id="systemHealthSkeleton"></div>
+        <div class="dev-health-grid" id="systemHealthGrid" hidden></div>
+      </div>
+
+      <div class="dev-panel" id="devPanel-diagnostics">
+        <p class="dev-diagnostics-warning">Read-only console. Only findOne / aggregate operations are accepted - the server rejects anything else.</p>
+        <div class="dev-diagnostics-form">
+          <select id="diagOp">
+            <option value="findOne">findOne</option>
+            <option value="aggregate">aggregate</option>
+          </select>
+          <input type="text" id="diagCollection" placeholder="collection name">
+          <textarea id="diagBody" rows="4" placeholder='findOne: {"_id": "..."}  |  aggregate: [{"$limit": 5}]'></textarea>
+          <button id="diagRunBtn">Run</button>
+        </div>
+        <pre id="diagResult"></pre>
+      </div>
+
+      <div class="dev-panel" id="devPanel-deployment-info">
+        <div class="skeleton" id="deploymentInfoSkeleton"></div>
+        <div id="deploymentInfoBody" hidden></div>
+      </div>
+
+      <div class="dev-panel" id="devPanel-testers">
+        <div class="dev-testers-add-row">
+          <input type="text" id="testerAddInput" placeholder="Discord user ID">
+          <button id="testerAddBtn">Add tester</button>
+        </div>
+        <div class="skeleton" id="testersSkeleton"></div>
+        <div id="testersList" hidden></div>
+      </div>
     </section>
   </main>
 </div>

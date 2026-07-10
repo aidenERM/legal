@@ -54,6 +54,21 @@ async function apiPost(path, body) {
   return { ok: response.ok, status: response.status, data };
 }
 
+async function apiDelete(path, body) {
+  const response = await fetch(`${WORKER_URL}${path}`, {
+    method: "DELETE",
+    credentials: "include",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body || {}),
+  });
+  if (response.status === 401) {
+    window.location.href = "index.html";
+    return null;
+  }
+  const data = await response.json().catch(() => null);
+  return { ok: response.ok, status: response.status, data };
+}
+
 const TIER_BADGE_COPY = {
   staff: "CHP Patrol Operations",
   admin: "CHP Human Resources & Command",
@@ -153,6 +168,38 @@ async function bootMe() {
     sidebar.appendChild(group);
     const lookupBtn = group.querySelector(".nav-item");
     lookupBtn.addEventListener("click", () => showPanel("lookup"));
+
+    // Phase 5 - Board of Commissioners tier: management/developer only.
+    // "High Ranks" (admin tier) never sees this nav item exists at all.
+    if (me.tier === "management" || me.tier === "developer") {
+      const bocBtn = document.createElement("button");
+      bocBtn.className = "nav-item";
+      bocBtn.dataset.section = "boc";
+      bocBtn.textContent = "Board of Commissioners";
+      bocBtn.addEventListener("click", () => {
+        showPanel("boc");
+        loadBocActiveTab();
+      });
+      group.appendChild(bocBtn);
+    }
+  }
+
+  // Developer Tools nav item - Developer tier only, per the Phase 6 plan
+  // ("this page itself must be visible ONLY to the developer tier").
+  if (me.tier === "developer") {
+    const sidebar = document.getElementById("sidebar");
+    const group = document.createElement("div");
+    group.className = "nav-group";
+    group.innerHTML = `
+      <p class="nav-category">Developer</p>
+      <button class="nav-item" data-section="developer">Developer Tools</button>
+    `;
+    sidebar.appendChild(group);
+    const devBtn = group.querySelector(".nav-item");
+    devBtn.addEventListener("click", () => {
+      showPanel("developer");
+      loadDevKillSwitches();
+    });
   }
 
   return me;
@@ -314,7 +361,26 @@ async function fireAdminAction(action) {
 }
 
 let currentLeaderboardPeriod = "weekly";
+let currentLeaderboardShiftType = "all";
 let customRangeValues = null; // { start, end } unix seconds, set once "Apply" is clicked
+let leaderboardAutoRefreshInterval = null;
+let onDutyPollInterval = null;
+
+// Animates a number counting up from 0 to `endValue` inside `el`, formatting
+// each intermediate frame with `formatFn` (e.g. formatDuration). Runs once
+// per fresh render - re-renders (period/filter changes) simply call this
+// again since each row is freshly created.
+function animateCountUp(el, endValue, formatFn, duration) {
+  const start = performance.now();
+  function frame(now) {
+    const progress = Math.min((now - start) / (duration || 600), 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out-cubic
+    const value = Math.round(endValue * eased);
+    el.textContent = formatFn(value);
+    if (progress < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
 
 function renderLeaderboardRows(entries, period) {
   if (entries.length === 0) {
@@ -335,22 +401,33 @@ function renderLeaderboardRows(entries, period) {
             <span class="leaderboard-name">${entry.username}</span>
             ${rankTitle}
           </span>
-          <span class="leaderboard-time">${liveBadge}${formatDuration(entry.totalSeconds)}</span>
+          <span class="leaderboard-time">${liveBadge}<span class="count-target" data-seconds="${entry.totalSeconds}">0h 0m</span></span>
         </li>
       `;
     })
     .join("");
 }
 
-function leaderboardQueryFor(period) {
-  if (period !== "custom") return `/api/leaderboard?period=${period}`;
+// Kicks off the count-up animation for every `.count-target` span inside
+// `container` - called right after innerHTML is set so the rows already
+// exist in the DOM.
+function animateLeaderboardCounts(container) {
+  container.querySelectorAll(".count-target").forEach((el) => {
+    const seconds = Number(el.dataset.seconds || 0);
+    animateCountUp(el, seconds, formatDuration, 700);
+  });
+}
+
+function leaderboardQueryFor(period, shiftType) {
+  const typeParam = shiftType && shiftType !== "all" ? `&shiftType=${shiftType}` : "";
+  if (period !== "custom") return `/api/leaderboard?period=${period}${typeParam}`;
   if (!customRangeValues) return null;
-  return `/api/leaderboard?period=custom&start=${customRangeValues.start}&end=${customRangeValues.end}`;
+  return `/api/leaderboard?period=custom&start=${customRangeValues.start}&end=${customRangeValues.end}${typeParam}`;
 }
 
 async function loadLeaderboard(period) {
   if (period) currentLeaderboardPeriod = period;
-  const path = leaderboardQueryFor(currentLeaderboardPeriod);
+  const path = leaderboardQueryFor(currentLeaderboardPeriod, currentLeaderboardShiftType);
   if (!path) return; // custom period selected but no range applied yet
 
   const skeleton = document.getElementById("leaderboardSkeleton");
@@ -375,6 +452,152 @@ async function loadLeaderboard(period) {
   }
 
   list.innerHTML = renderLeaderboardRows(leaderboard.entries, currentLeaderboardPeriod);
+  animateLeaderboardCounts(list);
+
+  refreshOnDutyBadge();
+}
+
+async function refreshOnDutyBadge() {
+  const badge = document.getElementById("onDutyBadge");
+  const countEl = document.getElementById("onDutyCount");
+  const typeParam = currentLeaderboardShiftType !== "all" ? `?shiftType=${currentLeaderboardShiftType}` : "";
+  const res = await apiGet(`/api/leaderboard/on-duty${typeParam}`);
+  if (!res || typeof res.count !== "number") {
+    badge.hidden = true;
+    return;
+  }
+  countEl.textContent = res.count;
+  badge.hidden = false;
+}
+
+// "Live" leaderboard period + the on-duty badge both auto-refresh every 45s
+// while the Leaderboard panel is open, per the plan's "this-week auto-refresh
+// every 30-60s" requirement (the on-duty badge is always kept fresh too,
+// since it's meaningful regardless of which period is selected).
+function startLeaderboardAutoRefresh() {
+  stopLeaderboardAutoRefresh();
+  leaderboardAutoRefreshInterval = setInterval(() => {
+    loadLeaderboard();
+  }, 45000);
+}
+
+function stopLeaderboardAutoRefresh() {
+  if (leaderboardAutoRefreshInterval) {
+    clearInterval(leaderboardAutoRefreshInterval);
+    leaderboardAutoRefreshInterval = null;
+  }
+}
+
+// ── Recognized Officers ──
+
+function renderOfficerOfWeekHtml(officer) {
+  if (!officer) return "";
+  const avatarUrl = avatarUrlFor(officer.userId, officer.avatar, 64);
+  return `
+    <img class="leaderboard-avatar" src="${avatarUrl}" alt="" width="40" height="40">
+    <span class="leaderboard-identity">
+      <span class="leaderboard-name">${officer.username}</span>
+    </span>
+    <span class="leaderboard-time"><span class="count-target" data-seconds="${officer.weeklySeconds}">0h 0m</span> this week</span>
+  `;
+}
+
+function renderRecognizedOfficerRows(officers) {
+  if (officers.length === 0) {
+    return `<li class="empty-state">No officers currently meet the 100+ hour / 6+ month bar.</li>`;
+  }
+  return officers
+    .map((officer, index) => {
+      const avatarUrl = avatarUrlFor(officer.userId, officer.avatar, 64);
+      const rankTitle = officer.rank
+        ? `<span class="leaderboard-rank-title">${officer.rank}</span>`
+        : `<span class="leaderboard-rank-title unranked">Unranked</span>`;
+      return `
+        <li class="leaderboard-row" style="animation-delay: ${Math.min(index, 20) * 0.02}s">
+          <span class="leaderboard-rank">${index + 1}</span>
+          <img class="leaderboard-avatar" src="${avatarUrl}" alt="" width="32" height="32">
+          <span class="leaderboard-identity">
+            <span class="leaderboard-name">${officer.username}</span>
+            ${rankTitle}
+          </span>
+          <span class="leaderboard-time">
+            <span class="tenure-pill">${Math.floor(officer.tenureDays / 30)}mo tenure</span>
+            <span class="count-target" data-seconds="${officer.totalSeconds}">0h 0m</span>
+          </span>
+        </li>
+      `;
+    })
+    .join("");
+}
+
+async function loadRecognizedOfficers() {
+  const skeleton = document.getElementById("recognizedOfficersSkeleton");
+  const list = document.getElementById("recognizedOfficersList");
+  const weekCard = document.getElementById("officerOfWeekCard");
+  const weekBody = document.getElementById("officerOfWeekBody");
+
+  const res = await apiGet("/api/officers/recognized");
+  skeleton.hidden = true;
+  list.hidden = false;
+
+  if (!res) {
+    list.innerHTML = `<li class="empty-state">Failed to load recognized officers. Try again.</li>`;
+    weekCard.hidden = true;
+    return;
+  }
+
+  if (res.officerOfTheWeek) {
+    weekBody.innerHTML = renderOfficerOfWeekHtml(res.officerOfTheWeek);
+    weekCard.hidden = false;
+    animateLeaderboardCounts(weekCard);
+  } else {
+    weekCard.hidden = true;
+  }
+
+  list.innerHTML = renderRecognizedOfficerRows(res.officers || []);
+  animateLeaderboardCounts(list);
+}
+
+// ── Department Feed ──
+
+const DEPARTMENT_FEED_ICON = {
+  promotion: "★",
+  application_accepted: "✓",
+};
+
+function renderDepartmentFeedRows(entries) {
+  if (entries.length === 0) {
+    return `<li class="empty-state">No recent department activity.</li>`;
+  }
+  return entries
+    .map(
+      (entry) => `
+        <li class="department-feed-row">
+          <span class="department-feed-icon department-feed-icon-${entry.kind}">${DEPARTMENT_FEED_ICON[entry.kind] || "•"}</span>
+          <span class="department-feed-desc">
+            ${entry.username ? `<span class="department-feed-name">${entry.username}</span> — ` : ""}${entry.description}
+          </span>
+          <span class="department-feed-date">${formatDate(entry.timestamp)}</span>
+        </li>
+      `
+    )
+    .join("");
+}
+
+async function loadDepartmentFeed() {
+  const skeleton = document.getElementById("departmentFeedSkeleton");
+  const list = document.getElementById("departmentFeedList");
+
+  const res = await apiGet("/api/officers/department-feed?limit=20");
+  skeleton.hidden = true;
+  list.hidden = false;
+
+  if (!res) {
+    list.innerHTML = `<li class="empty-state">Failed to load the department feed. Try again.</li>`;
+    return;
+  }
+
+  list.innerHTML = renderDepartmentFeedRows(res.entries || []);
 }
 
 async function loadMiniLeaderboard() {
@@ -800,6 +1023,16 @@ document.getElementById("customRangeApply").addEventListener("click", () => {
   loadLeaderboard("custom");
 });
 
+document.querySelectorAll(".shift-type-filter-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    currentLeaderboardShiftType = btn.dataset.shiftType;
+    document
+      .querySelectorAll(".shift-type-filter-btn")
+      .forEach((b) => b.classList.toggle("active", b === btn));
+    loadLeaderboard();
+  });
+});
+
 document.querySelectorAll(".nav-item[data-section]").forEach((item) => {
   item.addEventListener("click", () => {
     const section = item.dataset.section;
@@ -810,7 +1043,14 @@ document.querySelectorAll(".nav-item[data-section]").forEach((item) => {
     if (section === "history") loadHistory();
     if (section === "profile") loadProfile();
     if (section === "settings") loadSettings();
-    if (section === "leaderboard") loadLeaderboard();
+    if (section === "leaderboard") {
+      loadLeaderboard();
+      startLeaderboardAutoRefresh();
+    } else {
+      stopLeaderboardAutoRefresh();
+    }
+    if (section === "recognized-officers") loadRecognizedOfficers();
+    if (section === "department-feed") loadDepartmentFeed();
   });
 });
 
@@ -943,5 +1183,314 @@ document.getElementById("aiInputForm").addEventListener("submit", (e) => {
   input.value = "";
   aiSendMessage(message);
 });
+
+// ── Board of Commissioners tier (Phase 5) ──
+// Confidential: a tester on the "management" tier gets 403
+// {reason:"confidential"} from every /api/boc/* route (never real data),
+// even though testers otherwise see every nav item. Every panel here checks
+// for that reason and swaps in a plain denial message instead of guessing.
+
+let bocActiveTab = "quota-enforcement";
+let bocHrActiveSubTab = "promotion-list";
+
+function bocShowDenied(reason) {
+  const denied = document.getElementById("bocDenied");
+  document.querySelectorAll("#panel-boc .dev-panel").forEach((p) => (p.hidden = true));
+  denied.hidden = false;
+  denied.textContent =
+    reason === "confidential"
+      ? "This section is confidential and unavailable in tester mode."
+      : "This section is unavailable right now.";
+}
+
+function bocClearDenied() {
+  document.getElementById("bocDenied").hidden = true;
+  document.querySelectorAll("#panel-boc .dev-panel").forEach((p) => (p.hidden = false));
+}
+
+// Board of Commissioners routes return a meaningful body on 403 (reason:
+// "confidential"|"forbidden") that the panel needs to render a denial
+// message - apiGet() discards the body on any non-2xx status, so this uses
+// its own fetch instead of apiGet for every boc/* call.
+async function bocGet(path) {
+  const response = await fetch(`${WORKER_URL}${path}`, { credentials: "include" });
+  if (response.status === 401) {
+    window.location.href = "index.html";
+    return null;
+  }
+  return response.json().catch(() => null);
+}
+
+function loadBocActiveTab() {
+  bocClearDenied();
+  if (bocActiveTab === "quota-enforcement") return loadBocQuotaEnforcement();
+  if (bocActiveTab === "hr-review") return loadBocHrSubTab();
+  if (bocActiveTab === "applications") return loadBocApplications();
+  if (bocActiveTab === "audit-log") return loadBocAuditLog();
+  if (bocActiveTab === "ra-stats") return loadBocRaStats();
+  if (bocActiveTab === "settings") return loadBocSettings();
+}
+
+document.querySelectorAll("#bocTabs .dev-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    bocActiveTab = tab.dataset.bocTab;
+    document.querySelectorAll("#bocTabs .dev-tab").forEach((t) => t.classList.toggle("active", t === tab));
+    document
+      .querySelectorAll("#panel-boc > .dev-panel")
+      .forEach((p) => p.classList.toggle("active", p.id === `bocPanel-${bocActiveTab}`));
+    loadBocActiveTab();
+  });
+});
+
+document.querySelectorAll("#bocHrSubTabs .dev-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    bocHrActiveSubTab = tab.dataset.bocHrTab;
+    document.querySelectorAll("#bocHrSubTabs .dev-tab").forEach((t) => t.classList.toggle("active", t === tab));
+    document
+      .querySelectorAll("#bocPanel-hr-review > .dev-panel")
+      .forEach((p) => p.classList.toggle("active", p.id === `bocHrPanel-${bocHrActiveSubTab}`));
+    loadBocHrSubTab();
+  });
+});
+
+function loadBocHrSubTab() {
+  if (bocHrActiveSubTab === "promotion-list") return loadBocPromotionList();
+  return loadBocHrReview();
+}
+
+async function loadBocQuotaEnforcement() {
+  const skeleton = document.getElementById("bocQuotaSkeleton");
+  const list = document.getElementById("bocQuotaList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await bocGet("/api/boc/quota-enforcement");
+  skeleton.hidden = true;
+  if (!res) return bocShowDenied();
+  if (res.reason === "confidential" || res.reason === "forbidden") return bocShowDenied(res.reason);
+  if (!res.ok) {
+    list.hidden = false;
+    list.innerHTML = `<div class="empty-state">Quota enforcement data is unavailable right now.</div>`;
+    return;
+  }
+
+  list.hidden = false;
+  const entries = res.entries || [];
+  const rows = entries
+    .map((e) => `<li>${e.displayName} — ${formatDuration(e.seconds)}</li>`)
+    .join("");
+  list.innerHTML = `
+    <p class="panel-subtitle">${entries.length} staff below quota this period. ${res.loaExemptCount || 0} exempt (LOA).</p>
+    <ul class="history-list">${rows || `<li class="empty-state">Everyone has met quota.</li>`}</ul>
+  `;
+}
+
+async function loadBocPromotionList() {
+  const skeleton = document.getElementById("bocPromotionSkeleton");
+  const list = document.getElementById("bocPromotionList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await bocGet("/api/boc/hr/promotion-list");
+  skeleton.hidden = true;
+  if (!res) return bocShowDenied();
+  if (res.reason === "confidential" || res.reason === "forbidden") return bocShowDenied(res.reason);
+  if (!res.ok) {
+    list.hidden = false;
+    list.innerHTML = `<div class="empty-state">Promotion list is unavailable right now.</div>`;
+    return;
+  }
+
+  list.hidden = false;
+  const entries = res.entries || [];
+  const rows = entries.map((e) => `<li>${e.displayName} — ${formatDuration(e.seconds)}</li>`).join("");
+  list.innerHTML = `
+    <p class="panel-subtitle">Weekly promotion quota: ${formatDuration(res.promotionQuota || 0)}</p>
+    <ul class="history-list">${rows || `<li class="empty-state">No one is eligible this period.</li>`}</ul>
+  `;
+}
+
+async function loadBocHrReview() {
+  const skeleton = document.getElementById("bocHrReviewSkeleton");
+  const list = document.getElementById("bocHrReviewList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await bocGet("/api/boc/hr/review");
+  skeleton.hidden = true;
+  if (!res) return bocShowDenied();
+  if (res.reason === "confidential" || res.reason === "forbidden") return bocShowDenied(res.reason);
+  if (!res.ok || !res.hrRoleConfigured) {
+    list.hidden = false;
+    list.innerHTML = `<div class="empty-state">No High Rank role is configured, or review data is unavailable.</div>`;
+    return;
+  }
+
+  list.hidden = false;
+  const members = res.members || [];
+  const rows = members
+    .map(
+      (m) =>
+        `<li>${m.displayName}${m.isSsgt ? " (SSGT)" : ""} — ${m.classification} (${m.weeksMet}/${m.weeksChecked} weeks met)</li>`
+    )
+    .join("");
+  list.innerHTML = `<ul class="history-list">${rows || `<li class="empty-state">No High Rank/SSGT members found.</li>`}</ul>`;
+}
+
+async function loadBocApplications() {
+  const skeleton = document.getElementById("bocApplicationsSkeleton");
+  const body = document.getElementById("bocApplicationsBody");
+  skeleton.hidden = false;
+  body.hidden = true;
+
+  const [pendingRes, statsRes] = await Promise.all([
+    bocGet("/api/boc/applications/pending"),
+    bocGet("/api/boc/applications/stats"),
+  ]);
+  skeleton.hidden = true;
+  if (!pendingRes || !statsRes) return bocShowDenied();
+  if (pendingRes.reason === "confidential") return bocShowDenied("confidential");
+
+  body.hidden = false;
+  const stats = statsRes.stats || { accepted: 0, denied: 0, pending: 0 };
+  const entries = pendingRes.entries || [];
+  const rows = entries
+    .map((a) => `<li>${a.discord_id} — applied ${new Date((a.created_at || 0) * 1000).toLocaleDateString()}</li>`)
+    .join("");
+  body.innerHTML = `
+    <div class="overview-cards">
+      <div class="stat-card"><div class="label">Pending</div><div class="value">${stats.pending}</div></div>
+      <div class="stat-card"><div class="label">Accepted</div><div class="value">${stats.accepted}</div></div>
+      <div class="stat-card"><div class="label">Denied</div><div class="value">${stats.denied}</div></div>
+    </div>
+    <h2 class="lookup-detail-heading">Pending Queue</h2>
+    <ul class="history-list">${rows || `<li class="empty-state">No pending applications.</li>`}</ul>
+  `;
+}
+
+async function loadBocAuditLog(actionFilter) {
+  const skeleton = document.getElementById("bocAuditSkeleton");
+  const list = document.getElementById("bocAuditList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const query = actionFilter ? `?action=${encodeURIComponent(actionFilter)}` : "";
+  const res = await bocGet(`/api/boc/audit-log${query}`);
+  skeleton.hidden = true;
+  if (!res) return bocShowDenied();
+  if (res.reason === "confidential" || res.reason === "forbidden") return bocShowDenied(res.reason);
+
+  list.hidden = false;
+  const entries = res.entries || [];
+  const rows = entries
+    .map((e) => `<li>[${e.source}] ${e.actorId} — ${e.action}${e.detail ? `: ${e.detail}` : ""}</li>`)
+    .join("");
+  list.innerHTML = `<ul class="history-list">${rows || `<li class="empty-state">No audit entries found.</li>`}</ul>`;
+}
+
+document.getElementById("bocAuditFilterBtn").addEventListener("click", () => {
+  const value = document.getElementById("bocAuditActionFilter").value.trim();
+  loadBocAuditLog(value || undefined);
+});
+
+document.getElementById("bocDmPreviewBtn").addEventListener("click", () => {
+  const message = document.getElementById("bocDmMessage").value;
+  const preview = document.getElementById("bocDmPreview");
+  preview.hidden = false;
+  preview.textContent = message || "(empty message)";
+});
+
+document.getElementById("bocDmSendBtn").addEventListener("click", async () => {
+  const targetType = document.getElementById("bocDmTargetType").value;
+  const targetId = document.getElementById("bocDmTargetId").value.trim();
+  const message = document.getElementById("bocDmMessage").value.trim();
+  const resultEl = document.getElementById("bocDmResult");
+
+  if (!message) {
+    resultEl.innerHTML = `<div class="lookup-action-message error">Message is required.</div>`;
+    return;
+  }
+
+  const target = { type: targetType };
+  if (targetType === "role") target.roleId = targetId;
+  if (targetType === "user") target.userId = targetId;
+
+  const res = await apiPost("/api/boc/dm-officers", { target, message });
+  if (!res || !res.ok || !res.data || res.data.ok === false) {
+    const reason = res && res.data ? res.data.reason || res.data.error : "request_failed";
+    resultEl.innerHTML = `<div class="lookup-action-message error">Failed: ${reason}</div>`;
+    return;
+  }
+  resultEl.innerHTML = `<div class="lookup-action-message success">Sent to ${res.data.sent} officer(s), ${res.data.failed} failed.</div>`;
+});
+
+document.getElementById("bocAnnPreviewBtn").addEventListener("click", () => {
+  const title = document.getElementById("bocAnnTitle").value;
+  const description = document.getElementById("bocAnnDescription").value;
+  const preview = document.getElementById("bocAnnPreview");
+  preview.hidden = false;
+  preview.innerHTML = `<strong>${title || "(no title)"}</strong><br>${description || "(empty body)"}`;
+});
+
+document.getElementById("bocAnnSendBtn").addEventListener("click", async () => {
+  const channelId = document.getElementById("bocAnnChannelId").value.trim();
+  const title = document.getElementById("bocAnnTitle").value.trim();
+  const description = document.getElementById("bocAnnDescription").value.trim();
+  const pingRoleId = document.getElementById("bocAnnPingRole").value.trim() || undefined;
+  const resultEl = document.getElementById("bocAnnResult");
+
+  if (!channelId || !description) {
+    resultEl.innerHTML = `<div class="lookup-action-message error">Channel and body are required.</div>`;
+    return;
+  }
+
+  const res = await apiPost("/api/boc/announcement", { channelId, title, description, pingRoleId });
+  if (!res || !res.ok || !res.data || res.data.ok === false) {
+    const reason = res && res.data ? res.data.reason || res.data.error : "request_failed";
+    resultEl.innerHTML = `<div class="lookup-action-message error">Failed: ${reason}</div>`;
+    return;
+  }
+  resultEl.innerHTML = `<div class="lookup-action-message success">Posted (message ${res.data.messageId}).</div>`;
+});
+
+async function loadBocRaStats() {
+  const skeleton = document.getElementById("bocRaStatsSkeleton");
+  const body = document.getElementById("bocRaStatsBody");
+  skeleton.hidden = false;
+  body.hidden = true;
+
+  const res = await bocGet("/api/boc/ra-program-stats");
+  skeleton.hidden = true;
+  if (!res) return bocShowDenied();
+  if (res.reason === "confidential" || res.reason === "forbidden") return bocShowDenied(res.reason);
+
+  body.hidden = false;
+  const statusCounts = res.statusCounts || {};
+  const topFtos = res.topFtos || [];
+  const statusRows = Object.entries(statusCounts)
+    .map(([status, count]) => `<div class="stat-card"><div class="label">${status}</div><div class="value">${count}</div></div>`)
+    .join("");
+  const ftoRows = topFtos.map((f) => `<li>${f.userId} — ${f.sessionsHosted} session(s)</li>`).join("");
+  body.innerHTML = `
+    <div class="overview-cards">${statusRows || `<div class="empty-state">No RA session data yet.</div>`}</div>
+    <h2 class="lookup-detail-heading">Top FTOs</h2>
+    <ul class="history-list">${ftoRows || `<li class="empty-state">No completed sessions yet.</li>`}</ul>
+  `;
+}
+
+async function loadBocSettings() {
+  const skeleton = document.getElementById("bocSettingsSkeleton");
+  const body = document.getElementById("bocSettingsBody");
+  skeleton.hidden = false;
+  body.hidden = true;
+
+  const res = await bocGet("/api/boc/settings");
+  skeleton.hidden = true;
+  if (!res) return bocShowDenied();
+  if (res.reason === "confidential" || res.reason === "forbidden") return bocShowDenied(res.reason);
+
+  body.hidden = false;
+  body.textContent = res.settings ? JSON.stringify(res.settings, null, 2) : "No settings document found.";
+}
 
 bootMe().then(() => loadShiftManagement());
