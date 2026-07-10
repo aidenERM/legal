@@ -823,4 +823,125 @@ document.getElementById("lookupSearchInput").addEventListener("keydown", (e) => 
   if (e.key === "Enter") performLookupSearch();
 });
 
+// ── AI Assistant (floating panel, present on every page) ──
+
+const aiConversationId = crypto.randomUUID();
+let aiPendingProposal = null; // { proposalId } for the most recent unconfirmed proposal
+
+function aiAppendBubble(role, text) {
+  const messages = document.getElementById("aiMessages");
+  const bubble = document.createElement("div");
+  bubble.className = `ai-bubble ${role}`;
+  bubble.textContent = text;
+  messages.appendChild(bubble);
+  messages.scrollTop = messages.scrollHeight;
+  return bubble;
+}
+
+function aiAppendNote(text) {
+  const messages = document.getElementById("aiMessages");
+  const note = document.createElement("div");
+  note.className = "ai-bubble note";
+  note.textContent = text;
+  messages.appendChild(note);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function aiShowTyping() {
+  const messages = document.getElementById("aiMessages");
+  const typing = document.createElement("div");
+  typing.className = "ai-typing";
+  typing.id = "aiTypingIndicator";
+  typing.innerHTML = "<span></span><span></span><span></span>";
+  messages.appendChild(typing);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function aiHideTyping() {
+  const typing = document.getElementById("aiTypingIndicator");
+  if (typing) typing.remove();
+}
+
+function aiAppendProposalActions(proposalId) {
+  const messages = document.getElementById("aiMessages");
+  const wrap = document.createElement("div");
+  wrap.className = "ai-proposal-actions";
+  wrap.innerHTML = `
+    <button class="ai-confirm-btn">Yes, do it</button>
+    <button class="ai-dismiss-btn">Dismiss</button>
+  `;
+  wrap.querySelector(".ai-confirm-btn").addEventListener("click", () => aiConfirmProposal(proposalId, wrap));
+  wrap.querySelector(".ai-dismiss-btn").addEventListener("click", () => {
+    wrap.remove();
+    aiAppendNote("okay, not doing that");
+    aiPendingProposal = null;
+  });
+  messages.appendChild(wrap);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+async function aiConfirmProposal(proposalId, actionsEl) {
+  actionsEl.remove();
+  aiShowTyping();
+  const res = await apiPost("/api/ai/confirm", { proposalId });
+  aiHideTyping();
+  aiPendingProposal = null;
+  if (!res) return; // 401 redirect already handled by apiPost
+  if (!res.ok || !res.data) {
+    aiAppendBubble("assistant", "Something went wrong confirming that action. Please try again.");
+    return;
+  }
+  aiAppendBubble("assistant", res.data.text || (res.data.ok ? "Done." : "That action could not be completed."));
+}
+
+async function aiSendMessage(message) {
+  aiAppendBubble("user", message);
+  aiShowTyping();
+
+  const res = await apiPost("/api/ai/chat", { message, conversationId: aiConversationId });
+  aiHideTyping();
+  if (!res) return; // 401 redirect already handled by apiPost
+  if (!res.ok || !res.data) {
+    aiAppendBubble("assistant", "Sorry, the assistant is unavailable right now. Please try again later.");
+    return;
+  }
+
+  const data = res.data;
+  aiAppendBubble("assistant", data.text || "");
+
+  if (data.type === "proposal" && data.proposalId) {
+    aiPendingProposal = { proposalId: data.proposalId };
+    aiAppendProposalActions(data.proposalId);
+  }
+}
+
+function aiOpenPanel() {
+  document.getElementById("aiPanel").classList.add("open");
+  document.getElementById("aiInput").focus();
+}
+
+function aiClosePanel() {
+  document.getElementById("aiPanel").classList.remove("open");
+}
+
+document.getElementById("aiFab").addEventListener("click", () => {
+  const panel = document.getElementById("aiPanel");
+  if (panel.classList.contains("open")) {
+    aiClosePanel();
+  } else {
+    aiOpenPanel();
+  }
+});
+
+document.getElementById("aiPanelClose").addEventListener("click", aiClosePanel);
+
+document.getElementById("aiInputForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = document.getElementById("aiInput");
+  const message = input.value.trim();
+  if (!message) return;
+  input.value = "";
+  aiSendMessage(message);
+});
+
 bootMe().then(() => loadShiftManagement());
