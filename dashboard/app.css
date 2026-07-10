@@ -1735,6 +1735,13 @@ body.reduce-motion, body.reduce-motion * {
   backdrop-filter: blur(3px);
   animation: loading-overlay-fade-in 0.25s ease both;
 }
+/* Author `display: flex` above beats the browser's default [hidden]
+   {display:none} UA rule (author styles always win over UA styles), so
+   setting the `hidden` attribute alone did nothing - the overlay was
+   rendering on every page load regardless of actual load state. */
+.loading-overlay[hidden] {
+  display: none;
+}
 body.reduce-motion .loading-overlay { animation: none; }
 @keyframes loading-overlay-fade-in {
   from { opacity: 0; }
