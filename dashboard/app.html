@@ -26,21 +26,45 @@
       <img src="../assets/images/chp-badge.png" alt="" width="28" height="28">
       <span>CHP Dashboard</span>
     </div>
-    <div class="nav-group">
-      <p class="nav-category">My CHP</p>
-      <button class="nav-item active" data-section="shift-management">Shift Management</button>
-      <button class="nav-item" data-section="loa">Leave of Absence</button>
-      <button class="nav-item" data-section="ra">RA</button>
-      <button class="nav-item" data-section="history">Shift History</button>
-      <button class="nav-item" data-section="profile">Profile</button>
-      <button class="nav-item" data-section="settings">Personal Settings</button>
-      <button class="nav-item" data-section="contact">Contact Us</button>
-    </div>
-    <div class="nav-group">
-      <p class="nav-category">Officers</p>
-      <button class="nav-item" data-section="leaderboard">Leaderboard</button>
-      <button class="nav-item" data-section="recognized-officers">Recognized Officers</button>
-      <button class="nav-item" data-section="department-feed">Department Feed</button>
+
+    <!-- Collapsed-state icon rail: one clickable icon per nav category.
+         Hidden while the sidebar is open; shown in place of the nav list
+         once collapsed. Populated/kept in sync by app.js. -->
+    <div class="sidebar-icon-rail" id="sidebarIconRail"></div>
+
+    <div class="sidebar-nav-scroll" id="sidebarNavScroll">
+      <div class="nav-group" data-category="my-chp">
+        <button class="nav-category-header" type="button" data-category="my-chp" aria-expanded="true">
+          <span class="nav-category-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg>
+          </span>
+          <span class="nav-category-label">My CHP</span>
+          <svg class="nav-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="nav-category-items">
+          <button class="nav-item active" data-section="shift-management">Shift Management</button>
+          <button class="nav-item" data-section="loa">Leave of Absence</button>
+          <button class="nav-item" data-section="ra">RA</button>
+          <button class="nav-item" data-section="history">Shift History</button>
+          <button class="nav-item" data-section="profile">Profile</button>
+          <button class="nav-item" data-section="settings">Personal Settings</button>
+          <button class="nav-item" data-section="contact">Contact Us</button>
+        </div>
+      </div>
+      <div class="nav-group" data-category="officers">
+        <button class="nav-category-header" type="button" data-category="officers" aria-expanded="true">
+          <span class="nav-category-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"/><circle cx="17" cy="8" r="2.6"/><path d="M16 14.5c2.7.4 5 2.3 5 5.5"/></svg>
+          </span>
+          <span class="nav-category-label">Officers</span>
+          <svg class="nav-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="nav-category-items">
+          <button class="nav-item" data-section="leaderboard">Leaderboard</button>
+          <button class="nav-item" data-section="recognized-officers">Recognized Officers</button>
+          <button class="nav-item" data-section="department-feed">Department Feed</button>
+        </div>
+      </div>
     </div>
   </nav>
 
@@ -94,6 +118,12 @@
             <h2 class="lookup-detail-heading">Quick Stats</h2>
             <div class="skeleton" id="quickStatsSkeleton" style="height: 100px;"></div>
             <div class="quick-stats-grid" id="quickStatsGrid" hidden></div>
+          </div>
+
+          <div class="on-duty-card">
+            <h2 class="lookup-detail-heading">Currently On Duty <span class="on-duty-card-count" id="onDutyCardCount"></span></h2>
+            <div class="skeleton" id="onDutyCardSkeleton" style="height: 140px;"></div>
+            <ul class="on-duty-list" id="onDutyCardList" hidden></ul>
           </div>
         </div>
       </div>
@@ -175,33 +205,58 @@
 
     <section class="panel" id="panel-settings">
       <h1>Personal Settings</h1>
+      <p class="panel-subtitle">Your preferences, synced to your Discord account across every guild the bot is in.</p>
 
-      <h2 class="settings-section-heading">Display</h2>
-      <div class="settings-list">
-        <div class="settings-row" data-key="reduce_motion">
-          <span class="settings-row-label">Reduce motion</span>
-          <button class="settings-toggle" id="reduceMotionToggle" data-value="false" aria-label="Toggle reduce motion"></button>
+      <div class="settings-card-grid">
+        <div class="settings-card">
+          <h2 class="settings-section-heading">Appearance</h2>
+          <div class="settings-list">
+            <div class="settings-row">
+              <div class="settings-row-text">
+                <span class="settings-row-label">Reduce motion</span>
+                <span class="settings-row-desc">Collapse animations/transitions across the dashboard.</span>
+              </div>
+              <button class="settings-toggle" id="reduceMotionToggle" data-value="false" aria-label="Toggle reduce motion"></button>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-text">
+                <span class="settings-row-label">Accent color</span>
+                <span class="settings-row-desc">Overrides the gold accent used throughout the dashboard.</span>
+              </div>
+              <div class="accent-picker">
+                <input type="color" id="accentColorInput" value="#c9a66b">
+                <button class="accent-reset-btn" id="accentColorReset" type="button">Reset</button>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-text">
+                <span class="settings-row-label">Background</span>
+                <span class="settings-row-desc">Choose a base color for a subtle dashboard background gradient.</span>
+              </div>
+              <div class="accent-picker">
+                <input type="color" id="bgColorInput" value="#1c1708">
+                <button class="accent-reset-btn" id="bgColorReset" type="button">Reset</button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="settings-row" data-key="accent_color">
-          <span class="settings-row-label">Accent color</span>
-          <div class="accent-picker">
-            <input type="color" id="accentColorInput" value="#c9a66b">
-            <button class="accent-reset-btn" id="accentColorReset" type="button">Reset</button>
+
+        <div class="settings-card">
+          <h2 class="settings-section-heading">Session</h2>
+          <div class="settings-list">
+            <div class="settings-row" id="sessionInfoRow">
+              <div class="settings-row-text">
+                <span class="settings-row-label">Stay signed in</span>
+                <span class="settings-row-desc">Set on the login page's checkbox.</span>
+              </div>
+              <span class="settings-row-status" id="sessionInfoStatus" data-status>Loading…</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <h2 class="settings-section-heading">Session</h2>
-      <div class="settings-list">
-        <div class="settings-row" id="sessionInfoRow">
-          <span class="settings-row-label">Stay signed in</span>
-          <span class="settings-row-status" id="sessionInfoStatus" data-status>Loading…</span>
-        </div>
-      </div>
-
-      <h2 class="settings-section-heading">Notifications &amp; Preferences</h2>
-      <div class="skeleton" id="settingsSkeleton"></div>
-      <div class="settings-list" id="settingsList" hidden></div>
+      <div class="skeleton" id="settingsSkeleton" style="margin-top: 22px;"></div>
+      <div class="settings-card-grid" id="settingsCardGrid" hidden></div>
     </section>
 
     <section class="panel" id="panel-contact">

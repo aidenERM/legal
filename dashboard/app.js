@@ -179,27 +179,43 @@ async function bootMe() {
   // tierAtLeast so "developer" (which is >= every other tier) always gets
   // every group, each correctly named.
   if (tierAtLeast(me.tier, "admin")) {
-    const sidebar = document.getElementById("sidebar");
+    const sidebar = document.getElementById("sidebarNavScroll");
     const group = document.createElement("div");
     group.className = "nav-group";
+    group.dataset.category = "high-ranks";
     group.innerHTML = `
-      <p class="nav-category">High Ranks</p>
-      <button class="nav-item" data-section="lookup">Member Lookup</button>
+      <button class="nav-category-header" type="button" data-category="high-ranks" aria-expanded="true">
+        <span class="nav-category-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.2-5.4 3.2 1.3-6-4.6-4.1 6.1-.6L12 3z"/></svg>
+        </span>
+        <span class="nav-category-label">High Ranks</span>
+        <svg class="nav-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="nav-category-items">
+        <button class="nav-item" data-section="lookup">Member Lookup</button>
+      </div>
     `;
     sidebar.appendChild(group);
+    const itemsWrap = group.querySelector(".nav-category-items");
     const lookupBtn = group.querySelector(".nav-item");
     lookupBtn.addEventListener("click", () => showPanel("lookup"));
 
     // Phase 4 - High Ranks tier (admin and above): LOA Management,
-    // Transfer Requests, RA Oversight, Promotion Quota, and the Officers
-    // roster/action panel. Not confidential-only, so visible to High Ranks
-    // and above (not gated further like the BOC group below).
+    // Transfer Requests, RA Oversight, and the Officers roster/action panel.
+    // Not confidential-only, so visible to High Ranks and above (not gated
+    // further like the BOC group below).
+    //
+    // Bug 1 fix: Promotion Quota used to live here (admin tier), but the
+    // user flagged that "only Board of Commissioners should know stuff
+    // about promotion, promotion quota, quota enforcement, etc." - admin
+    // ("High Ranks") should NOT see quota data. Moved to the BOC nav group
+    // below; the Worker route (routes/promotionQuota.js) was updated to
+    // require management+ to match.
     const phase4Items = [
       { section: "officers-mgmt", label: "Officers", onOpen: loadOfficersRoster },
       { section: "loa-mgmt", label: "LOA Management", onOpen: loadLoaManagement },
       { section: "transfers", label: "Transfer Requests", onOpen: loadTransfersQueue },
       { section: "ra-oversight", label: "RA Oversight", onOpen: loadRaOversight },
-      { section: "promotion-quota", label: "Promotion Quota", onOpen: loadPromotionQuota },
     ];
     phase4Items.forEach(({ section, label, onOpen }) => {
       const btn = document.createElement("button");
@@ -210,7 +226,7 @@ async function bootMe() {
         showPanel(section);
         onOpen();
       });
-      group.appendChild(btn);
+      itemsWrap.appendChild(btn);
     });
   }
 
@@ -218,10 +234,20 @@ async function bootMe() {
   // included, since developer must be treated as >= every tier). Gets its
   // own group with its own header, distinct from the High Ranks group above.
   if (tierAtLeast(me.tier, "management")) {
-    const sidebar = document.getElementById("sidebar");
+    const sidebar = document.getElementById("sidebarNavScroll");
     const group = document.createElement("div");
     group.className = "nav-group";
-    group.innerHTML = `<p class="nav-category">Board of Commissioners</p>`;
+    group.dataset.category = "boc";
+    group.innerHTML = `
+      <button class="nav-category-header" type="button" data-category="boc" aria-expanded="true">
+        <span class="nav-category-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l5 5M4 14l5-5 5 5-5 5-5-5z"/><path d="M14 10l6-6M18 6l2 2"/><path d="M4 19h6"/></svg>
+        </span>
+        <span class="nav-category-label">Board of Commissioners</span>
+        <svg class="nav-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="nav-category-items"></div>
+    `;
     sidebar.appendChild(group);
     const bocBtn = document.createElement("button");
     bocBtn.className = "nav-item";
@@ -231,18 +257,40 @@ async function bootMe() {
       showPanel("boc");
       loadBocActiveTab();
     });
-    group.appendChild(bocBtn);
+    const bocItemsWrap = group.querySelector(".nav-category-items");
+    bocItemsWrap.appendChild(bocBtn);
+
+    // Bug 1 fix: Promotion Quota moved here from the High Ranks (admin)
+    // group - promotion/quota data is BOC-only.
+    const quotaBtn = document.createElement("button");
+    quotaBtn.className = "nav-item";
+    quotaBtn.dataset.section = "promotion-quota";
+    quotaBtn.textContent = "Promotion Quota";
+    quotaBtn.addEventListener("click", () => {
+      showPanel("promotion-quota");
+      loadPromotionQuota();
+    });
+    bocItemsWrap.appendChild(quotaBtn);
   }
 
   // Developer Tools nav item - Developer tier only, per the Phase 6 plan
   // ("this page itself must be visible ONLY to the developer tier").
   if (tierAtLeast(me.tier, "developer")) {
-    const sidebar = document.getElementById("sidebar");
+    const sidebar = document.getElementById("sidebarNavScroll");
     const group = document.createElement("div");
     group.className = "nav-group";
+    group.dataset.category = "developer";
     group.innerHTML = `
-      <p class="nav-category">Developer</p>
-      <button class="nav-item" data-section="developer">Developer Tools</button>
+      <button class="nav-category-header" type="button" data-category="developer" aria-expanded="true">
+        <span class="nav-category-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l2.1-2.1a4 4 0 01-5.3 5.3l-6.4 6.4a2 2 0 01-2.8-2.8l6.4-6.4a4 4 0 015.3-5.3l-2.1 2.1z"/></svg>
+        </span>
+        <span class="nav-category-label">Developer</span>
+        <svg class="nav-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="nav-category-items">
+        <button class="nav-item" data-section="developer">Developer Tools</button>
+      </div>
     `;
     sidebar.appendChild(group);
     const devBtn = group.querySelector(".nav-item");
@@ -252,6 +300,7 @@ async function bootMe() {
     });
   }
 
+  refreshSidebarCategories();
   return me;
 }
 
@@ -337,6 +386,7 @@ async function performLookupSearch() {
         <li class="lookup-result-row" data-user-id="${r.userId}">
           <span class="lookup-result-name">${r.username}</span>
           ${r.nickname ? `<span class="lookup-result-nick">${r.nickname}</span>` : ""}
+          <span class="lookup-result-nick">${r.topRole || "No rank"}</span>
         </li>
       `
         )
@@ -354,10 +404,11 @@ async function loadLookupDetail(userId) {
   const detailWrap = document.getElementById("lookupDetailWrap");
   detailWrap.innerHTML = `<div class="skeleton" style="height: 120px; margin-top: 20px;"></div>`;
 
-  const [shifts, history, roblox] = await Promise.all([
+  const [shifts, history, roblox, live] = await Promise.all([
     apiGet(`/api/lookup/${userId}/shifts`),
     apiGet(`/api/lookup/${userId}/history`),
     apiGet(`/api/lookup/${userId}/roblox`),
+    apiGet(`/api/lookup/${userId}/live`),
   ]);
 
   if (!shifts || !history) {
@@ -375,8 +426,22 @@ async function loadLookupDetail(userId) {
       : `<div class="empty-state">No linked Roblox account found.</div>`;
   }
 
+  // Bug 5 fix: live nickname/top-role from the bot's guild.members cache
+  // (see /member/live), shown ahead of the historically-derived sections so
+  // Member Lookup never looks stale on rename/promotion.
+  let liveHtml = `<div class="empty-state">Live member data unavailable right now.</div>`;
+  if (live && live.ok) {
+    const l = live;
+    liveHtml = `
+      <div class="badge-card">Current rank: <strong>${l.topRole || "No rank"}</strong></div>
+      <div class="badge-card">Current nickname: <strong>${l.nickname || l.username}</strong></div>
+    `;
+  }
+
   detailWrap.innerHTML = `
-    <h2 class="lookup-detail-heading">Shifts</h2>
+    <h2 class="lookup-detail-heading">Current Info</h2>
+    ${liveHtml}
+    <h2 class="lookup-detail-heading" style="margin-top: 22px;">Shifts</h2>
     ${renderShiftsSummaryHtml(shifts)}
     <h2 class="lookup-detail-heading" style="margin-top: 22px;">Linked Roblox</h2>
     ${robloxHtml}
@@ -1273,6 +1338,68 @@ function toggleSidebar() {
 }
 document.getElementById("sidebarToggle").addEventListener("click", toggleSidebar);
 document.getElementById("sidebarToggleCollapsed").addEventListener("click", toggleSidebar);
+
+// ── Sidebar categories: per-category accordion collapse (persisted) +
+// collapsed-sidebar icon rail (one icon per category, click to jump/expand).
+// Runs once for the static "My CHP"/"Officers" groups on load, then again
+// after bootMe() appends the tier-gated groups (High Ranks/BOC/Developer) -
+// idempotent via data-wired flags so re-running never double-binds.
+const NAV_CAT_COLLAPSE_KEY = (cat) => `chp_nav_cat_collapsed_${cat}`;
+
+function setCategoryCollapsed(group, collapsed) {
+  const header = group.querySelector(".nav-category-header");
+  group.classList.toggle("cat-collapsed", collapsed);
+  if (header) header.setAttribute("aria-expanded", String(!collapsed));
+}
+
+function refreshSidebarCategories() {
+  // Wire each category header's chevron toggle (skip already-wired ones).
+  document.querySelectorAll(".nav-group[data-category]").forEach((group) => {
+    const category = group.dataset.category;
+    const header = group.querySelector(".nav-category-header");
+    if (!header || header.dataset.wired) return;
+    header.dataset.wired = "1";
+
+    const stored = localStorage.getItem(NAV_CAT_COLLAPSE_KEY(category));
+    setCategoryCollapsed(group, stored === "1");
+
+    header.addEventListener("click", () => {
+      const collapsed = !group.classList.contains("cat-collapsed");
+      setCategoryCollapsed(group, collapsed);
+      localStorage.setItem(NAV_CAT_COLLAPSE_KEY(category), collapsed ? "1" : "0");
+    });
+  });
+
+  // Rebuild the collapsed-state icon rail from whatever categories currently
+  // exist in the DOM (varies by tier - a regular member only ever sees
+  // My CHP + Officers, a developer sees all five).
+  const rail = document.getElementById("sidebarIconRail");
+  if (!rail) return;
+  rail.innerHTML = "";
+  document.querySelectorAll(".nav-group[data-category]").forEach((group) => {
+    const category = group.dataset.category;
+    const iconSvg = group.querySelector(".nav-category-icon")?.innerHTML || "";
+    const label = group.querySelector(".nav-category-label")?.textContent || category;
+    const btn = document.createElement("button");
+    btn.className = "rail-icon-btn";
+    btn.type = "button";
+    btn.dataset.category = category;
+    btn.title = label;
+    btn.setAttribute("aria-label", label);
+    btn.innerHTML = `<span class="nav-category-icon" aria-hidden="true">${iconSvg}</span>`;
+    btn.addEventListener("click", () => {
+      // Expand the sidebar, make sure this category's items are open, then
+      // scroll it into view - "go somewhere about that category" from the
+      // rail without having to hunt through a fully-open list first.
+      document.getElementById("shell").classList.remove("collapsed");
+      setCategoryCollapsed(group, false);
+      localStorage.setItem(NAV_CAT_COLLAPSE_KEY(category), "0");
+      group.scrollIntoView({ block: "nearest" });
+    });
+    rail.appendChild(btn);
+  });
+}
+refreshSidebarCategories();
 
 document.getElementById("lookupSearchBtn").addEventListener("click", performLookupSearch);
 document.getElementById("lookupSearchInput").addEventListener("keydown", (e) => {
