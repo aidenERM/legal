@@ -557,6 +557,245 @@ html, body {
   color: rgba(255,180,180,0.9);
 }
 
+/* ── Shift Management ── */
+.shift-mgmt-body { display: flex; flex-direction: column; gap: 22px; }
+
+.current-shift-card {
+  padding: 26px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(201,166,107,0.20);
+  backdrop-filter: blur(6px) saturate(200%);
+  -webkit-backdrop-filter: blur(6px) saturate(200%);
+}
+
+.current-shift-off { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+.current-shift-off-label { margin: 0; font-size: 13.5px; color: rgba(255,255,255,0.5); }
+.shift-type-picker { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.shift-type-btn {
+  padding: 12px 22px;
+  border-radius: 14px;
+  border: 1px solid rgba(201,166,107,0.30);
+  background: rgba(201,166,107,0.14);
+  color: var(--chp-gold-bright);
+  font-family: "Manrope", sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.shift-type-btn:hover { background: rgba(201,166,107,0.22); }
+
+.current-shift-on { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.current-shift-type {
+  font-family: "Manrope", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+}
+.current-shift-timer {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 40px;
+  color: var(--chp-gold-bright);
+  font-variant-numeric: tabular-nums;
+}
+.current-shift-actions { display: flex; gap: 10px; }
+.shift-break-btn {
+  padding: 11px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  font-family: "Manrope", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.shift-break-btn:hover { background: rgba(255,255,255,0.09); }
+.shift-break-btn.on-break { border-color: rgba(201,166,107,0.35); color: var(--chp-gold-bright); }
+.shift-end-btn {
+  padding: 11px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(220,90,90,0.30);
+  background: rgba(220,90,90,0.10);
+  color: rgba(255,180,180,0.9);
+  font-family: "Manrope", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.shift-end-btn:hover { background: rgba(220,90,90,0.20); }
+.shift-end-btn.confirming { background: rgba(220,90,90,0.28); border-color: rgba(220,90,90,0.5); }
+
+.mini-leaderboard-card {
+  padding: 20px 22px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.09);
+}
+
+/* ── LOA / RA shared status chips ── */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.status-chip.pending { background: rgba(201,166,107,0.14); border: 1px solid rgba(201,166,107,0.3); color: var(--chp-gold-bright); }
+.status-chip.accepted { background: rgba(90,200,120,0.10); border: 1px solid rgba(90,200,120,0.25); color: rgba(170,230,190,0.9); }
+.status-chip.denied { background: rgba(220,90,90,0.10); border: 1px solid rgba(220,90,90,0.25); color: rgba(255,180,180,0.9); }
+.status-chip.expired { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.5); }
+
+.loa-form, .contact-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 18px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.contact-form { flex-direction: column; align-items: stretch; }
+.loa-form select, .loa-form input[type="number"] {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: #fff;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+}
+.loa-form textarea, .contact-form textarea {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: #fff;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  resize: vertical;
+  width: 100%;
+}
+.loa-form select:focus, .loa-form input:focus, .loa-form textarea:focus, .contact-form textarea:focus {
+  outline: none; border-color: rgba(201,166,107,0.4);
+}
+
+.loa-history-list, .ra-sessions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.loa-history-row, .ra-session-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.ra-ftos-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.ra-fto-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.ra-fto-chip img { width: 24px; height: 24px; border-radius: 50%; }
+.ra-fto-chip span { font-size: 13px; color: #fff; font-weight: 600; }
+
+.form-message {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.form-message.success { background: rgba(90,200,120,0.10); border: 1px solid rgba(90,200,120,0.25); color: rgba(170,230,190,0.9); }
+.form-message.error { background: rgba(220,90,90,0.10); border: 1px solid rgba(220,90,90,0.25); color: rgba(255,180,180,0.9); }
+
+/* ── Profile / badges ── */
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.badge-card {
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(201,166,107,0.20);
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--chp-gold-bright);
+}
+
+/* ── Personal Settings ── */
+.settings-list { display: flex; flex-direction: column; gap: 10px; }
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.settings-row-label { font-size: 13.5px; color: #fff; font-weight: 600; }
+.settings-row input[type="number"], .settings-row input[type="text"] {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: #fff;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  width: 100px;
+}
+.settings-toggle {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.12);
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.settings-toggle::after {
+  content: "";
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s ease;
+}
+.settings-toggle.on { background: rgba(201,166,107,0.5); }
+.settings-toggle.on::after { transform: translateX(18px); }
+.settings-row-status { font-size: 11px; color: rgba(255,255,255,0.4); }
+.settings-row-status.saved { color: rgba(170,230,190,0.9); }
+.settings-row-status.error { color: rgba(255,180,180,0.9); }
+
 @media (max-width: 720px) {
   .sidebar { position: fixed; height: 100%; z-index: 15; transform: translateX(-100%); }
   .shell:not(.collapsed) .sidebar { transform: translateX(0); }

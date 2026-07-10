@@ -24,16 +24,107 @@
       <span>CHP Dashboard</span>
     </div>
     <div class="nav-group">
+      <p class="nav-category">My CHP</p>
+      <button class="nav-item active" data-section="shift-management">Shift Management</button>
+      <button class="nav-item" data-section="loa">Leave of Absence</button>
+      <button class="nav-item" data-section="ra">RA</button>
+      <button class="nav-item" data-section="history">Shift History</button>
+      <button class="nav-item" data-section="profile">Profile</button>
+      <button class="nav-item" data-section="settings">Personal Settings</button>
+      <button class="nav-item" data-section="contact">Contact Us</button>
+    </div>
+    <div class="nav-group">
       <p class="nav-category">Officers</p>
-      <button class="nav-item active" data-section="overview">Overview</button>
-      <button class="nav-item" data-section="shifts">Shifts</button>
       <button class="nav-item" data-section="leaderboard">Leaderboard</button>
-      <button class="nav-item" data-section="history">History</button>
     </div>
   </nav>
 
   <main class="content" id="content">
-    <section class="panel active" id="panel-overview">
+
+    <section class="panel active" id="panel-shift-management">
+      <h1>Shift Management</h1>
+
+      <div class="skeleton" id="shiftMgmtSkeleton"></div>
+      <div class="shift-mgmt-body" id="shiftMgmtBody" hidden>
+        <div class="current-shift-card" id="currentShiftCard">
+          <div class="current-shift-off" id="currentShiftOff">
+            <p class="current-shift-off-label">Not currently on duty</p>
+            <div class="shift-type-picker" id="shiftTypePicker">
+              <button class="shift-type-btn" data-shift-type="CHP">Start CHP Shift</button>
+              <button class="shift-type-btn" data-shift-type="SEU">Start SEU Shift</button>
+            </div>
+          </div>
+          <div class="current-shift-on" id="currentShiftOn" hidden>
+            <div class="current-shift-type" id="currentShiftType"></div>
+            <div class="current-shift-timer" id="currentShiftTimer">00:00:00</div>
+            <div class="current-shift-actions">
+              <button class="shift-break-btn" id="shiftBreakBtn">Start Break</button>
+              <button class="shift-end-btn" id="shiftEndBtn">End Shift</button>
+            </div>
+          </div>
+        </div>
+        <div id="shiftActionMessage"></div>
+
+        <div class="mini-leaderboard-card">
+          <h2 class="lookup-detail-heading">This Week - Top 5</h2>
+          <div class="skeleton" id="miniLeaderboardSkeleton" style="height: 180px;"></div>
+          <ol class="leaderboard-list" id="miniLeaderboardList" hidden></ol>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-loa">
+      <h1>Leave of Absence</h1>
+
+      <form class="loa-form" id="loaForm">
+        <div class="field-row">
+          <label for="loaType">Type</label>
+          <select id="loaType">
+            <option value="loa">LOA</option>
+            <option value="ra">RA Notice</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label for="loaDuration">Duration (days)</label>
+          <input type="number" id="loaDuration" min="1" max="60" value="7">
+        </div>
+        <div class="field-row" style="flex: 1; min-width: 220px;">
+          <label for="loaReason">Reason</label>
+          <textarea id="loaReason" rows="2" placeholder="Reason for your request..."></textarea>
+        </div>
+        <button type="submit" class="lookup-search-btn" id="loaSubmitBtn">Request</button>
+      </form>
+      <div id="loaFormMessage"></div>
+
+      <h2 class="lookup-detail-heading" style="margin-top: 26px;">My History</h2>
+      <div class="skeleton" id="loaHistorySkeleton"></div>
+      <ol class="loa-history-list" id="loaHistoryList" hidden></ol>
+    </section>
+
+    <section class="panel" id="panel-ra">
+      <h1>RA Program</h1>
+
+      <div class="ra-request-card">
+        <button class="lookup-search-btn" id="raRequestBtn">Request RA Session</button>
+        <div id="raRequestMessage"></div>
+      </div>
+
+      <h2 class="lookup-detail-heading" style="margin-top: 26px;">My Sessions</h2>
+      <div class="skeleton" id="raSessionsSkeleton"></div>
+      <ol class="ra-sessions-list" id="raSessionsList" hidden></ol>
+
+      <h2 class="lookup-detail-heading" style="margin-top: 26px;">Online FTOs</h2>
+      <div class="skeleton" id="raFtosSkeleton"></div>
+      <div class="ra-ftos-list" id="raFtosList" hidden></div>
+    </section>
+
+    <section class="panel" id="panel-history">
+      <h1>Shift History</h1>
+      <div class="skeleton" id="historySkeleton"></div>
+      <ol class="history-list" id="historyList" hidden></ol>
+    </section>
+
+    <section class="panel" id="panel-profile">
       <div class="welcome-skeleton" id="welcomeSkeleton">
         <div class="skeleton skeleton-avatar"></div>
         <div class="skeleton skeleton-line"></div>
@@ -42,21 +133,33 @@
         <img class="welcome-avatar" id="welcomeAvatar" src="" alt="">
         <h1 class="welcome-title">Welcome, <span id="welcomeName"></span></h1>
         <p class="access-badge" id="accessBadge"></p>
-        <p class="welcome-intro">
-          This is your CHP dashboard — check your duty time, see where you rank on
-          the leaderboard, and keep track of everything tied to your record, all in
-          one place.
-        </p>
       </div>
 
       <div class="skeleton" id="overviewSkeleton"></div>
       <div class="card-grid" id="overviewCards" hidden></div>
-    </section>
 
-    <section class="panel" id="panel-shifts">
-      <h1>Shifts</h1>
+      <h2 class="lookup-detail-heading" style="margin-top: 26px;">Badges</h2>
+      <div class="skeleton" id="badgesSkeleton"></div>
+      <div class="badges-grid" id="badgesGrid" hidden></div>
+
+      <h2 class="lookup-detail-heading" style="margin-top: 26px;">Duty Time by Shift Type</h2>
       <div class="skeleton" id="shiftsSkeleton"></div>
       <div class="shifts-body" id="shiftsBody" hidden></div>
+    </section>
+
+    <section class="panel" id="panel-settings">
+      <h1>Personal Settings</h1>
+      <div class="skeleton" id="settingsSkeleton"></div>
+      <div class="settings-list" id="settingsList" hidden></div>
+    </section>
+
+    <section class="panel" id="panel-contact">
+      <h1>Contact Us</h1>
+      <form class="contact-form" id="contactForm">
+        <textarea id="contactMessage" rows="6" placeholder="What do you need help with?"></textarea>
+        <button type="submit" class="lookup-search-btn" id="contactSubmitBtn">Send</button>
+      </form>
+      <div id="contactFormMessage"></div>
     </section>
 
     <section class="panel" id="panel-leaderboard">
@@ -82,12 +185,6 @@
       </div>
       <div class="skeleton" id="leaderboardSkeleton"></div>
       <ol class="leaderboard-list" id="leaderboardList" hidden></ol>
-    </section>
-
-    <section class="panel" id="panel-history">
-      <h1>History</h1>
-      <div class="skeleton" id="historySkeleton"></div>
-      <ol class="history-list" id="historyList" hidden></ol>
     </section>
 
     <section class="panel" id="panel-lookup">
