@@ -14,11 +14,14 @@
 <body>
 
 <div class="shell" id="shell">
-  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle menu">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  <button class="content-sidebar-toggle" id="sidebarToggleCollapsed" aria-label="Open menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
   </button>
 
   <nav class="sidebar" id="sidebar">
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Collapse menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>
+    </button>
     <div class="sidebar-brand">
       <img src="../assets/images/chp-badge.png" alt="" width="28" height="28">
       <span>CHP Dashboard</span>
@@ -47,30 +50,51 @@
       <h1>Shift Management</h1>
 
       <div class="skeleton" id="shiftMgmtSkeleton"></div>
-      <div class="shift-mgmt-body" id="shiftMgmtBody" hidden>
-        <div class="current-shift-card" id="currentShiftCard">
-          <div class="current-shift-off" id="currentShiftOff">
-            <p class="current-shift-off-label">Not currently on duty</p>
-            <div class="shift-type-picker" id="shiftTypePicker">
-              <button class="shift-type-btn" data-shift-type="CHP">Start CHP Shift</button>
-              <button class="shift-type-btn" data-shift-type="SEU">Start SEU Shift</button>
+      <div class="shift-mgmt-grid" id="shiftMgmtBody" hidden>
+        <div class="shift-mgmt-col">
+          <div class="current-shift-card" id="currentShiftCard">
+            <div class="current-shift-off" id="currentShiftOff">
+              <p class="current-shift-off-label">Not currently on duty</p>
+              <div class="shift-type-picker" id="shiftTypePicker">
+                <button class="shift-type-btn" data-shift-type="CHP">Start CHP Shift</button>
+                <button class="shift-type-btn" data-shift-type="SEU">Start SEU Shift</button>
+              </div>
+            </div>
+            <div class="current-shift-on" id="currentShiftOn" hidden>
+              <div class="current-shift-type" id="currentShiftType"></div>
+              <div class="current-shift-timer" id="currentShiftTimer">00:00:00</div>
+              <div class="current-shift-actions">
+                <button class="shift-break-btn" id="shiftBreakBtn">Start Break</button>
+                <button class="shift-end-btn" id="shiftEndBtn">End Shift</button>
+              </div>
             </div>
           </div>
-          <div class="current-shift-on" id="currentShiftOn" hidden>
-            <div class="current-shift-type" id="currentShiftType"></div>
-            <div class="current-shift-timer" id="currentShiftTimer">00:00:00</div>
-            <div class="current-shift-actions">
-              <button class="shift-break-btn" id="shiftBreakBtn">Start Break</button>
-              <button class="shift-end-btn" id="shiftEndBtn">End Shift</button>
-            </div>
+          <div id="shiftActionMessage"></div>
+
+          <div class="mini-leaderboard-card">
+            <h2 class="lookup-detail-heading">This Week - Top 15</h2>
+            <div class="skeleton" id="miniLeaderboardSkeleton" style="height: 180px;"></div>
+            <ol class="leaderboard-list" id="miniLeaderboardList" hidden></ol>
           </div>
         </div>
-        <div id="shiftActionMessage"></div>
 
-        <div class="mini-leaderboard-card">
-          <h2 class="lookup-detail-heading">This Week - Top 5</h2>
-          <div class="skeleton" id="miniLeaderboardSkeleton" style="height: 180px;"></div>
-          <ol class="leaderboard-list" id="miniLeaderboardList" hidden></ol>
+        <div class="shift-mgmt-col">
+          <div class="quota-ring-card">
+            <h2 class="lookup-detail-heading">Weekly Quota</h2>
+            <div class="skeleton" id="quotaRingSkeleton" style="height: 180px;"></div>
+            <div class="quota-ring-body" id="quotaRingBody" hidden>
+              <div class="quota-ring" id="quotaRing" style="--quota-pct: 0;">
+                <span class="quota-ring-pct" id="quotaRingPct">0%</span>
+              </div>
+              <p class="quota-ring-detail" id="quotaRingDetail"></p>
+            </div>
+          </div>
+
+          <div class="quick-stats-card">
+            <h2 class="lookup-detail-heading">Quick Stats</h2>
+            <div class="skeleton" id="quickStatsSkeleton" style="height: 100px;"></div>
+            <div class="quick-stats-grid" id="quickStatsGrid" hidden></div>
+          </div>
         </div>
       </div>
     </section>
@@ -151,6 +175,31 @@
 
     <section class="panel" id="panel-settings">
       <h1>Personal Settings</h1>
+
+      <h2 class="settings-section-heading">Display</h2>
+      <div class="settings-list">
+        <div class="settings-row" data-key="reduce_motion">
+          <span class="settings-row-label">Reduce motion</span>
+          <button class="settings-toggle" id="reduceMotionToggle" data-value="false" aria-label="Toggle reduce motion"></button>
+        </div>
+        <div class="settings-row" data-key="accent_color">
+          <span class="settings-row-label">Accent color</span>
+          <div class="accent-picker">
+            <input type="color" id="accentColorInput" value="#c9a66b">
+            <button class="accent-reset-btn" id="accentColorReset" type="button">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="settings-section-heading">Session</h2>
+      <div class="settings-list">
+        <div class="settings-row" id="sessionInfoRow">
+          <span class="settings-row-label">Stay signed in</span>
+          <span class="settings-row-status" id="sessionInfoStatus" data-status>Loading…</span>
+        </div>
+      </div>
+
+      <h2 class="settings-section-heading">Notifications &amp; Preferences</h2>
       <div class="skeleton" id="settingsSkeleton"></div>
       <div class="settings-list" id="settingsList" hidden></div>
     </section>
@@ -422,7 +471,7 @@
 </button>
 
 <div class="ai-panel" id="aiPanel">
-  <div class="ai-panel-header">
+  <div class="ai-panel-header" id="aiPanelHeader">
     <span>CHP AI Assistant</span>
     <button class="ai-panel-close" id="aiPanelClose" aria-label="Close">&times;</button>
   </div>
@@ -433,6 +482,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
     </button>
   </form>
+  <div class="ai-panel-resize-handle" id="aiPanelResizeHandle"></div>
 </div>
 
 <script src="app.js"></script>

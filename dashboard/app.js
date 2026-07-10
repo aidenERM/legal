@@ -76,6 +76,20 @@ const TIER_BADGE_COPY = {
   developer: "Developer Access",
 };
 
+// Shared tier-rank helper (Bug 4 fix): every place in this file that needs to
+// know "does this viewer's tier meet-or-exceed some required tier" should go
+// through this, instead of ad-hoc `tier === "admin"` checks that don't treat
+// "developer" as satisfying every lower tier's gate. `tester` is a parallel
+// flag (see loadBoc's confidential-panel check) and deliberately NOT part of
+// this ordering - it doesn't rank above or below any tier.
+const TIER_ORDER = ["staff", "admin", "management", "developer"];
+function tierAtLeast(userTier, requiredTier) {
+  const userRank = TIER_ORDER.indexOf(userTier);
+  const requiredRank = TIER_ORDER.indexOf(requiredTier);
+  if (userRank === -1 || requiredRank === -1) return false;
+  return userRank >= requiredRank;
+}
+
 function formatDate(unixSeconds) {
   return new Date(unixSeconds * 1000).toLocaleDateString("en-US", {
     month: "short",
@@ -155,25 +169,31 @@ async function bootMe() {
   if (!me) return null;
   currentMe = me;
 
-  if (me.tier === "admin" || me.tier === "management" || me.tier === "developer") {
-    const categoryLabel =
-      me.tier === "developer" ? "Developer" : me.tier === "management" ? "Board of Commissioners" : "High Ranks";
+  // Bug 4 fix: previously this built ONE shared nav-group whose header label
+  // was picked from the VIEWER's own tier (`developer` -> header "Developer"),
+  // so a developer saw the High Ranks + Board of Commissioners items real
+  // enough, but both ended up crammed under a single "Developer"-labeled
+  // group indistinguishable from the actual Developer Tools group below -
+  // it looked like "High Ranks" and "Board of Commissioners" didn't exist.
+  // Fix: build each tier's group under its own fixed label, gated by
+  // tierAtLeast so "developer" (which is >= every other tier) always gets
+  // every group, each correctly named.
+  if (tierAtLeast(me.tier, "admin")) {
     const sidebar = document.getElementById("sidebar");
     const group = document.createElement("div");
     group.className = "nav-group";
     group.innerHTML = `
-      <p class="nav-category">${categoryLabel}</p>
+      <p class="nav-category">High Ranks</p>
       <button class="nav-item" data-section="lookup">Member Lookup</button>
     `;
     sidebar.appendChild(group);
     const lookupBtn = group.querySelector(".nav-item");
     lookupBtn.addEventListener("click", () => showPanel("lookup"));
 
-    // Phase 4 - High Ranks tier (admin/management/developer): LOA Management,
-    // Transfer Requests, RA Oversight, Promotion Quota, and the new Officers
-    // roster/action panel. All sit in this same admin+ nav group - it's a
-    // management action surface, not confidential-only, so it's visible to
-    // High Ranks and above (not gated further like the BOC group below).
+    // Phase 4 - High Ranks tier (admin and above): LOA Management,
+    // Transfer Requests, RA Oversight, Promotion Quota, and the Officers
+    // roster/action panel. Not confidential-only, so visible to High Ranks
+    // and above (not gated further like the BOC group below).
     const phase4Items = [
       { section: "officers-mgmt", label: "Officers", onOpen: loadOfficersRoster },
       { section: "loa-mgmt", label: "LOA Management", onOpen: loadLoaManagement },
@@ -192,25 +212,31 @@ async function bootMe() {
       });
       group.appendChild(btn);
     });
+  }
 
-    // Phase 5 - Board of Commissioners tier: management/developer only.
-    // "High Ranks" (admin tier) never sees this nav item exists at all.
-    if (me.tier === "management" || me.tier === "developer") {
-      const bocBtn = document.createElement("button");
-      bocBtn.className = "nav-item";
-      bocBtn.dataset.section = "boc";
-      bocBtn.textContent = "Board of Commissioners";
-      bocBtn.addEventListener("click", () => {
-        showPanel("boc");
-        loadBocActiveTab();
-      });
-      group.appendChild(bocBtn);
-    }
+  // Phase 5 - Board of Commissioners tier: management and above (developer
+  // included, since developer must be treated as >= every tier). Gets its
+  // own group with its own header, distinct from the High Ranks group above.
+  if (tierAtLeast(me.tier, "management")) {
+    const sidebar = document.getElementById("sidebar");
+    const group = document.createElement("div");
+    group.className = "nav-group";
+    group.innerHTML = `<p class="nav-category">Board of Commissioners</p>`;
+    sidebar.appendChild(group);
+    const bocBtn = document.createElement("button");
+    bocBtn.className = "nav-item";
+    bocBtn.dataset.section = "boc";
+    bocBtn.textContent = "Board of Commissioners";
+    bocBtn.addEventListener("click", () => {
+      showPanel("boc");
+      loadBocActiveTab();
+    });
+    group.appendChild(bocBtn);
   }
 
   // Developer Tools nav item - Developer tier only, per the Phase 6 plan
   // ("this page itself must be visible ONLY to the developer tier").
-  if (me.tier === "developer") {
+  if (tierAtLeast(me.tier, "developer")) {
     const sidebar = document.getElementById("sidebar");
     const group = document.createElement("div");
     group.className = "nav-group";
@@ -647,7 +673,69 @@ async function loadMiniLeaderboard() {
     list.innerHTML = `<li class="empty-state">Failed to load leaderboard.</li>`;
     return;
   }
-  list.innerHTML = renderLeaderboardRows((leaderboard.entries || []).slice(0, 5), "weekly");
+  list.innerHTML = renderLeaderboardRows((leaderboard.entries || []).slice(0, 15), "weekly");
+}
+
+// ── Quota progress ring + quick stats (Shift Management right column) ──
+
+async function loadQuotaRing() {
+  const skeleton = document.getElementById("quotaRingSkeleton");
+  const body = document.getElementById("quotaRingBody");
+  const res = await apiGet("/api/shift/quota");
+  skeleton.hidden = true;
+  body.hidden = false;
+
+  const detailEl = document.getElementById("quotaRingDetail");
+  const ring = document.getElementById("quotaRing");
+  const pctEl = document.getElementById("quotaRingPct");
+
+  if (!res || res.ok === false) {
+    detailEl.textContent = "Quota data is unavailable right now.";
+    ring.style.setProperty("--quota-pct", 0);
+    pctEl.textContent = "--";
+    return;
+  }
+
+  const { quotaSeconds, currentSeconds } = res;
+  if (!quotaSeconds || quotaSeconds <= 0) {
+    detailEl.textContent = "No quota configured for your role.";
+    ring.style.setProperty("--quota-pct", 0);
+    pctEl.textContent = "--";
+    return;
+  }
+
+  const pct = Math.min(100, Math.round((currentSeconds / quotaSeconds) * 100));
+  ring.style.setProperty("--quota-pct", pct);
+  pctEl.textContent = `${pct}%`;
+  detailEl.textContent = `${formatDuration(currentSeconds)} of ${formatDuration(quotaSeconds)} this week`;
+}
+
+async function loadQuickStats() {
+  const skeleton = document.getElementById("quickStatsSkeleton");
+  const grid = document.getElementById("quickStatsGrid");
+  const [shifts, liveBoard] = await Promise.all([
+    apiGet("/api/shifts"),
+    apiGet("/api/leaderboard?period=live"),
+  ]);
+  skeleton.hidden = true;
+  grid.hidden = false;
+
+  const myLiveEntry = (liveBoard && liveBoard.entries || []).find(
+    (e) => currentMe && e.userId === currentMe.userId
+  );
+  const weekSeconds = myLiveEntry ? myLiveEntry.totalSeconds : 0;
+  const totalShiftCount = shifts ? shifts.shiftCount || 0 : 0;
+
+  grid.innerHTML = `
+    <div class="quick-stat">
+      <span class="quick-stat-value">${formatDuration(weekSeconds)}</span>
+      <span class="quick-stat-label">This week</span>
+    </div>
+    <div class="quick-stat">
+      <span class="quick-stat-value">${totalShiftCount}</span>
+      <span class="quick-stat-label">Total shifts</span>
+    </div>
+  `;
 }
 
 // ── Shift Management ──
@@ -715,6 +803,8 @@ async function loadShiftManagement() {
 
   await refreshCurrentShift();
   loadMiniLeaderboard();
+  loadQuotaRing();
+  loadQuickStats();
 
   if (shiftPollInterval) clearInterval(shiftPollInterval);
   shiftPollInterval = setInterval(refreshCurrentShift, 45000);
@@ -871,13 +961,17 @@ async function loadRaSessions() {
 
 function renderRaFtos(ftos) {
   if (!ftos.length) return `<div class="empty-state">No FTOs currently online.</div>`;
+  // /api/ra/ftos now resolves each FTO's real guild display name + avatar
+  // through the bot (see ERM-main/cogs/DashboardAPI.py's handle_ra_ftos) -
+  // previously this rendered the raw numeric userId as the "name".
   return ftos
     .map((fto) => {
-      const userId = fto.user || fto.user_id || "unknown";
+      const userId = fto.userId || fto.user || "unknown";
+      const displayName = fto.displayName || `User ${userId}`;
       return `
         <div class="ra-fto-chip">
-          <img src="${avatarUrlFor(userId, null, 32)}" alt="">
-          <span>${userId}</span>
+          <img src="${avatarUrlFor(userId, fto.avatar, 32)}" alt="">
+          <span>${displayName}</span>
         </div>
       `;
     })
@@ -931,6 +1025,16 @@ async function loadRa() {
 
 function renderSettingRow(key, value) {
   const label = key.replace(/_/g, " ");
+  if (Array.isArray(value)) {
+    // e.g. profile_widgets - no dedicated editor yet; show read-only rather
+    // than risk overwriting an array field with a plain string on save.
+    return `
+      <div class="settings-row" data-key="${key}">
+        <span class="settings-row-label">${label}</span>
+        <span class="settings-row-status">${value.join(", ") || "(none)"}</span>
+      </div>
+    `;
+  }
   if (typeof value === "boolean") {
     return `
       <div class="settings-row" data-key="${key}">
@@ -983,7 +1087,13 @@ async function loadSettings() {
     return;
   }
 
-  const entries = Object.entries(res).filter(([key]) => key !== "ok");
+  // handleSettingsGet (workers/dashboard-api/src/routes/settings.js) returns
+  // {ok, settings: {...}} - the actual per-key toggles live one level down
+  // under "settings", not at the top level. Reading straight off `res` here
+  // used to render a single broken "[object Object]" row instead of one row
+  // per real setting, which is why this panel looked empty/useless.
+  const settings = res.settings || {};
+  const entries = Object.entries(settings);
   if (entries.length === 0) {
     list.innerHTML = `<div class="empty-state">No settings to show.</div>`;
     return;
@@ -1079,7 +1189,7 @@ document.querySelectorAll(".nav-item[data-section]").forEach((item) => {
     if (section === "ra") loadRa();
     if (section === "history") loadHistory();
     if (section === "profile") loadProfile();
-    if (section === "settings") loadSettings();
+    if (section === "settings") { loadSettings(); loadSessionInfo(); }
     if (section === "leaderboard") {
       loadLeaderboard();
       startLeaderboardAutoRefresh();
@@ -1091,9 +1201,78 @@ document.querySelectorAll(".nav-item[data-section]").forEach((item) => {
   });
 });
 
-document.getElementById("sidebarToggle").addEventListener("click", () => {
+// ── Reduce Motion + Accent Color (client-only prefs, localStorage) ──
+// Dashboard-rendering concerns only, per the plan: not a bot-side
+// user_settings field, so these never touch the bridge/bot.
+const REDUCE_MOTION_KEY = "chp_reduce_motion";
+const ACCENT_COLOR_KEY = "chp_accent_color";
+const DEFAULT_ACCENT = "#c9a66b"; // matches --chp-gold in assets/chp-theme.css
+
+function applyReduceMotion(on) {
+  document.body.classList.toggle("reduce-motion", on);
+  const toggle = document.getElementById("reduceMotionToggle");
+  if (toggle) {
+    toggle.classList.toggle("on", on);
+    toggle.dataset.value = String(on);
+  }
+}
+
+function applyAccentColor(hex) {
+  const root = document.documentElement.style;
+  root.setProperty("--chp-gold", hex);
+  root.setProperty("--chp-gold-bright", hex);
+  root.setProperty("--chp-gold-dim", hex);
+  root.setProperty("--chp-gold-soft", hex);
+  const input = document.getElementById("accentColorInput");
+  if (input) input.value = hex;
+}
+
+function initPersonalPrefs() {
+  applyReduceMotion(localStorage.getItem(REDUCE_MOTION_KEY) === "true");
+  applyAccentColor(localStorage.getItem(ACCENT_COLOR_KEY) || DEFAULT_ACCENT);
+
+  document.getElementById("reduceMotionToggle")?.addEventListener("click", () => {
+    const next = localStorage.getItem(REDUCE_MOTION_KEY) !== "true";
+    localStorage.setItem(REDUCE_MOTION_KEY, String(next));
+    applyReduceMotion(next);
+  });
+
+  document.getElementById("accentColorInput")?.addEventListener("input", (e) => {
+    localStorage.setItem(ACCENT_COLOR_KEY, e.target.value);
+    applyAccentColor(e.target.value);
+  });
+
+  document.getElementById("accentColorReset")?.addEventListener("click", () => {
+    localStorage.removeItem(ACCENT_COLOR_KEY);
+    applyAccentColor(DEFAULT_ACCENT);
+  });
+}
+initPersonalPrefs();
+
+async function loadSessionInfo() {
+  const statusEl = document.getElementById("sessionInfoStatus");
+  if (!statusEl) return;
+  const res = await apiGet("/api/session");
+  if (!res || res.ok === false) {
+    statusEl.textContent = "Unavailable";
+    return;
+  }
+  const issued = res.issuedAt ? new Date(res.issuedAt * 1000).toLocaleString() : "unknown";
+  const expires = res.expiresAt ? new Date(res.expiresAt * 1000).toLocaleString() : "unknown";
+  statusEl.textContent = res.remember
+    ? `On - signed in ${issued}, expires ${expires}`
+    : `Off - signed in ${issued}, expires ${expires} (this session)`;
+}
+
+// Two toggle buttons, one state: the in-sidebar chevron (visible while open,
+// rides the sidebar's own edge so it never overlaps the brand logo) and the
+// content-pinned chevron (visible only once collapsed, per .shell.collapsed
+// .content-sidebar-toggle in app.css) - both just flip the same class.
+function toggleSidebar() {
   document.getElementById("shell").classList.toggle("collapsed");
-});
+}
+document.getElementById("sidebarToggle").addEventListener("click", toggleSidebar);
+document.getElementById("sidebarToggleCollapsed").addEventListener("click", toggleSidebar);
 
 document.getElementById("lookupSearchBtn").addEventListener("click", performLookupSearch);
 document.getElementById("lookupSearchInput").addEventListener("keydown", (e) => {
@@ -1113,6 +1292,36 @@ function aiAppendBubble(role, text) {
   messages.appendChild(bubble);
   messages.scrollTop = messages.scrollHeight;
   return bubble;
+}
+
+// Client-side "typewriter" reveal for assistant replies. This is NOT real
+// token streaming (the bot's Bedrock client only does a single blocking
+// converse() call) - it just reveals already-received text progressively so
+// the transition from the typing indicator doesn't feel jarring.
+function typewriterReveal(bubbleEl, fullText, onComplete) {
+  const text = fullText || "";
+  if (!text) {
+    bubbleEl.textContent = "";
+    if (onComplete) onComplete();
+    return;
+  }
+  // Tuned so a ~200-char message takes ~1.5-3s: reveal a small chunk of
+  // characters every ~20ms.
+  const CHUNK_MS = 20;
+  const totalDurationMs = Math.min(3000, Math.max(1500, text.length * 12));
+  const chunkSize = Math.max(1, Math.ceil(text.length / (totalDurationMs / CHUNK_MS)));
+
+  const messages = document.getElementById("aiMessages");
+  let i = 0;
+  const timer = setInterval(() => {
+    i = Math.min(text.length, i + chunkSize);
+    bubbleEl.textContent = text.slice(0, i);
+    if (messages) messages.scrollTop = messages.scrollHeight;
+    if (i >= text.length) {
+      clearInterval(timer);
+      if (onComplete) onComplete();
+    }
+  }, CHUNK_MS);
 }
 
 function aiAppendNote(text) {
@@ -1165,10 +1374,13 @@ async function aiConfirmProposal(proposalId, actionsEl) {
   aiPendingProposal = null;
   if (!res) return; // 401 redirect already handled by apiPost
   if (!res.ok || !res.data) {
-    aiAppendBubble("assistant", "Something went wrong confirming that action. Please try again.");
+    typewriterReveal(aiAppendBubble("assistant", ""), "Something went wrong confirming that action. Please try again.");
     return;
   }
-  aiAppendBubble("assistant", res.data.text || (res.data.ok ? "Done." : "That action could not be completed."));
+  typewriterReveal(
+    aiAppendBubble("assistant", ""),
+    res.data.text || (res.data.ok ? "Done." : "That action could not be completed.")
+  );
 }
 
 async function aiSendMessage(message) {
@@ -1179,20 +1391,170 @@ async function aiSendMessage(message) {
   aiHideTyping();
   if (!res) return; // 401 redirect already handled by apiPost
   if (!res.ok || !res.data) {
-    aiAppendBubble("assistant", "Sorry, the assistant is unavailable right now. Please try again later.");
+    typewriterReveal(aiAppendBubble("assistant", ""), "Sorry, the assistant is unavailable right now. Please try again later.");
     return;
   }
 
   const data = res.data;
-  aiAppendBubble("assistant", data.text || "");
+  typewriterReveal(aiAppendBubble("assistant", ""), data.text || "", () => {
+    if (data.type === "proposal" && data.proposalId) {
+      aiPendingProposal = { proposalId: data.proposalId };
+      aiAppendProposalActions(data.proposalId);
+    }
+  });
+}
 
-  if (data.type === "proposal" && data.proposalId) {
-    aiPendingProposal = { proposalId: data.proposalId };
-    aiAppendProposalActions(data.proposalId);
+const AI_PANEL_GEOMETRY_KEY = "chp-dashboard-ai-panel-geometry";
+const AI_PANEL_DEFAULT_WIDTH = 360;
+const AI_PANEL_DEFAULT_HEIGHT = 480;
+const AI_PANEL_MIN_WIDTH = 300;
+const AI_PANEL_MIN_HEIGHT = 360;
+const AI_PANEL_MAX_WIDTH = 720;
+
+function aiPanelIsMobile() {
+  return window.innerWidth <= 480;
+}
+
+function aiPanelMaxHeight() {
+  return window.innerHeight * 0.9;
+}
+
+function aiClampGeometry(geo) {
+  const width = Math.min(Math.max(geo.width, AI_PANEL_MIN_WIDTH), AI_PANEL_MAX_WIDTH, window.innerWidth);
+  const height = Math.min(Math.max(geo.height, AI_PANEL_MIN_HEIGHT), aiPanelMaxHeight(), window.innerHeight);
+  const maxLeft = Math.max(0, window.innerWidth - width);
+  const maxTop = Math.max(0, window.innerHeight - height);
+  const left = Math.min(Math.max(geo.left, 0), maxLeft);
+  const top = Math.min(Math.max(geo.top, 0), maxTop);
+  return { left, top, width, height };
+}
+
+function aiLoadGeometry() {
+  let saved = null;
+  try {
+    saved = JSON.parse(localStorage.getItem(AI_PANEL_GEOMETRY_KEY));
+  } catch (e) {
+    saved = null;
+  }
+  const width = (saved && typeof saved.width === "number") ? saved.width : AI_PANEL_DEFAULT_WIDTH;
+  const height = (saved && typeof saved.height === "number") ? saved.height : AI_PANEL_DEFAULT_HEIGHT;
+  let left, top;
+  if (saved && typeof saved.left === "number" && typeof saved.top === "number") {
+    left = saved.left;
+    top = saved.top;
+  } else {
+    left = window.innerWidth - width - 22;
+    top = window.innerHeight - height - 88;
+  }
+  return aiClampGeometry({ left, top, width, height });
+}
+
+function aiSaveGeometry(geo) {
+  try {
+    localStorage.setItem(AI_PANEL_GEOMETRY_KEY, JSON.stringify(geo));
+  } catch (e) {
+    // ignore storage errors (e.g. private mode quota)
   }
 }
 
+function aiApplyGeometry(panel, geo) {
+  panel.style.left = geo.left + "px";
+  panel.style.top = geo.top + "px";
+  panel.style.width = geo.width + "px";
+  panel.style.height = geo.height + "px";
+}
+
+function aiRestorePanelGeometry() {
+  const panel = document.getElementById("aiPanel");
+  if (aiPanelIsMobile()) return;
+  const geo = aiLoadGeometry();
+  aiApplyGeometry(panel, geo);
+}
+
+function aiInitPanelDragResize() {
+  const panel = document.getElementById("aiPanel");
+  const header = document.getElementById("aiPanelHeader");
+  const resizeHandle = document.getElementById("aiPanelResizeHandle");
+
+  function currentGeometry() {
+    const rect = panel.getBoundingClientRect();
+    return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+  }
+
+  header.addEventListener("pointerdown", (e) => {
+    if (aiPanelIsMobile()) return;
+    if (e.target.closest(".ai-panel-close")) return;
+    e.preventDefault();
+    const startGeo = currentGeometry();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    panel.classList.add("dragging");
+    header.setPointerCapture(e.pointerId);
+
+    function onMove(ev) {
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      const geo = aiClampGeometry({
+        left: startGeo.left + dx,
+        top: startGeo.top + dy,
+        width: startGeo.width,
+        height: startGeo.height,
+      });
+      aiApplyGeometry(panel, geo);
+    }
+    function onUp(ev) {
+      header.releasePointerCapture(ev.pointerId);
+      header.removeEventListener("pointermove", onMove);
+      header.removeEventListener("pointerup", onUp);
+      panel.classList.remove("dragging");
+      aiSaveGeometry(currentGeometry());
+    }
+    header.addEventListener("pointermove", onMove);
+    header.addEventListener("pointerup", onUp);
+  });
+
+  resizeHandle.addEventListener("pointerdown", (e) => {
+    if (aiPanelIsMobile()) return;
+    e.preventDefault();
+    const startGeo = currentGeometry();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    panel.classList.add("resizing");
+    resizeHandle.setPointerCapture(e.pointerId);
+
+    function onMove(ev) {
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      const geo = aiClampGeometry({
+        left: startGeo.left,
+        top: startGeo.top,
+        width: startGeo.width + dx,
+        height: startGeo.height + dy,
+      });
+      aiApplyGeometry(panel, geo);
+    }
+    function onUp(ev) {
+      resizeHandle.releasePointerCapture(ev.pointerId);
+      resizeHandle.removeEventListener("pointermove", onMove);
+      resizeHandle.removeEventListener("pointerup", onUp);
+      panel.classList.remove("resizing");
+      aiSaveGeometry(currentGeometry());
+    }
+    resizeHandle.addEventListener("pointermove", onMove);
+    resizeHandle.addEventListener("pointerup", onUp);
+  });
+
+  window.addEventListener("resize", () => {
+    if (aiPanelIsMobile()) return;
+    aiSaveGeometry(aiClampGeometry(currentGeometry()));
+    aiApplyGeometry(panel, aiClampGeometry(currentGeometry()));
+  });
+}
+
+aiInitPanelDragResize();
+
 function aiOpenPanel() {
+  aiRestorePanelGeometry();
   document.getElementById("aiPanel").classList.add("open");
   document.getElementById("aiInput").focus();
 }
@@ -1918,12 +2280,21 @@ async function loadOfficersRoster() {
     list.innerHTML = `<li class="empty-state">No officers found (or the staff role isn't configured).</li>`;
     return;
   }
+  const officersById = {};
+  res.officers.forEach((o) => (officersById[o.userId] = o));
+  window._officersById = officersById;
+
   list.innerHTML = res.officers
     .map(
       (o) => `
-      <li class="lookup-result-row" data-user-id="${o.userId}">
-        <span class="lookup-result-name">${o.displayName}</span>
-        <span class="lookup-result-nick">${o.topRole || ""}${o.onDuty ? " · On duty" : ""}</span>
+      <li class="lookup-result-row officer-row" data-user-id="${o.userId}">
+        <img class="officer-avatar" src="${o.avatarUrl || avatarUrlFor(o.userId, null, 40)}" alt="" width="36" height="36" />
+        <span class="officer-row-info">
+          <span class="lookup-result-name">${o.displayName}</span>
+          <span class="lookup-result-nick">${o.topRole || "No rank"}</span>
+        </span>
+        <span class="officer-duty-dot ${o.onDuty ? "on" : "off"}" title="${o.onDuty ? "On duty" : "Off duty"}"></span>
+        ${o.watched ? `<span class="officer-watch-badge" title="Currently being watched">Watched</span>` : ""}
       </li>
     `
     )
@@ -1937,15 +2308,50 @@ let officerDetailUserId = null;
 
 function openOfficerDetail(userId) {
   officerDetailUserId = userId;
+  const officer = (window._officersById || {})[userId];
   const wrap = document.getElementById("officerDetailWrap");
   wrap.innerHTML = `
-    <h2 class="lookup-detail-heading" style="margin-top: 22px;">Manage officer <code>${userId}</code></h2>
+    <div class="officer-detail-header">
+      <img class="officer-avatar" src="${(officer && officer.avatarUrl) || avatarUrlFor(userId, null, 56)}" alt="" width="48" height="48" />
+      <div>
+        <h2 class="lookup-detail-heading" style="margin: 0;">${(officer && officer.displayName) || userId}</h2>
+        <p class="panel-subtitle" style="margin: 2px 0 0;">${(officer && officer.topRole) || "No rank"} · ${officer && officer.onDuty ? "On duty" : "Off duty"}</p>
+      </div>
+    </div>
+
+    <h3 class="officer-action-group-heading">Shift</h3>
     <div class="lookup-actions">
       <button class="lookup-action-btn" data-kind="shift_end">End Shift</button>
-      <button class="lookup-action-btn" data-kind="loa_create">File LOA (7d)</button>
-      <button class="lookup-action-btn" data-kind="promote">Log Promotion Eligible</button>
     </div>
-    <div class="field-row" style="margin-top: 12px;">
+
+    <h3 class="officer-action-group-heading">LOA / RA</h3>
+    <div class="lookup-actions">
+      <button class="lookup-action-btn" data-kind="loa_create">File LOA (7d)</button>
+    </div>
+
+    <h3 class="officer-action-group-heading">Personnel</h3>
+    <div class="lookup-actions">
+      <button class="lookup-action-btn" data-kind="promote">Log Promotion Eligible</button>
+      <button class="lookup-action-btn" id="officerBgCheckBtn">Background Check</button>
+    </div>
+    <div id="officerBgCheckWrap"></div>
+
+    <h3 class="officer-action-group-heading">Watch</h3>
+    <div class="field-row">
+      <select id="officerWatchDuration">
+        <option value="3600">1 hour</option>
+        <option value="21600">6 hours</option>
+        <option value="86400" selected>1 day</option>
+        <option value="259200">3 days</option>
+        <option value="604800">7 days</option>
+      </select>
+      <button class="lookup-action-btn" id="officerWatchStartBtn">Start Watch</button>
+      <button class="lookup-action-btn" id="officerWatchSummaryBtn">View Summary</button>
+    </div>
+    <div id="officerWatchWrap"></div>
+
+    <h3 class="officer-action-group-heading">Direct Message</h3>
+    <div class="field-row">
       <textarea id="officerDmMessage" rows="3" placeholder="DM message to this officer..." style="flex: 1;"></textarea>
       <button class="lookup-action-btn" id="officerDmSendBtn">Send DM</button>
     </div>
@@ -1955,6 +2361,62 @@ function openOfficerDetail(userId) {
     btn.addEventListener("click", () => handleOfficerActionClick(btn));
   });
   document.getElementById("officerDmSendBtn").addEventListener("click", () => sendOfficerDm());
+  document.getElementById("officerBgCheckBtn").addEventListener("click", () => loadOfficerBackgroundCheck(userId));
+  document.getElementById("officerWatchStartBtn").addEventListener("click", () => startOfficerWatch(userId));
+  document.getElementById("officerWatchSummaryBtn").addEventListener("click", () => loadOfficerWatchSummary(userId));
+}
+
+async function loadOfficerBackgroundCheck(userId) {
+  const wrap = document.getElementById("officerBgCheckWrap");
+  wrap.innerHTML = `<div class="skeleton" style="height: 60px;"></div>`;
+  const res = await apiGet(`/api/lookup/${encodeURIComponent(userId)}/history`);
+  if (!res || !res.entries) {
+    wrap.innerHTML = `<div class="empty-state">Failed to load background check.</div>`;
+    return;
+  }
+  if (!res.entries.length) {
+    wrap.innerHTML = `<div class="empty-state">No history on file (clean record).</div>`;
+    return;
+  }
+  wrap.innerHTML = `
+    <ol class="loa-history-list">
+      ${res.entries
+        .slice(0, 20)
+        .map(
+          (e) => `<li class="loa-history-row"><span class="history-desc">[${e.type}] ${e.description}</span><span class="history-date">${formatDate(e.timestamp)}</span></li>`
+        )
+        .join("")}
+    </ol>
+  `;
+}
+
+async function startOfficerWatch(userId) {
+  const messageEl = document.getElementById("officerActionMessage");
+  const durationSeconds = Number(document.getElementById("officerWatchDuration").value);
+  const res = await apiPost("/api/hr/officers/watch/start", { targetUserId: userId, durationSeconds });
+  if (!res || !res.ok || !res.data || !res.data.ok) {
+    messageEl.innerHTML = `<div class="lookup-action-message error">Could not start watch${res && res.data && res.data.error ? `: ${res.data.error}` : ""}.</div>`;
+    return;
+  }
+  messageEl.innerHTML = `<div class="lookup-action-message success">Watch started. You'll get a DM summary when it ends.</div>`;
+}
+
+async function loadOfficerWatchSummary(userId) {
+  const wrap = document.getElementById("officerWatchWrap");
+  wrap.innerHTML = `<div class="skeleton" style="height: 60px;"></div>`;
+  const res = await apiPost("/api/hr/officers/watch/summary", { targetUserId: userId });
+  if (!res || !res.ok || !res.data || !res.data.ok) {
+    wrap.innerHTML = `<div class="empty-state">No watch session found for this officer.</div>`;
+    return;
+  }
+  const s = res.data.summary;
+  wrap.innerHTML = `
+    <div class="stat-card"><div class="label">Status</div><div class="value">${res.data.active ? "Active" : "Closed"}</div></div>
+    <div class="stat-card"><div class="label">Shifts started</div><div class="value">${s.shiftCount}</div></div>
+    <div class="stat-card"><div class="label">LOA/RA requests</div><div class="value">${s.loaCount}</div></div>
+    <div class="stat-card"><div class="label">Rank changes</div><div class="value">${s.rankChangeCount}</div></div>
+    <div class="stat-card"><div class="label">Commands used</div><div class="value">${s.commandUseCount}</div></div>
+  `;
 }
 
 function handleOfficerActionClick(btn) {
