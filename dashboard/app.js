@@ -315,11 +315,15 @@ async function loadProfile() {
   document.getElementById("accessBadge").textContent = TIER_BADGE_COPY[me.tier] || me.tier;
   document.getElementById("welcomeHero").hidden = false;
 
+  // Bug fix: this card grid used to lead with an "Access tier" stat card
+  // showing the exact same value as the accessBadge pill in welcomeHero
+  // directly above it - the same tier rendered twice on screen a few pixels
+  // apart read as a visual glitch/duplicate ("shows like a double thing").
+  // Dropped the redundant card; the two remaining cards are each unique info.
   document.getElementById("overviewSkeleton").hidden = true;
   const cards = document.getElementById("overviewCards");
   cards.hidden = false;
   cards.innerHTML = `
-    <div class="stat-card"><div class="label">Access tier</div><div class="value">${me.tier}</div></div>
     <div class="stat-card"><div class="label">Total duty time</div><div class="value">${formatDuration(shifts.totalSeconds)}</div></div>
     <div class="stat-card"><div class="label">Shifts logged</div><div class="value">${shifts.shiftCount}</div></div>
   `;
@@ -337,12 +341,25 @@ async function loadProfile() {
   } else {
     const badges = badgesRes.badges || [];
     const extra = `
-      <div class="badge-card">Streak: ${badgesRes.streak ?? 0}</div>
-      <div class="badge-card">Tenure: ${badgesRes.tenureDays != null ? `${badgesRes.tenureDays}d` : "N/A"}</div>
-      <div class="badge-card">Rank: ${badgesRes.rank || "Unranked"}</div>
+      <div class="badge-card badge-card-stat"><span class="badge-icon" aria-hidden="true">🔥</span><span class="badge-label">Streak: ${badgesRes.streak ?? 0} day${badgesRes.streak === 1 ? "" : "s"}</span></div>
+      <div class="badge-card badge-card-stat"><span class="badge-icon" aria-hidden="true">📅</span><span class="badge-label">Tenure: ${badgesRes.tenureDays != null ? `${badgesRes.tenureDays}d` : "N/A"}</span></div>
+      <div class="badge-card badge-card-stat"><span class="badge-icon" aria-hidden="true">🎖️</span><span class="badge-label">Rank: ${badgesRes.rank || "Unranked"}</span></div>
     `;
-    const badgeCards = badges.map((b) => `<div class="badge-card">${b}</div>`).join("");
-    badgesGrid.innerHTML = extra + badgeCards || `<div class="empty-state">No badges yet.</div>`;
+    // Bug fix: compute_badges() (bot-side) prefixes every badge with a raw
+    // Discord custom-emoji markdown token (e.g. "<:badge_name:123456789>
+    // 10 Shifts Logged") for rendering inside Discord embeds - on a web page
+    // that markup can't resolve to an image and was showing as ugly literal
+    // text instead of a medal/ribbon icon. Strip it and render a real
+    // medal-style badge card (icon + label) instead.
+    const badgeCards = badges
+      .map((b) => (b || "").replace(/^<a?:\w+:\d+>\s*/, "").trim())
+      .filter(Boolean)
+      .map(
+        (label) =>
+          `<div class="badge-card badge-card-earned"><span class="badge-icon" aria-hidden="true">🏅</span><span class="badge-label">${label}</span></div>`
+      )
+      .join("");
+    badgesGrid.innerHTML = extra + (badgeCards || `<div class="badge-card empty-state">No badges earned yet.</div>`);
   }
 }
 
@@ -862,6 +879,48 @@ function showShiftMessage(text, kind) {
   el.innerHTML = `<div class="form-message ${kind}">${text}</div>`;
 }
 
+// ── Currently On Duty (Shift Management right column) ──
+
+function renderOnDutyRows(entries) {
+  if (entries.length === 0) {
+    return `<li class="empty-state">Nobody is currently on duty.</li>`;
+  }
+  return entries
+    .map((e) => {
+      const meta = e.onBreak ? "On break" : (e.shiftType || "On duty");
+      return `
+        <li class="on-duty-row ${e.onBreak ? "on-break" : ""}">
+          <img src="${avatarUrlFor(e.userId, e.avatar, 28)}" alt="">
+          <div class="on-duty-row-body">
+            <span class="on-duty-row-name">${e.displayName}</span>
+            <span class="on-duty-row-meta">${meta}</span>
+          </div>
+          <span class="on-duty-row-elapsed">${formatHms(e.elapsedSeconds || 0)}</span>
+        </li>
+      `;
+    })
+    .join("");
+}
+
+async function loadOnDutyCard() {
+  const skeleton = document.getElementById("onDutyCardSkeleton");
+  const list = document.getElementById("onDutyCardList");
+  const countEl = document.getElementById("onDutyCardCount");
+  const res = await apiGet("/api/shift/on-duty");
+  skeleton.hidden = true;
+  list.hidden = false;
+
+  if (!res || res.ok === false) {
+    list.innerHTML = `<li class="empty-state">On-duty list is unavailable right now.</li>`;
+    countEl.textContent = "";
+    return;
+  }
+
+  const onDuty = res.onDuty || [];
+  countEl.textContent = onDuty.length ? `(${onDuty.length})` : "";
+  list.innerHTML = renderOnDutyRows(onDuty);
+}
+
 async function loadShiftManagement() {
   document.getElementById("shiftMgmtSkeleton").hidden = true;
   document.getElementById("shiftMgmtBody").hidden = false;
@@ -870,9 +929,13 @@ async function loadShiftManagement() {
   loadMiniLeaderboard();
   loadQuotaRing();
   loadQuickStats();
+  loadOnDutyCard();
 
   if (shiftPollInterval) clearInterval(shiftPollInterval);
-  shiftPollInterval = setInterval(refreshCurrentShift, 45000);
+  shiftPollInterval = setInterval(() => {
+    refreshCurrentShift();
+    loadOnDutyCard();
+  }, 45000);
 }
 
 async function startShift(shiftType) {
@@ -1087,41 +1150,155 @@ async function loadRa() {
 }
 
 // ── Personal Settings ──
+// Real fields come from ERM-main/utils/user_settings.py's DEFAULT_SETTINGS -
+// grouped into cards (mirrors the Shift Management page's card-grid
+// convention) with a friendly label/description and a proper control per
+// field, instead of one flat auto-generated list of raw key names.
+
+const DAY_OPTIONS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, "0")}:00`);
+
+const SETTING_META = {
+  nudge_opt_out: {
+    card: "Notifications", label: "Opt out of nudges",
+    desc: "Stop receiving reminder nudges from the bot.", type: "toggle",
+  },
+  report_card_opt_out: {
+    card: "Notifications", label: "Opt out of report card",
+    desc: "Don't receive your periodic performance report card DM.", type: "toggle",
+  },
+  shift_reports_enabled: {
+    card: "Notifications", label: "Shift reports",
+    desc: "Receive a DM summary after ending a shift.", type: "toggle",
+  },
+  dm_on_claim: {
+    card: "Notifications", label: "DM on RA claim",
+    desc: "Get DM'd when an FTO claims your RA request.", type: "toggle",
+  },
+  trainee_result_alert: {
+    card: "Notifications", label: "Trainee result alerts",
+    desc: "FTO setting - DM you when a trainee's RA result posts.", type: "toggle",
+  },
+  weekly_digest_day: {
+    card: "Notifications", label: "Weekly digest day",
+    desc: "Day for your personal weekly summary DM (hours, rank, streak).",
+    type: "select-day",
+  },
+  weekly_digest_hour: {
+    card: "Notifications", label: "Weekly digest hour",
+    desc: "Hour (Eastern) for the weekly digest DM.", type: "select-hour",
+  },
+
+  shift_reminder_minutes: {
+    card: "Shift Reminders", label: "Shift reminder",
+    desc: "Minutes into a shift before a reminder DM. Blank = off.", type: "number",
+  },
+  quota_reminder_day: {
+    card: "Shift Reminders", label: "Quota reminder day",
+    desc: "Day for the weekly quota reminder DM.", type: "select-day",
+  },
+  quota_reminder_hour: {
+    card: "Shift Reminders", label: "Quota reminder hour",
+    desc: "Hour (Eastern) for the quota reminder DM.", type: "select-hour",
+  },
+  confirm_long_shifts: {
+    card: "Shift Reminders", label: "Confirm long shifts",
+    desc: "Ask for confirmation before ending an unusually long shift.", type: "toggle",
+  },
+  long_shift_threshold_hours: {
+    card: "Shift Reminders", label: "Long shift threshold",
+    desc: "Hours before a shift is considered long.", type: "number",
+  },
+  auto_end_shift: {
+    card: "Shift Reminders", label: "Auto-end at quota",
+    desc: "Automatically end your shift once weekly quota is met.", type: "toggle",
+  },
+  default_shift_type: {
+    card: "Shift Reminders", label: "Default shift type",
+    desc: "Pre-selected shift type when starting duty.", type: "text",
+  },
+  default_max_trainees: {
+    card: "Shift Reminders", label: "Default max trainees",
+    desc: "FTO setting - default trainee cap when hosting RA.", type: "number",
+  },
+  auto_toggle_ra_availability: {
+    card: "Shift Reminders", label: "Auto-toggle RA availability",
+    desc: "FTO setting - mark available/unavailable automatically with duty status.",
+    type: "toggle",
+  },
+
+  profile_visibility: {
+    card: "Profile & Privacy", label: "Profile visibility",
+    desc: "Who can see your duty data on lookups.", type: "select",
+    options: [["everyone", "Everyone (Deputy+)"], ["staff", "Staff only (data hidden)"], ["command", "Command Team only"]],
+  },
+  embed_accent_color: {
+    card: "Profile & Privacy", label: "DM embed accent color",
+    desc: "Accent color name used on DM embeds sent to you.", type: "text",
+  },
+  profile_widgets: {
+    card: "Profile & Privacy", label: "Profile widgets",
+    desc: "Widgets shown on your profile page.", type: "readonly",
+  },
+  roblox_auto_start_enabled: {
+    card: "Profile & Privacy", label: "Auto-start prompt",
+    desc: "DM a start-shift prompt when you join ERLC off duty.", type: "toggle",
+  },
+  shift_notes_enabled: {
+    card: "Profile & Privacy", label: "Shift notes prompt",
+    desc: "Show a \"leave a note?\" prompt when ending a shift.", type: "toggle",
+  },
+  timezone: {
+    card: "Profile & Privacy", label: "Timezone",
+    desc: "Used for displaying times in your local zone.", type: "text",
+  },
+  mobile_friendly: {
+    card: "Profile & Privacy", label: "Mobile-friendly embeds",
+    desc: "Simplify embed layout for mobile Discord.", type: "toggle",
+  },
+};
+
+const CARD_ORDER = ["Notifications", "Shift Reminders", "Profile & Privacy"];
+
+function settingControlHtml(key, value, meta) {
+  if (meta.type === "toggle") {
+    return `<button class="settings-toggle ${value ? "on" : ""}" data-key="${key}" data-value="${!!value}"></button>`;
+  }
+  if (meta.type === "select-day" || meta.type === "select") {
+    const options = meta.type === "select-day"
+      ? DAY_OPTIONS.map((d, i) => [String(i), d])
+      : meta.options;
+    const optHtml = [`<option value="" ${value == null ? "selected" : ""}>Server default</option>`]
+      .concat(options.map(([v, l]) => `<option value="${v}" ${String(value) === v ? "selected" : ""}>${l}</option>`))
+      .join("");
+    return `<select class="settings-select" data-key="${key}">${optHtml}</select>`;
+  }
+  if (meta.type === "select-hour") {
+    const optHtml = [`<option value="" ${value == null ? "selected" : ""}>Server default</option>`]
+      .concat(HOUR_OPTIONS.map((l, h) => `<option value="${h}" ${String(value) === String(h) ? "selected" : ""}>${l}</option>`))
+      .join("");
+    return `<select class="settings-select" data-key="${key}">${optHtml}</select>`;
+  }
+  if (meta.type === "readonly") {
+    return `<span class="settings-row-status">${Array.isArray(value) ? (value.join(", ") || "(none)") : String(value ?? "")}</span>`;
+  }
+  if (meta.type === "number") {
+    return `<input type="number" class="settings-input" data-key="${key}" value="${value ?? ""}">`;
+  }
+  return `<input type="text" class="settings-input" data-key="${key}" value="${value ?? ""}">`;
+}
 
 function renderSettingRow(key, value) {
-  const label = key.replace(/_/g, " ");
-  if (Array.isArray(value)) {
-    // e.g. profile_widgets - no dedicated editor yet; show read-only rather
-    // than risk overwriting an array field with a plain string on save.
-    return `
-      <div class="settings-row" data-key="${key}">
-        <span class="settings-row-label">${label}</span>
-        <span class="settings-row-status">${value.join(", ") || "(none)"}</span>
-      </div>
-    `;
-  }
-  if (typeof value === "boolean") {
-    return `
-      <div class="settings-row" data-key="${key}">
-        <span class="settings-row-label">${label}</span>
-        <button class="settings-toggle ${value ? "on" : ""}" data-key="${key}" data-value="${value}"></button>
-        <span class="settings-row-status" data-status></span>
-      </div>
-    `;
-  }
-  if (typeof value === "number") {
-    return `
-      <div class="settings-row" data-key="${key}">
-        <span class="settings-row-label">${label}</span>
-        <input type="number" data-key="${key}" value="${value}">
-        <span class="settings-row-status" data-status></span>
-      </div>
-    `;
-  }
+  const meta = SETTING_META[key] || {
+    card: "Other", label: key.replace(/_/g, " "), desc: "", type: Array.isArray(value) ? "readonly" : typeof value === "boolean" ? "toggle" : typeof value === "number" ? "number" : "text",
+  };
   return `
     <div class="settings-row" data-key="${key}">
-      <span class="settings-row-label">${label}</span>
-      <input type="text" data-key="${key}" value="${value ?? ""}">
+      <div class="settings-row-text">
+        <span class="settings-row-label">${meta.label}</span>
+        ${meta.desc ? `<span class="settings-row-desc">${meta.desc}</span>` : ""}
+      </div>
+      ${settingControlHtml(key, value, meta)}
       <span class="settings-row-status" data-status></span>
     </div>
   `;
@@ -1144,11 +1321,11 @@ async function saveSetting(row, key, value) {
 async function loadSettings() {
   const res = await apiGet("/api/settings");
   document.getElementById("settingsSkeleton").hidden = true;
-  const list = document.getElementById("settingsList");
-  list.hidden = false;
+  const grid = document.getElementById("settingsCardGrid");
+  grid.hidden = false;
 
   if (!res || res.ok === false) {
-    list.innerHTML = `<div class="empty-state">Settings are unavailable right now.</div>`;
+    grid.innerHTML = `<div class="empty-state">Settings are unavailable right now.</div>`;
     return;
   }
 
@@ -1160,13 +1337,33 @@ async function loadSettings() {
   const settings = res.settings || {};
   const entries = Object.entries(settings);
   if (entries.length === 0) {
-    list.innerHTML = `<div class="empty-state">No settings to show.</div>`;
+    grid.innerHTML = `<div class="empty-state">No settings to show.</div>`;
     return;
   }
 
-  list.innerHTML = entries.map(([key, value]) => renderSettingRow(key, value)).join("");
+  const byCard = new Map();
+  for (const [key, value] of entries) {
+    const card = (SETTING_META[key] || {}).card || "Other";
+    if (!byCard.has(card)) byCard.set(card, []);
+    byCard.get(card).push([key, value]);
+  }
 
-  list.querySelectorAll(".settings-toggle").forEach((toggle) => {
+  const orderedCards = CARD_ORDER.filter((c) => byCard.has(c)).concat(
+    [...byCard.keys()].filter((c) => !CARD_ORDER.includes(c))
+  );
+
+  grid.innerHTML = orderedCards
+    .map((card) => `
+      <div class="settings-card">
+        <h2 class="settings-section-heading">${card}</h2>
+        <div class="settings-list">
+          ${byCard.get(card).map(([key, value]) => renderSettingRow(key, value)).join("")}
+        </div>
+      </div>
+    `)
+    .join("");
+
+  grid.querySelectorAll(".settings-toggle").forEach((toggle) => {
     toggle.addEventListener("click", () => {
       const newValue = toggle.dataset.value !== "true";
       toggle.classList.toggle("on", newValue);
@@ -1175,11 +1372,19 @@ async function loadSettings() {
     });
   });
 
-  list.querySelectorAll("input[type='number'], input[type='text']").forEach((input) => {
+  grid.querySelectorAll(".settings-input").forEach((input) => {
     input.addEventListener("change", () => {
       const key = input.dataset.key;
       const value = input.type === "number" ? Number(input.value) : input.value;
       saveSetting(input.closest(".settings-row"), key, value);
+    });
+  });
+
+  grid.querySelectorAll(".settings-select").forEach((select) => {
+    select.addEventListener("change", () => {
+      const key = select.dataset.key;
+      const value = select.value === "" ? null : Number(select.value);
+      saveSetting(select.closest(".settings-row"), key, value);
     });
   });
 }
@@ -1245,33 +1450,101 @@ document.querySelectorAll(".shift-type-filter-btn").forEach((btn) => {
   });
 });
 
+// ── Bug 5: shared slow-load overlay ──
+// Any panel load that takes longer than SLOW_LOAD_THRESHOLD_MS gets a
+// spinner + rotating fun-fact/tip instead of just sitting on its bare
+// skeleton. Wraps a panel's load call(s) rather than duplicating
+// show/hide/timer logic in every individual load* function.
+const SLOW_LOAD_THRESHOLD_MS = 600;
+const LOADING_TIPS = [
+  "Tip: you can start, break, and end a shift right from the Shift Management page - no need to touch a Discord command.",
+  "Did you know? The AI Assistant (bottom-right) can start or end your shift for you if you just ask.",
+  "Tip: the Leaderboard's \"Live\" filter tracks duty time since the last period reset, not just the last 7 days.",
+  "Did you know? Your quota progress ring on Shift Management updates automatically as you rack up hours.",
+  "Tip: check Recognized Officers for staff who've logged 100+ hours and 6+ months of tenure.",
+  "Did you know? LOA and RA requests submitted here post the same embed the bot posts for in-Discord requests.",
+  "Tip: Personal Settings lets you turn on Reduce Motion if the animations aren't your thing.",
+  "Did you know? The Department Feed shows recent promotions and accepted applications in one place.",
+  "Tip: online FTOs show up live on the RA page so you know who's available before requesting.",
+  "Did you know? Your duty time is broken down by CHP and SEU shift type right on your Profile page.",
+  "Tip: use the Custom range on the Leaderboard to pull duty totals for any specific date window.",
+  "Did you know? Badges on your Profile page track streaks, tenure, and RA passes - keep showing up to earn more.",
+  "Tip: the on-duty badge next to the Leaderboard filters shows exactly how many officers are active right now.",
+  "Did you know? You can filter the Leaderboard to just CHP or just SEU duty time.",
+  "Tip: Contact Us messages go straight to the developer as a Discord DM - use it for bugs or questions.",
+  "Did you know? Session info in Personal Settings shows exactly when your login expires.",
+  "Tip: shift streaks count consecutive days with at least one completed shift - today doesn't break yesterday's streak.",
+];
+let loadingOverlayTimer = null;
+let loadingOverlayTipInterval = null;
+
+function showLoadingOverlay() {
+  const overlay = document.getElementById("loadingOverlay");
+  const tipEl = document.getElementById("loadingOverlayTip");
+  if (!overlay || !tipEl) return;
+  const pickTip = () => {
+    tipEl.textContent = LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)];
+  };
+  pickTip();
+  overlay.hidden = false;
+  clearInterval(loadingOverlayTipInterval);
+  loadingOverlayTipInterval = setInterval(pickTip, 4000);
+}
+
+function hideLoadingOverlay() {
+  clearTimeout(loadingOverlayTimer);
+  clearInterval(loadingOverlayTipInterval);
+  loadingOverlayTimer = null;
+  const overlay = document.getElementById("loadingOverlay");
+  if (overlay) overlay.hidden = true;
+}
+
+// Runs `loadFns` (one or more load* functions, called immediately, may be
+// async or fire-and-forget) and shows the overlay only if they're still
+// running after SLOW_LOAD_THRESHOLD_MS. Safe to call with functions that
+// don't return a promise - Promise.resolve() normalizes them.
+function withLoadingOverlay(...loadFns) {
+  clearTimeout(loadingOverlayTimer);
+  loadingOverlayTimer = setTimeout(showLoadingOverlay, SLOW_LOAD_THRESHOLD_MS);
+  const results = loadFns.map((fn) => {
+    try {
+      return Promise.resolve(fn());
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  });
+  Promise.allSettled(results).then(hideLoadingOverlay);
+}
+
 document.querySelectorAll(".nav-item[data-section]").forEach((item) => {
   item.addEventListener("click", () => {
     const section = item.dataset.section;
     showPanel(section);
-    if (section === "shift-management") loadShiftManagement();
-    if (section === "loa") loadLoa();
-    if (section === "ra") loadRa();
-    if (section === "history") loadHistory();
-    if (section === "profile") loadProfile();
-    if (section === "settings") { loadSettings(); loadSessionInfo(); }
+    if (section === "shift-management") withLoadingOverlay(loadShiftManagement);
+    if (section === "loa") withLoadingOverlay(loadLoa);
+    if (section === "ra") withLoadingOverlay(loadRa);
+    if (section === "history") withLoadingOverlay(loadHistory);
+    if (section === "profile") withLoadingOverlay(loadProfile);
+    if (section === "settings") withLoadingOverlay(loadSettings, loadSessionInfo);
     if (section === "leaderboard") {
-      loadLeaderboard();
+      withLoadingOverlay(loadLeaderboard);
       startLeaderboardAutoRefresh();
     } else {
       stopLeaderboardAutoRefresh();
     }
-    if (section === "recognized-officers") loadRecognizedOfficers();
-    if (section === "department-feed") loadDepartmentFeed();
+    if (section === "recognized-officers") withLoadingOverlay(loadRecognizedOfficers);
+    if (section === "department-feed") withLoadingOverlay(loadDepartmentFeed);
   });
 });
 
-// ── Reduce Motion + Accent Color (client-only prefs, localStorage) ──
-// Dashboard-rendering concerns only, per the plan: not a bot-side
-// user_settings field, so these never touch the bridge/bot.
+// ── Reduce Motion + Accent Color + Background (client-only prefs,
+// localStorage) ── Dashboard-rendering concerns only, per the plan: not a
+// bot-side user_settings field, so these never touch the bridge/bot.
 const REDUCE_MOTION_KEY = "chp_reduce_motion";
 const ACCENT_COLOR_KEY = "chp_accent_color";
+const BG_COLOR_KEY = "chp_bg_color";
 const DEFAULT_ACCENT = "#c9a66b"; // matches --chp-gold in assets/chp-theme.css
+const DEFAULT_BG = "#1c1708"; // matches html/body's default linear-gradient base
 
 function applyReduceMotion(on) {
   document.body.classList.toggle("reduce-motion", on);
@@ -1292,9 +1565,33 @@ function applyAccentColor(hex) {
   if (input) input.value = hex;
 }
 
+// Derives a subtle dark gradient from the user's chosen base color, kept
+// dark enough (low lightness mix toward black) that the gold/white text and
+// card contrast established elsewhere stays legible - never a literal bright
+// wash across the whole dashboard.
+function shadeHex(hex, targetMix) {
+  const clean = hex.replace("#", "");
+  const r = parseInt(clean.slice(0, 2), 16) || 0;
+  const g = parseInt(clean.slice(2, 4), 16) || 0;
+  const b = parseInt(clean.slice(4, 6), 16) || 0;
+  const mix = (channel) => Math.round(channel * targetMix);
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+}
+
+function applyBackgroundColor(hex) {
+  const root = document.documentElement.style;
+  root.setProperty("--chp-bg-glow", `${hex}2e`); // ~18% alpha, matches the default glow's opacity
+  root.setProperty("--chp-bg-1", shadeHex(hex, 0.55));
+  root.setProperty("--chp-bg-2", shadeHex(hex, 0.28));
+  root.setProperty("--chp-bg-3", shadeHex(hex, 0.12));
+  const input = document.getElementById("bgColorInput");
+  if (input) input.value = hex;
+}
+
 function initPersonalPrefs() {
   applyReduceMotion(localStorage.getItem(REDUCE_MOTION_KEY) === "true");
   applyAccentColor(localStorage.getItem(ACCENT_COLOR_KEY) || DEFAULT_ACCENT);
+  applyBackgroundColor(localStorage.getItem(BG_COLOR_KEY) || DEFAULT_BG);
 
   document.getElementById("reduceMotionToggle")?.addEventListener("click", () => {
     const next = localStorage.getItem(REDUCE_MOTION_KEY) !== "true";
@@ -1310,6 +1607,16 @@ function initPersonalPrefs() {
   document.getElementById("accentColorReset")?.addEventListener("click", () => {
     localStorage.removeItem(ACCENT_COLOR_KEY);
     applyAccentColor(DEFAULT_ACCENT);
+  });
+
+  document.getElementById("bgColorInput")?.addEventListener("input", (e) => {
+    localStorage.setItem(BG_COLOR_KEY, e.target.value);
+    applyBackgroundColor(e.target.value);
+  });
+
+  document.getElementById("bgColorReset")?.addEventListener("click", () => {
+    localStorage.removeItem(BG_COLOR_KEY);
+    applyBackgroundColor(DEFAULT_BG);
   });
 }
 initPersonalPrefs();

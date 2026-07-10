@@ -540,6 +540,17 @@
   <div class="ai-panel-resize-handle" id="aiPanelResizeHandle"></div>
 </div>
 
+<!-- Bug fix: shared slow-load overlay (Bug 5) - shown by withLoadingOverlay()
+     in app.js whenever a panel load takes longer than ~600ms, instead of the
+     page just sitting there with a bare skeleton. Rotates through short
+     CHP/dashboard tips while waiting. -->
+<div class="loading-overlay" id="loadingOverlay" hidden aria-live="polite">
+  <div class="loading-overlay-card">
+    <div class="loading-overlay-spinner"></div>
+    <p class="loading-overlay-tip" id="loadingOverlayTip"></p>
+  </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>
