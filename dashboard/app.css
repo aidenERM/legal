@@ -63,9 +63,30 @@
 
 /* Low-intensity SVG refraction/displacement - opt-in only, and only on the
    small fixed set of hero surfaces named in the plan (sidebar, login card,
-   AI panel, loading overlay card). Never on repeating rows for performance. */
+   AI panel, loading overlay card). Never on repeating rows for performance.
+
+   IMPORTANT: the filter must never sit on the panel itself - `filter`
+   distorts EVERY pixel of the element it's applied to, including text
+   glyphs rendered inside it, which is what caused names/messages inside
+   the AI panel and login card to render "wobbly". Instead it lives on a
+   dedicated ::after layer with no text content of its own, positioned
+   behind the actual content (z-index: 0, same layer as ::before) - it
+   re-applies the backdrop blur through the distortion so the refraction
+   effect still reads on the blurred background, while real content
+   (lifted to z-index: 1 by `.liquid-glass > *` above) stays crisp. */
 .liquid-glass-distort {
+  position: relative;
+}
+.liquid-glass-distort::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   filter: url(#liquid-glass-distort);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* will-change is only ever turned on while a pointer is actively tracked
