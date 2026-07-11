@@ -249,16 +249,41 @@ async function bootMe() {
       <div class="nav-category-items"></div>
     `;
     sidebar.appendChild(group);
-    const bocBtn = document.createElement("button");
-    bocBtn.className = "nav-item";
-    bocBtn.dataset.section = "boc";
-    bocBtn.textContent = "Board of Commissioners";
-    bocBtn.addEventListener("click", () => {
-      showPanel("boc");
-      loadBocActiveTab();
-    });
     const bocItemsWrap = group.querySelector(".nav-category-items");
-    bocItemsWrap.appendChild(bocBtn);
+
+    // Bug report: "the board of commissioners tab doesn't show like all the
+    // subcategories" - panel-boc has always had all 8 sub-views wired as an
+    // internal tab bar (#bocTabs), but the sidebar only ever exposed a single
+    // generic "Board of Commissioners" nav item, so unless someone happened
+    // to notice the in-panel tab strip after clicking in, the other 7
+    // sections were effectively invisible. Give each sub-view its own
+    // sidebar entry (same pattern already used for Promotion Quota below),
+    // wired via bocSwitchToTab so nav-click and tab-click stay in sync.
+    const bocSubItems = [
+      { tab: "quota-enforcement", label: "Quota Enforcement" },
+      { tab: "hr-review", label: "HR Promotion Review" },
+      { tab: "hr-oversight", label: "HR Oversight" },
+      { tab: "leaderboard-control", label: "Leaderboard Control" },
+      { tab: "schedules", label: "Scheduled Actions" },
+      { tab: "applications", label: "Applications" },
+      { tab: "audit-log", label: "Audit Log" },
+      { tab: "dm-officers", label: "DM Officers" },
+      { tab: "announcement", label: "Announcement" },
+      { tab: "ra-stats", label: "RA Program Stats" },
+      { tab: "settings", label: "Settings" },
+    ];
+    bocSubItems.forEach(({ tab, label }) => {
+      const btn = document.createElement("button");
+      btn.className = "nav-item";
+      btn.dataset.section = "boc";
+      btn.dataset.bocNavTab = tab;
+      btn.textContent = label;
+      btn.addEventListener("click", () => {
+        showPanel("boc");
+        bocSwitchToTab(tab);
+      });
+      bocItemsWrap.appendChild(btn);
+    });
 
     // Bug 1 fix: Promotion Quota moved here from the High Ranks (admin)
     // group - promotion/quota data is BOC-only.
@@ -2123,21 +2148,32 @@ function loadBocActiveTab() {
   bocClearDenied();
   if (bocActiveTab === "quota-enforcement") return loadBocQuotaEnforcement();
   if (bocActiveTab === "hr-review") return loadBocHrSubTab();
+  if (bocActiveTab === "hr-oversight") return loadBocHrOversight();
+  if (bocActiveTab === "leaderboard-control") return; // static panel, no data to load
+  if (bocActiveTab === "schedules") return loadBocSchedules();
   if (bocActiveTab === "applications") return loadBocApplications();
   if (bocActiveTab === "audit-log") return loadBocAuditLog();
   if (bocActiveTab === "ra-stats") return loadBocRaStats();
   if (bocActiveTab === "settings") return loadBocSettings();
 }
 
+// Shared by the in-panel #bocTabs strip and the sidebar's per-subcategory
+// nav items (added under bootMe's BOC group) so both stay in sync no matter
+// which one the user actually clicks.
+function bocSwitchToTab(tabName) {
+  bocActiveTab = tabName;
+  document.querySelectorAll("#bocTabs .dev-tab").forEach((t) => t.classList.toggle("active", t.dataset.bocTab === tabName));
+  document
+    .querySelectorAll("#panel-boc > .dev-panel")
+    .forEach((p) => p.classList.toggle("active", p.id === `bocPanel-${tabName}`));
+  document
+    .querySelectorAll('.nav-item[data-boc-nav-tab]')
+    .forEach((btn) => btn.classList.toggle("active", btn.dataset.bocNavTab === tabName));
+  loadBocActiveTab();
+}
+
 document.querySelectorAll("#bocTabs .dev-tab").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    bocActiveTab = tab.dataset.bocTab;
-    document.querySelectorAll("#bocTabs .dev-tab").forEach((t) => t.classList.toggle("active", t === tab));
-    document
-      .querySelectorAll("#panel-boc > .dev-panel")
-      .forEach((p) => p.classList.toggle("active", p.id === `bocPanel-${bocActiveTab}`));
-    loadBocActiveTab();
-  });
+  tab.addEventListener("click", () => bocSwitchToTab(tab.dataset.bocTab));
 });
 
 document.querySelectorAll("#bocHrSubTabs .dev-tab").forEach((tab) => {
@@ -2233,6 +2269,160 @@ async function loadBocHrReview() {
     )
     .join("");
   list.innerHTML = `<ul class="history-list">${rows || `<li class="empty-state">No High Rank/SSGT members found.</li>`}</ul>`;
+}
+
+async function loadBocHrOversight() {
+  const skeleton = document.getElementById("bocHrOversightSkeleton");
+  const list = document.getElementById("bocHrOversightList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await bocGet("/api/boc/hr-oversight");
+  skeleton.hidden = true;
+  if (!res) return bocShowDenied();
+  if (res.reason === "confidential" || res.reason === "forbidden") return bocShowDenied(res.reason);
+  if (!res.ok) {
+    list.hidden = false;
+    list.innerHTML = `<div class="empty-state">HR oversight data is unavailable right now (${res.note || res.error || "unknown"}).</div>`;
+    return;
+  }
+
+  list.hidden = false;
+  const officers = res.officers || [];
+  const rows = officers
+    .map((o) => {
+      const quotaLabel = o.quotaConfigured
+        ? `${formatDuration(o.seconds)} / ${formatDuration(o.quotaSeconds)} ${o.quotaMet ? "(met)" : "(not met)"}`
+        : "no quota configured";
+      const watches = (o.watchHistory || [])
+        .map((w) => `${w.active ? "Active watch" : "Watch"} started ${new Date((w.startedAt || 0) * 1000).toLocaleString()}`)
+        .join("; ");
+      return `<li>
+        <strong>${o.displayName}</strong> — ${o.onDuty ? "on duty" : "off duty"}, quota: ${quotaLabel}
+        ${watches ? `<br><span class="panel-subtitle">${watches}</span>` : ""}
+      </li>`;
+    })
+    .join("");
+  list.innerHTML = `<ul class="history-list">${rows || `<li class="empty-state">No High Rank role is configured, or no members hold it.</li>`}</ul>`;
+}
+
+async function loadBocSchedules() {
+  const container = document.getElementById("bocScheduleGroups");
+  const kinds = [
+    { kind: "scheduled_period_reset", label: "Scheduled Leaderboard Reset" },
+    { kind: "scheduled_quota_enforcement", label: "Scheduled Quota Enforcement" },
+    { kind: "scheduled_promotion_review", label: "Scheduled Promotion Review" },
+  ];
+  container.innerHTML = kinds.map(({ kind, label }) => `
+    <div class="card" data-schedule-kind="${kind}" style="margin-bottom:16px;">
+      <h3>${label}</h3>
+      <div class="schedule-status" data-role="status">Loading...</div>
+      <div class="dev-diagnostics-form">
+        <select data-role="type">
+          <option value="weekly">Weekly</option>
+          <option value="interval">Every N days</option>
+        </select>
+        <input type="number" data-role="weekday" min="0" max="6" placeholder="Weekday (0=Mon..6=Sun)">
+        <input type="number" data-role="hour" min="0" max="23" placeholder="Hour (0-23, UTC)">
+        <input type="number" data-role="minute" min="0" max="59" placeholder="Minute (0-59)">
+        <input type="number" data-role="days" min="1" placeholder="Every N days">
+        <input type="text" data-role="channelId" placeholder="Notify channel ID (optional; else DMs you)">
+        <button data-role="save">Save Schedule</button>
+        <button data-role="cancel">Cancel Schedule</button>
+      </div>
+      <div data-role="result"></div>
+    </div>
+  `).join("");
+
+  for (const { kind } of kinds) {
+    const card = container.querySelector(`[data-schedule-kind="${kind}"]`);
+    const statusEl = card.querySelector('[data-role="status"]');
+    const res = await bocGet(`/api/boc/schedule?kind=${kind}`);
+    if (!res) {
+      statusEl.textContent = "Unavailable.";
+    } else if (res.reason === "confidential" || res.reason === "forbidden") {
+      return bocShowDenied(res.reason);
+    } else if (res.ok && res.active) {
+      const next = res.nextRun ? new Date(res.nextRun * 1000).toLocaleString() : "unknown";
+      statusEl.textContent = `Active — next run: ${next}`;
+    } else {
+      statusEl.textContent = "Not scheduled.";
+    }
+
+    card.querySelector('[data-role="save"]').addEventListener("click", async () => {
+      const type = card.querySelector('[data-role="type"]').value;
+      const channelId = card.querySelector('[data-role="channelId"]').value.trim();
+      const config = { type };
+      if (type === "weekly") {
+        config.weekday = Number(card.querySelector('[data-role="weekday"]').value);
+        config.hour = Number(card.querySelector('[data-role="hour"]').value);
+        config.minute = Number(card.querySelector('[data-role="minute"]').value) || 0;
+      } else {
+        config.days = Number(card.querySelector('[data-role="days"]').value);
+      }
+      if (channelId) config.notify = { channelId };
+
+      const resultEl = card.querySelector('[data-role="result"]');
+      const setRes = await apiPost("/api/boc/schedule", { kind, config });
+      if (!setRes || !setRes.ok || !setRes.data || setRes.data.ok === false) {
+        resultEl.innerHTML = `<div class="lookup-action-message error">Failed to save schedule.</div>`;
+        return;
+      }
+      resultEl.innerHTML = `<div class="lookup-action-message success">Schedule saved.</div>`;
+      statusEl.textContent = `Active — next run: ${new Date(setRes.data.nextRun * 1000).toLocaleString()}`;
+    });
+
+    card.querySelector('[data-role="cancel"]').addEventListener("click", async () => {
+      const resultEl = card.querySelector('[data-role="result"]');
+      const cancelRes = await fetch(`${WORKER_URL}/api/boc/schedule`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ kind }),
+      });
+      if (!cancelRes.ok) {
+        resultEl.innerHTML = `<div class="lookup-action-message error">Failed to cancel schedule.</div>`;
+        return;
+      }
+      resultEl.innerHTML = `<div class="lookup-action-message success">Schedule cancelled.</div>`;
+      statusEl.textContent = "Not scheduled.";
+    });
+  }
+}
+
+// Manual "Reset Period" - destructive-feeling action, so it reuses the same
+// click-again-to-confirm pattern as the High Ranks Lookup panel's admin
+// action buttons (handleAdminActionClick) rather than inventing a new one.
+document.getElementById("bocResetPeriodBtn").addEventListener("click", (e) => {
+  const btn = e.currentTarget;
+  if (!btn.classList.contains("confirming")) {
+    btn.classList.add("confirming");
+    const original = btn.textContent;
+    btn.dataset.originalLabel = original;
+    btn.textContent = "Are you sure? This cannot be undone — click again to confirm";
+    setTimeout(() => {
+      if (btn.classList.contains("confirming")) {
+        btn.classList.remove("confirming");
+        btn.textContent = btn.dataset.originalLabel;
+      }
+    }, 5000);
+    return;
+  }
+  btn.classList.remove("confirming");
+  btn.textContent = btn.dataset.originalLabel;
+  fireBocPeriodReset();
+});
+
+async function fireBocPeriodReset() {
+  const resultEl = document.getElementById("bocResetPeriodResult");
+  resultEl.innerHTML = `<div class="lookup-action-message">Resetting...</div>`;
+  const res = await apiPost("/api/boc/leaderboard/reset", {});
+  if (!res || !res.ok || !res.data || res.data.ok === false) {
+    const reason = res && res.data ? res.data.reason || res.data.error : "request_failed";
+    resultEl.innerHTML = `<div class="lookup-action-message error">Failed: ${reason}</div>`;
+    return;
+  }
+  resultEl.innerHTML = `<div class="lookup-action-message success">Leaderboard period reset. New period started.</div>`;
 }
 
 async function loadBocApplications() {
