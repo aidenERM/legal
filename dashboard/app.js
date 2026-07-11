@@ -715,17 +715,19 @@ function renderDepartmentFeedRows(entries) {
     return `<li class="empty-state">No recent department activity.</li>`;
   }
   return entries
-    .map(
-      (entry) => `
+    .map((entry) => {
+      const avatarUrl = avatarUrlFor(entry.userId, entry.avatar, 32);
+      return `
         <li class="department-feed-row">
+          <img class="department-feed-avatar" src="${avatarUrl}" alt="" width="28" height="28">
           <span class="department-feed-icon department-feed-icon-${entry.kind}">${DEPARTMENT_FEED_ICON[entry.kind] || "•"}</span>
           <span class="department-feed-desc">
             ${entry.username ? `<span class="department-feed-name">${entry.username}</span> — ` : ""}${entry.description}
           </span>
           <span class="department-feed-date">${formatDate(entry.timestamp)}</span>
         </li>
-      `
-    )
+      `;
+    })
     .join("");
 }
 
