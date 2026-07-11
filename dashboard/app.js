@@ -723,11 +723,15 @@ async function loadProfile() {
 
 async function loadHistory() {
   const [shifts, history] = await Promise.all([apiGet("/api/shifts"), apiGet("/api/history")]);
-  if (!history) return;
 
   document.getElementById("historySkeleton").hidden = true;
   const list = document.getElementById("historyList");
   list.hidden = false;
+
+  if (!history) {
+    list.innerHTML = `<div class="empty-state">Failed to load history.</div>`;
+    return;
+  }
 
   const buckets = categorizeHistoryEntries(history.entries);
   const shiftsHtml = shifts ? renderShiftsSummaryHtml(shifts) : `<div class="empty-state">Shift data unavailable right now.</div>`;
@@ -737,16 +741,34 @@ async function loadHistory() {
 
 let lookupSelectedUserId = null;
 
+// Live as-you-type search (server-backed, roster-scoped via /member/search).
+// Every call gets a fresh sequence number so a slow response for an earlier,
+// shorter query (e.g. "f") can never overwrite the results of a newer query
+// that already resolved (e.g. "fin") - classic out-of-order-response race
+// when someone types faster than the round-trip.
+let lookupSearchSeq = 0;
+
 async function performLookupSearch() {
   const input = document.getElementById("lookupSearchInput");
-  const query = input.value.trim();
+  await runLookupSearch(input.value.trim());
+}
+
+async function runLookupSearch(query) {
   const resultsWrap = document.getElementById("lookupResultsWrap");
   document.getElementById("lookupDetailWrap").innerHTML = "";
-  if (!query) return;
+
+  const seq = ++lookupSearchSeq;
+
+  if (!query) {
+    resultsWrap.innerHTML = "";
+    return;
+  }
 
   resultsWrap.innerHTML = `<div class="skeleton" style="height: 60px;"></div>`;
 
   const res = await apiPost("/api/lookup/search", { query });
+  if (seq !== lookupSearchSeq) return; // a newer query already resolved (or superseded this one)
+
   if (!res || !res.ok) {
     resultsWrap.innerHTML = `<div class="empty-state">Search failed. Try again.</div>`;
     return;
@@ -2451,6 +2473,17 @@ document.getElementById("lookupSearchBtn").addEventListener("click", performLook
 document.getElementById("lookupSearchInput").addEventListener("keydown", (e) => {
   if (e.key === "Enter") performLookupSearch();
 });
+// Live, incremental, narrowing search-as-you-type (matches the Officers
+// roster's live-filter feel). Debounced lightly since this one is
+// server-backed - the Officers roster filter is local so it needs none.
+let lookupSearchDebounceTimer = null;
+document.getElementById("lookupSearchInput").addEventListener("input", (e) => {
+  const query = e.target.value.trim();
+  if (lookupSearchDebounceTimer) clearTimeout(lookupSearchDebounceTimer);
+  lookupSearchDebounceTimer = setTimeout(() => {
+    runLookupSearch(query);
+  }, 200);
+});
 
 // ── AI Assistant (floating panel, present on every page) ──
 
@@ -3577,6 +3610,33 @@ async function loadBocSettings() {
   body.textContent = res.settings ? JSON.stringify(res.settings, null, 2) : "No settings document found.";
 }
 
+document.getElementById("bocSettingsSaveBtn")?.addEventListener("click", () => {
+  confirmAction("Save these BOC settings?", fireBocSettingsSave);
+});
+
+async function fireBocSettingsSave() {
+  const resultEl = document.getElementById("bocSettingsSaveResult");
+  const hoursInput = document.getElementById("bocRecognizedHoursThreshold");
+  const tenureInput = document.getElementById("bocRecognizedTenureDays");
+  const recognizedHoursThreshold = Number(hoursInput.value);
+  const recognizedTenureDays = Number(tenureInput.value);
+
+  resultEl.innerHTML = `<div class="lookup-action-message">Saving...</div>`;
+
+  if (!Number.isFinite(recognizedHoursThreshold) || !Number.isFinite(recognizedTenureDays)) {
+    resultEl.innerHTML = `<div class="lookup-action-message error">Both fields must be numbers.</div>`;
+    return;
+  }
+
+  const res = await apiPost("/api/boc/settings/update", { recognizedHoursThreshold, recognizedTenureDays });
+  if (!res || !res.ok || !res.data || res.data.ok === false) {
+    const reason = res && res.data ? res.data.error || res.data.reason : "request_failed";
+    resultEl.innerHTML = `<div class="lookup-action-message error">Failed: ${reason}</div>`;
+    return;
+  }
+  resultEl.innerHTML = `<div class="lookup-action-message success">Saved.</div>`;
+}
+
 
 // ── Developer Tools (Phase 6) ──
 
@@ -4120,8 +4180,9 @@ document.getElementById("officersRosterSearch")?.addEventListener("input", (e) =
   }
   const filtered = all.filter((o) => {
     const name = (o.displayName || "").toLowerCase();
+    const username = (o.username || "").toLowerCase();
     const nick = (o.nickname || "").toLowerCase();
-    return name.includes(query) || nick.includes(query);
+    return name.includes(query) || username.includes(query) || nick.includes(query);
   });
   renderOfficersRosterRows(filtered);
 });
