@@ -1615,8 +1615,12 @@ select option {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  gap: 8px;
+  padding: 12px 14px;
   border-bottom: 1px solid rgba(255,255,255,0.1);
+  /* Subtle extra separation below the border so the header reads as a
+     distinct band from the message list rather than just a hairline. */
+  box-shadow: 0 1px 0 rgba(0,0,0,0.25);
   font-family: "Manrope", sans-serif;
   font-weight: 700;
   font-size: 14px;
@@ -1624,6 +1628,10 @@ select option {
   cursor: grab;
   flex-shrink: 0;
   touch-action: none;
+}
+.ai-panel-header > span {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .ai-panel-header:active { cursor: grabbing; }
 
@@ -1660,19 +1668,31 @@ select option {
 .ai-panel-close:hover { color: #fff; }
 
 .ai-convo-select {
-  flex: 1;
-  min-width: 0;
-  margin: 0 8px;
+  flex: 1 1 auto;
+  min-width: 60px;
+  /* Was cramped at 12px with no truncation handling, which made long
+     auto-generated titles (e.g. "can you get me all the info yo...")
+     read poorly in the native select box. Bumped size slightly and added
+     proper ellipsis truncation on the closed control; each <option>'s
+     `title` attribute (set in aiPopulateConvoSelect) surfaces the full
+     text on hover so nothing is actually lost, just not force-fit into
+     the header row. */
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0 4px;
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.15);
   border-radius: 6px;
   color: #fff;
   font-family: "Inter", sans-serif;
   font-weight: 500;
-  font-size: 12px;
-  padding: 4px 6px;
+  font-size: 12.5px;
+  padding: 5px 8px;
   cursor: pointer;
 }
+.ai-convo-select:hover { border-color: rgba(201,166,107,0.35); }
 .ai-new-chat-btn {
   background: none;
   border: 1px solid var(--chp-gold-bright, #e0bf80);
@@ -1681,7 +1701,7 @@ select option {
   font-family: "Inter", sans-serif;
   font-weight: 600;
   font-size: 11px;
-  padding: 4px 8px;
+  padding: 5px 9px;
   cursor: pointer;
   flex-shrink: 0;
   white-space: nowrap;
@@ -1738,6 +1758,25 @@ select option {
   border: none;
   padding: 0 4px;
 }
+.ai-bubble.error {
+  border-color: rgba(214,90,90,0.35);
+}
+.ai-retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  background: rgba(201,166,107,0.12);
+  border: 1px solid rgba(201,166,107,0.3);
+  color: var(--chp-gold-bright);
+  border-radius: 8px;
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  font-size: 11.5px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.ai-retry-btn:hover { background: rgba(201,166,107,0.2); }
 
 .ai-typing {
   align-self: flex-start;

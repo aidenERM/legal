@@ -2532,6 +2532,10 @@ function aiPopulateConvoSelect() {
     const opt = document.createElement("option");
     opt.value = c.id;
     opt.textContent = c.title || "New Chat";
+    // Full title on hover - the closed select box now truncates with an
+    // ellipsis (see .ai-convo-select in app.css), so long auto-generated
+    // titles are still fully readable via tooltip instead of just being cut.
+    opt.title = c.title || "New Chat";
     select.appendChild(opt);
   });
   select.value = aiActiveConversationId;
@@ -2744,9 +2748,28 @@ async function aiSendMessage(message) {
   }
   aiShowTyping();
 
+  // UX fix: error bubbles used to be a dead end - the user had to retype
+  // their whole message to try again. Now every error bubble gets a
+  // "Retry" action that just re-sends the same `message` we already have
+  // in scope, wired up after the bubble is revealed below.
   const onError = (errText) => {
     aiHideTyping();
-    typewriterReveal(aiAppendBubble("assistant", ""), errText);
+    const bubble = aiAppendBubble("assistant", "");
+    bubble.classList.add("error");
+    typewriterReveal(bubble, errText, () => {
+      const retryBtn = document.createElement("button");
+      retryBtn.type = "button";
+      retryBtn.className = "ai-retry-btn";
+      retryBtn.textContent = "Retry";
+      retryBtn.addEventListener("click", () => {
+        retryBtn.remove();
+        aiSendMessage(message);
+      });
+      bubble.appendChild(document.createElement("br"));
+      bubble.appendChild(retryBtn);
+      const messagesEl = document.getElementById("aiMessages");
+      if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
+    });
     if (convo) {
       convo.messages.push({ role: "assistant", content: errText, timestamp: Date.now() });
       aiSaveConversations();
@@ -2867,7 +2890,10 @@ async function aiSendMessage(message) {
   }
 
   const finalize = () => {
-    if (data.type === "proposal" && data.proposalId) {
+    // The SSE envelope's own "type" is always "done" here (see the matching
+    // backend fix) - the result's semantic type (message/proposal) travels
+    // under "resultType" instead, since both used to collide on "type".
+    if (data.resultType === "proposal" && data.proposalId) {
       aiPendingProposal = { proposalId: data.proposalId };
       aiAppendProposalActions(data.proposalId);
     }
