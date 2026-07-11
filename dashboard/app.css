@@ -475,6 +475,38 @@ body.reduce-motion, body.reduce-motion * {
 }
 .field-row input[type="date"]:focus { outline: none; border-color: rgba(201,166,107,0.4); }
 
+/* Global base for every plain form control that isn't otherwise classed -
+   without this, any <select>/<textarea>/<input> dropped into a panel (Watch
+   duration, DM message box, dev diagnostics fields, etc) falls back to the
+   browser's default white background, which reads as a broken, unstyled
+   patch against this otherwise fully dark-themed dashboard. */
+select,
+textarea,
+input[type="text"],
+input[type="number"],
+input[type="search"] {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: #fff;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  color-scheme: dark;
+}
+select:focus,
+textarea:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus {
+  outline: none;
+  border-color: rgba(201,166,107,0.4);
+}
+select option {
+  background: #1a1610;
+  color: #fff;
+}
+
 .leaderboard-list {
   list-style: none;
   margin: 0;
@@ -846,6 +878,14 @@ body.reduce-motion, body.reduce-motion * {
 
 /* Officers panel roster + detail drawer (Bug 3 rebuild / Watch feature) */
 .officer-row { gap: 12px; }
+.officer-detail-row {
+  padding: 16px 18px 20px;
+  border-radius: 14px;
+  background: rgba(201,166,107,0.05);
+  border: 1px solid rgba(201,166,107,0.25);
+  border-left: 3px solid var(--chp-gold-bright, #e0bf80);
+  animation: leaderboard-row-in 0.2s var(--ease-smooth, ease) both;
+}
 .officer-avatar {
   width: 36px;
   height: 36px;

@@ -3021,7 +3021,7 @@ async function loadPromotionQuota() {
 async function loadOfficersRoster() {
   const skeleton = document.getElementById("officersRosterSkeleton");
   const list = document.getElementById("officersRosterList");
-  document.getElementById("officerDetailWrap").innerHTML = "";
+  officerDetailUserId = null;
   const res = await apiGet("/api/hr/officers/roster");
   skeleton.hidden = true;
   list.hidden = false;
@@ -3055,10 +3055,33 @@ async function loadOfficersRoster() {
 
 let officerDetailUserId = null;
 
+// Inserted as a sibling <li> directly after the clicked officer's row (not
+// a single fixed container after the whole list), so the customize panel
+// always appears right below the person you clicked - clicking the same
+// officer again collapses it; clicking a different one moves it.
 function openOfficerDetail(userId) {
+  const list = document.getElementById("officersRosterList");
+  const existing = list.querySelector(".officer-detail-row");
+  const wasOpenForSameUser = officerDetailUserId === userId;
+  if (existing) existing.remove();
+
+  if (wasOpenForSameUser) {
+    officerDetailUserId = null;
+    return;
+  }
   officerDetailUserId = userId;
+
+  const clickedRow = list.querySelector(`.lookup-result-row[data-user-id="${userId}"]`);
+  if (!clickedRow) return;
+
+  const detailRow = document.createElement("li");
+  detailRow.className = "officer-detail-row";
+  const wrap = document.createElement("div");
+  wrap.id = "officerDetailWrap";
+  detailRow.appendChild(wrap);
+  clickedRow.insertAdjacentElement("afterend", detailRow);
+
   const officer = (window._officersById || {})[userId];
-  const wrap = document.getElementById("officerDetailWrap");
   wrap.innerHTML = `
     <div class="officer-detail-header">
       <img class="officer-avatar" src="${(officer && officer.avatarUrl) || avatarUrlFor(userId, null, 56)}" alt="" width="48" height="48" />
