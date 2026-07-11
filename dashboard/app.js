@@ -98,6 +98,74 @@ async function apiPost(path, body) {
   return { ok: response.ok, status: response.status, data };
 }
 
+// ── Undo toast (item 1): small reusable bottom-of-screen snackbar shown
+// after a non-destructive self-service action succeeds. If `undoFn` is
+// passed, an "Undo" button is shown that calls it; otherwise it's a plain
+// auto-dismissing confirmation toast. Only one toast is shown at a time.
+let activeUndoToastEl = null;
+function showUndoToast(message, undoFn) {
+  if (activeUndoToastEl) activeUndoToastEl.remove();
+  const toast = document.createElement("div");
+  toast.className = "undo-toast liquid-glass";
+  toast.innerHTML = `
+    <span class="undo-toast-msg">${message}</span>
+    ${undoFn ? `<button class="undo-toast-btn" type="button">Undo</button>` : ""}
+    <button class="undo-toast-close" type="button" aria-label="Dismiss">&times;</button>
+  `;
+  document.body.appendChild(toast);
+  activeUndoToastEl = toast;
+
+  const dismiss = () => {
+    if (activeUndoToastEl === toast) activeUndoToastEl = null;
+    toast.remove();
+  };
+  const timer = setTimeout(dismiss, 5000);
+  toast.querySelector(".undo-toast-close").addEventListener("click", () => {
+    clearTimeout(timer);
+    dismiss();
+  });
+  if (undoFn) {
+    toast.querySelector(".undo-toast-btn").addEventListener("click", () => {
+      clearTimeout(timer);
+      dismiss();
+      undoFn();
+    });
+  }
+}
+
+// ── Confirm-action modal (item 2): one small reusable centered modal used
+// in front of every write action that previously fired immediately (or used
+// the ad-hoc click-twice pattern). Styled with the existing .liquid-glass
+// surface + button classes rather than new heavy CSS.
+function confirmAction(message, onConfirm) {
+  const existing = document.getElementById("confirmActionOverlay");
+  if (existing) existing.remove();
+
+  const overlay = document.createElement("div");
+  overlay.className = "confirm-action-overlay";
+  overlay.id = "confirmActionOverlay";
+  overlay.innerHTML = `
+    <div class="confirm-action-modal liquid-glass">
+      <p class="confirm-action-message">${message}</p>
+      <div class="confirm-action-buttons">
+        <button class="confirm-action-cancel" type="button">Cancel</button>
+        <button class="confirm-action-confirm" type="button">Confirm</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) close();
+  });
+  overlay.querySelector(".confirm-action-cancel").addEventListener("click", close);
+  overlay.querySelector(".confirm-action-confirm").addEventListener("click", () => {
+    close();
+    onConfirm();
+  });
+}
+
 async function apiDelete(path, body) {
   const response = await fetch(`${WORKER_URL}${path}`, {
     method: "DELETE",
@@ -280,6 +348,7 @@ async function bootMe() {
   const me = await apiGet("/api/me");
   if (!me) return null;
   currentMe = me;
+  buildSidebarFooter(me);
 
   // Bug 4 fix: previously this built ONE shared nav-group whose header label
   // was picked from the VIEWER's own tier (`developer` -> header "Developer"),
@@ -715,6 +784,10 @@ async function loadLookupDetail(userId) {
       <button class="lookup-action-btn" data-action="reset">Reset Period</button>
     </div>
     <div id="lookupActionMessage"></div>
+    ${tierAtLeast(me.tier, "admin") || me.isIa ? `
+    <h2 class="lookup-detail-heading" style="margin-top: 22px;">HR Notes</h2>
+    <div id="hrNotesWrap"></div>
+    ` : ""}
   `;
 
   // Shifts already have their own section above (via /api/lookup/:id/shifts),
@@ -728,6 +801,59 @@ async function loadLookupDetail(userId) {
     btn.addEventListener("click", () => handleAdminActionClick(btn));
   });
   wireLookupRecentShiftActions(detailWrap);
+
+  // HR Notes (client-side render gate only - the real access gate is the
+  // Worker's /api/hr-notes route, isAdminPlus-or-isIa, same as officersRoster.js).
+  if (document.getElementById("hrNotesWrap")) {
+    await loadHrNotes(userId);
+  }
+}
+
+// Private HR case notes for Member Lookup's detail view. The Worker gates
+// both /api/hr-notes routes server-side (admin+ tier OR session.isIa) - this
+// client check only decides whether to render the section at all.
+async function loadHrNotes(userId) {
+  const wrap = document.getElementById("hrNotesWrap");
+  if (!wrap) return;
+  wrap.innerHTML = `<div class="skeleton" style="height: 60px;"></div>`;
+
+  const result = await apiGet(`/api/hr-notes?target_user_id=${encodeURIComponent(userId)}`);
+  const notes = result && result.ok ? result.notes || [] : [];
+
+  wrap.innerHTML = `
+    <ul class="lookup-recent-shifts-list" id="hrNotesList">
+      ${
+        notes.length
+          ? notes
+              .map(
+                (n) => `
+        <li class="lookup-recent-shift-row" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+          <span><strong>${n.author_name || n.author_id || "Unknown"}</strong> &middot; ${new Date(n.created_at).toLocaleString()}</span>
+          <span>${(n.note || "").replace(/</g, "&lt;")}</span>
+        </li>
+      `
+              )
+              .join("")
+          : `<li class="empty-state">No HR notes yet.</li>`
+      }
+    </ul>
+    <textarea id="hrNotesInput" placeholder="Add a private HR note..." rows="3" style="width: 100%; margin-top: 10px;"></textarea>
+    <button class="lookup-action-btn" id="hrNotesAddBtn" style="margin-top: 8px;">Add Note</button>
+    <div id="hrNotesMessage"></div>
+  `;
+
+  document.getElementById("hrNotesAddBtn").addEventListener("click", async () => {
+    const input = document.getElementById("hrNotesInput");
+    const note = input.value.trim();
+    const msg = document.getElementById("hrNotesMessage");
+    if (!note) return;
+    const addResult = await apiPost("/api/hr-notes", { targetUserId: userId, note });
+    if (!addResult || !addResult.ok) {
+      if (msg) msg.innerHTML = `<div class="form-message error">Failed to add note.</div>`;
+      return;
+    }
+    await loadHrNotes(userId);
+  });
 }
 
 // Per-shift Void/Edit admin picker for Member Lookup - lists the target's
@@ -770,19 +896,11 @@ function renderLookupRecentShiftsHtml(recent) {
 
 function wireLookupRecentShiftActions(detailWrap) {
   detailWrap.querySelectorAll(".lookup-shift-void-btn").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      if (!btn.classList.contains("confirming")) {
-        btn.classList.add("confirming");
-        btn.textContent = "Confirm void?";
-        setTimeout(() => {
-          btn.classList.remove("confirming");
-          btn.textContent = "Void";
-        }, 4000);
-        return;
-      }
-      btn.classList.remove("confirming");
-      await fireAdminAction("void_shift", { shiftId: btn.dataset.shiftId });
-      loadLookupDetail(lookupSelectedUserId);
+    btn.addEventListener("click", () => {
+      confirmAction("Void this shift?", async () => {
+        await fireAdminAction("void_shift", { shiftId: btn.dataset.shiftId });
+        loadLookupDetail(lookupSelectedUserId);
+      });
     });
   });
 
@@ -794,33 +912,22 @@ function wireLookupRecentShiftActions(detailWrap) {
   });
 
   detailWrap.querySelectorAll(".lookup-shift-edit-save-btn").forEach((btn) => {
-    btn.addEventListener("click", async () => {
+    btn.addEventListener("click", () => {
       const form = btn.closest(".lookup-shift-edit-form");
       const startEpoch = Number(form.querySelector(".lookup-shift-edit-start").value) || null;
       const endEpoch = Number(form.querySelector(".lookup-shift-edit-end").value) || null;
-      await fireAdminAction("edit_shift_time", { shiftId: btn.dataset.shiftId, startEpoch, endEpoch });
-      loadLookupDetail(lookupSelectedUserId);
+      confirmAction("Save these shift time changes?", async () => {
+        await fireAdminAction("edit_shift_time", { shiftId: btn.dataset.shiftId, startEpoch, endEpoch });
+        loadLookupDetail(lookupSelectedUserId);
+      });
     });
   });
 }
 
 function handleAdminActionClick(btn) {
-  if (!btn.classList.contains("confirming")) {
-    btn.classList.add("confirming");
-    const original = btn.textContent;
-    btn.dataset.originalLabel = original;
-    btn.textContent = "Are you sure? Click again to confirm";
-    setTimeout(() => {
-      if (btn.classList.contains("confirming")) {
-        btn.classList.remove("confirming");
-        btn.textContent = btn.dataset.originalLabel;
-      }
-    }, 4000);
-    return;
-  }
-  btn.classList.remove("confirming");
-  btn.textContent = btn.dataset.originalLabel;
-  fireAdminAction(btn.dataset.action);
+  confirmAction(`Run "${btn.textContent.trim()}" on this member?`, () => {
+    fireAdminAction(btn.dataset.action);
+  });
 }
 
 async function fireAdminAction(action, extra) {
@@ -1287,6 +1394,7 @@ async function startShift(shiftType) {
 }
 
 async function endShift() {
+  const endedShiftType = currentShiftState && currentShiftState.shiftType;
   const res = await apiPost("/api/shift/end", {});
   if (!res || !res.ok || !res.data || res.data.ok === false) {
     showShiftMessage(`Could not end shift: ${(res && res.data && res.data.error) || "unknown error"}`, "error");
@@ -1294,6 +1402,14 @@ async function endShift() {
   }
   showShiftMessage("Shift ended.", "success");
   refreshCurrentShift();
+  // "Undo" here isn't a true undo (there's no undo API for ending a shift) -
+  // it just re-starts a shift of the same type, which is safe since it's the
+  // user's own shift they just ended.
+  if (endedShiftType) {
+    showUndoToast("Shift ended.", async () => {
+      await startShift(endedShiftType);
+    });
+  }
 }
 
 async function toggleBreak() {
@@ -1312,24 +1428,8 @@ document.getElementById("shiftTypePicker").addEventListener("click", (e) => {
   startShift(btn.dataset.shiftType);
 });
 document.getElementById("shiftBreakBtn").addEventListener("click", toggleBreak);
-document.getElementById("shiftEndBtn").addEventListener("click", (e) => {
-  const btn = e.target;
-  if (!btn.classList.contains("confirming")) {
-    btn.classList.add("confirming");
-    const original = btn.textContent;
-    btn.dataset.originalLabel = original;
-    btn.textContent = "Are you sure? Click again to confirm";
-    setTimeout(() => {
-      if (btn.classList.contains("confirming")) {
-        btn.classList.remove("confirming");
-        btn.textContent = btn.dataset.originalLabel;
-      }
-    }, 4000);
-    return;
-  }
-  btn.classList.remove("confirming");
-  btn.textContent = btn.dataset.originalLabel;
-  endShift();
+document.getElementById("shiftEndBtn").addEventListener("click", () => {
+  confirmAction("End your current shift?", endShift);
 });
 
 // ── Leave of Absence ──
@@ -1991,6 +2091,107 @@ function applyBackgroundColor(hex) {
   if (input) input.value = hex;
 }
 
+// ── Bottom-left sidebar footer (item 4): Discord/Slack-style settings gear
+// + account avatar, each opening a small floating panel instead of a full
+// page nav. Wired once bootMe() has the logged-in `me` object.
+const THEME_KEY = "chp_theme";
+
+function closeSidebarFloatPanels(except) {
+  ["sidebarGearPanel", "sidebarAccountPanel"].forEach((id) => {
+    if (id === except) return;
+    const el = document.getElementById(id);
+    if (el) el.hidden = true;
+  });
+}
+
+function buildSidebarFooter(me) {
+  const nameEl = document.getElementById("sidebarFooterName");
+  const avatarImg = document.getElementById("sidebarFooterAvatarImg");
+  if (nameEl) nameEl.textContent = displayNameFor(me);
+  if (avatarImg) avatarImg.src = avatarUrlFor(me.userId, me.avatar, 64);
+
+  const gearBtn = document.getElementById("sidebarGearBtn");
+  const gearPanel = document.getElementById("sidebarGearPanel");
+  const avatarBtn = document.getElementById("sidebarAvatarBtn");
+  const accountPanel = document.getElementById("sidebarAccountPanel");
+
+  gearBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const willOpen = gearPanel.hidden;
+    closeSidebarFloatPanels();
+    gearPanel.hidden = !willOpen;
+  });
+  avatarBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const willOpen = accountPanel.hidden;
+    closeSidebarFloatPanels();
+    accountPanel.hidden = !willOpen;
+  });
+  document.addEventListener("click", (e) => {
+    if (!gearPanel?.hidden && !gearPanel.contains(e.target) && e.target !== gearBtn) gearPanel.hidden = true;
+    if (!accountPanel?.hidden && !accountPanel.contains(e.target) && e.target !== avatarBtn) accountPanel.hidden = true;
+  });
+
+  // Quick Settings panel: mirrors the full Personal Settings accent-color +
+  // reduce-effects controls (same localStorage keys), so changing either one
+  // here or on the full Settings page stays in sync.
+  const quickAccent = document.getElementById("quickAccentColorInput");
+  if (quickAccent) {
+    quickAccent.value = localStorage.getItem(ACCENT_COLOR_KEY) || DEFAULT_ACCENT;
+    quickAccent.addEventListener("input", (e) => {
+      localStorage.setItem(ACCENT_COLOR_KEY, e.target.value);
+      applyAccentColor(e.target.value);
+    });
+  }
+  const quickReduce = document.getElementById("quickReduceEffectsToggle");
+  if (quickReduce) {
+    const on = localStorage.getItem(GLASS_REDUCE_KEY) === "true";
+    quickReduce.classList.toggle("on", on);
+    quickReduce.dataset.value = String(on);
+    quickReduce.addEventListener("click", () => {
+      const next = localStorage.getItem(GLASS_REDUCE_KEY) !== "true";
+      localStorage.setItem(GLASS_REDUCE_KEY, String(next));
+      quickReduce.classList.toggle("on", next);
+      quickReduce.dataset.value = String(next);
+      document.querySelectorAll(".liquid-glass-distort").forEach((el) => {
+        el.classList.toggle("liquid-glass-distort-off", next);
+      });
+      const fullToggle = document.getElementById("reduceEffectsToggle");
+      if (fullToggle) {
+        fullToggle.classList.toggle("on", next);
+        fullToggle.dataset.value = String(next);
+      }
+    });
+  }
+  document.getElementById("sidebarGearFullSettingsBtn")?.addEventListener("click", () => {
+    gearPanel.hidden = true;
+    document.querySelector('.nav-item[data-section="settings"]')?.click();
+  });
+
+  // Account panel: theme toggle (persisted; a full light-mode stylesheet is
+  // a separate, larger pass - this wires the mechanism and persists the
+  // choice now rather than leaving it unbuilt), switch accounts (no
+  // multi-session-in-one-browser concept exists, so this just logs out and
+  // returns to login for a different Discord account), and log out.
+  document.getElementById("sidebarThemeToggleBtn")?.addEventListener("click", () => {
+    const current = localStorage.getItem(THEME_KEY) || "dark";
+    const next = current === "dark" ? "light" : "dark";
+    localStorage.setItem(THEME_KEY, next);
+    document.documentElement.dataset.theme = next;
+  });
+  document.getElementById("sidebarSwitchAccountsBtn")?.addEventListener("click", async () => {
+    await apiPost("/api/logout", {});
+    window.location.href = "index.html?switch=1";
+  });
+  document.getElementById("sidebarLogoutBtn")?.addEventListener("click", async () => {
+    await apiPost("/api/logout", {});
+    window.location.href = "index.html";
+  });
+
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+}
+
 function initPersonalPrefs() {
   applyReduceMotion(localStorage.getItem(REDUCE_MOTION_KEY) === "true");
   applyAccentColor(localStorage.getItem(ACCENT_COLOR_KEY) || DEFAULT_ACCENT);
@@ -2057,6 +2258,41 @@ async function loadSessionInfo() {
     ? `On - signed in ${issued}, expires ${expires}`
     : `Off - signed in ${issued}, expires ${expires} (this session)`;
 }
+loadSessionInfo();
+
+async function loadSessionDevices() {
+  const skeleton = document.getElementById("sessionDevicesSkeleton");
+  const list = document.getElementById("sessionDevicesList");
+  if (!list) return;
+  const res = await apiGet("/api/sessions");
+  if (skeleton) skeleton.hidden = true;
+  list.hidden = false;
+  if (!res || !res.sessions || res.sessions.length === 0) {
+    list.innerHTML = `<div class="empty-state">No other devices on record.</div>`;
+    return;
+  }
+  list.innerHTML = res.sessions
+    .map(
+      (s) => `
+      <div class="settings-row" data-sid="${s.sid}">
+        <div class="settings-row-text">
+          <span class="settings-row-label">${s.device || "Unknown device"}</span>
+          <span class="settings-row-desc">Last seen ${s.lastSeenAt ? new Date(s.lastSeenAt * 1000).toLocaleString() : "unknown"}</span>
+        </div>
+        <button class="lookup-action-btn" type="button" data-revoke="${s.sid}">Revoke</button>
+      </div>`
+    )
+    .join("");
+  list.querySelectorAll("[data-revoke]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      confirmAction("Revoke this device's access?", async () => {
+        await apiPost("/api/sessions/revoke", { sid: btn.dataset.revoke });
+        loadSessionDevices();
+      });
+    });
+  });
+}
+loadSessionDevices();
 
 // Two toggle buttons, one state: the in-sidebar chevron (visible while open,
 // rides the sidebar's own edge so it never overlaps the brand logo) and the
@@ -2845,24 +3081,8 @@ async function loadBocSchedules() {
 // Manual "Reset Period" - destructive-feeling action, so it reuses the same
 // click-again-to-confirm pattern as the High Ranks Lookup panel's admin
 // action buttons (handleAdminActionClick) rather than inventing a new one.
-document.getElementById("bocResetPeriodBtn").addEventListener("click", (e) => {
-  const btn = e.currentTarget;
-  if (!btn.classList.contains("confirming")) {
-    btn.classList.add("confirming");
-    const original = btn.textContent;
-    btn.dataset.originalLabel = original;
-    btn.textContent = "Are you sure? This cannot be undone — click again to confirm";
-    setTimeout(() => {
-      if (btn.classList.contains("confirming")) {
-        btn.classList.remove("confirming");
-        btn.textContent = btn.dataset.originalLabel;
-      }
-    }, 5000);
-    return;
-  }
-  btn.classList.remove("confirming");
-  btn.textContent = btn.dataset.originalLabel;
-  fireBocPeriodReset();
+document.getElementById("bocResetPeriodBtn").addEventListener("click", () => {
+  confirmAction("Reset the leaderboard period? This cannot be undone.", fireBocPeriodReset);
 });
 
 async function fireBocPeriodReset() {
@@ -2955,13 +3175,15 @@ document.getElementById("bocDmSendBtn").addEventListener("click", async () => {
   if (targetType === "role") target.roleId = targetId;
   if (targetType === "user") target.userId = targetId;
 
-  const res = await apiPost("/api/boc/dm-officers", { target, message });
-  if (!res || !res.ok || !res.data || res.data.ok === false) {
-    const reason = res && res.data ? res.data.reason || res.data.error : "request_failed";
-    resultEl.innerHTML = `<div class="lookup-action-message error">Failed: ${reason}</div>`;
-    return;
-  }
-  resultEl.innerHTML = `<div class="lookup-action-message success">Sent to ${res.data.sent} officer(s), ${res.data.failed} failed.</div>`;
+  confirmAction("Send this DM to the selected target(s)?", async () => {
+    const res = await apiPost("/api/boc/dm-officers", { target, message });
+    if (!res || !res.ok || !res.data || res.data.ok === false) {
+      const reason = res && res.data ? res.data.reason || res.data.error : "request_failed";
+      resultEl.innerHTML = `<div class="lookup-action-message error">Failed: ${reason}</div>`;
+      return;
+    }
+    resultEl.innerHTML = `<div class="lookup-action-message success">Sent to ${res.data.sent} officer(s), ${res.data.failed} failed.</div>`;
+  });
 });
 
 document.getElementById("bocAnnPreviewBtn").addEventListener("click", () => {
@@ -2984,13 +3206,15 @@ document.getElementById("bocAnnSendBtn").addEventListener("click", async () => {
     return;
   }
 
-  const res = await apiPost("/api/boc/announcement", { channelId, title, description, pingRoleId });
-  if (!res || !res.ok || !res.data || res.data.ok === false) {
-    const reason = res && res.data ? res.data.reason || res.data.error : "request_failed";
-    resultEl.innerHTML = `<div class="lookup-action-message error">Failed: ${reason}</div>`;
-    return;
-  }
-  resultEl.innerHTML = `<div class="lookup-action-message success">Posted (message ${res.data.messageId}).</div>`;
+  confirmAction("Post this announcement?", async () => {
+    const res = await apiPost("/api/boc/announcement", { channelId, title, description, pingRoleId });
+    if (!res || !res.ok || !res.data || res.data.ok === false) {
+      const reason = res && res.data ? res.data.reason || res.data.error : "request_failed";
+      resultEl.innerHTML = `<div class="lookup-action-message error">Failed: ${reason}</div>`;
+      return;
+    }
+    resultEl.innerHTML = `<div class="lookup-action-message success">Posted (message ${res.data.messageId}).</div>`;
+  });
 });
 
 async function loadBocRaStats() {
@@ -3021,13 +3245,22 @@ async function loadBocRaStats() {
 async function loadBocSettings() {
   const skeleton = document.getElementById("bocSettingsSkeleton");
   const body = document.getElementById("bocSettingsBody");
+  const fields = document.getElementById("bocSettingsFields");
   skeleton.hidden = false;
   body.hidden = true;
+  fields.hidden = true;
 
   const res = await bocGet("/api/boc/settings");
   skeleton.hidden = true;
   if (!res) return bocShowDenied();
   if (res.reason === "confidential" || res.reason === "forbidden") return bocShowDenied(res.reason);
+
+  const shiftMgmt = (res.settings && res.settings.shift_management) || {};
+  const hoursInput = document.getElementById("bocRecognizedHoursThreshold");
+  const tenureInput = document.getElementById("bocRecognizedTenureDays");
+  hoursInput.value = shiftMgmt.recognized_hours_threshold ?? "";
+  tenureInput.value = shiftMgmt.recognized_tenure_days ?? "";
+  fields.hidden = false;
 
   body.hidden = false;
   body.textContent = res.settings ? JSON.stringify(res.settings, null, 2) : "No settings document found.";
@@ -3051,8 +3284,39 @@ document.querySelectorAll(".dev-tab").forEach((tab) => {
     if (tab.dataset.devTab === "deployment-info") loadDevDeploymentInfo();
     if (tab.dataset.devTab === "testers") loadDevTesters();
     if (tab.dataset.devTab === "access-control") loadDevAccessControl();
+    if (tab.dataset.devTab === "anomalous-logins") loadDevAnomalousLogins();
   });
 });
+
+async function loadDevAnomalousLogins() {
+  const skeleton = document.getElementById("anomalousLoginsSkeleton");
+  const list = document.getElementById("anomalousLoginsList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await apiGet("/api/anomalous-logins");
+  skeleton.hidden = true;
+  list.hidden = false;
+
+  if (!res || !res.ok) {
+    list.innerHTML = `<li class="empty-state">Failed to load anomalous logins.</li>`;
+    return;
+  }
+
+  const entries = res.entries || [];
+  list.innerHTML = entries.length
+    ? entries
+        .map(
+          (e) => `
+    <li class="loa-history-row">
+      <span class="history-desc">User <code>${escapeHtml(e.userId || e.targetId || "unknown")}</code>: ${escapeHtml(e.detail || "Login country changed.")}</span>
+      <span class="history-date">${e.timestamp ? formatDate(e.timestamp) : "?"}</span>
+    </li>
+  `
+        )
+        .join("")
+    : `<li class="empty-state">No anomalous logins recorded.</li>`;
+}
 
 async function loadDevAccessControl() {
   const skeleton = document.getElementById("accessControlSkeleton");
@@ -4016,4 +4280,87 @@ document.getElementById("iaToneBtn")?.addEventListener("click", async () => {
   `;
 });
 
+// ── Notifications Center - isolated addition. Bell + badge + dropdown are
+// injected into the sidebar in app.html; this just wires them up. Kept
+// self-contained (own fetch/render/toggle logic) so it doesn't touch any
+// existing init flow beyond being called once after bootMe().
+function notifRelativeTime(createdAt) {
+  const ts = typeof createdAt === "number" ? createdAt * 1000 : new Date(createdAt).getTime();
+  const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (diffSec < 60) return "just now";
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+  return `${Math.floor(diffSec / 86400)}d ago`;
+}
+
+function renderNotifDropdown(entries) {
+  const list = document.getElementById("notifDropdownList");
+  if (!list) return;
+  if (!entries.length) {
+    list.innerHTML = `<div class="notif-dropdown-empty">No notifications yet.</div>`;
+    return;
+  }
+  list.innerHTML = entries
+    .map(
+      (n) => `
+      <div class="notif-dropdown-item${n.read ? "" : " unread"}" data-id="${n._id ?? ""}">
+        <span>${escapeHtml(n.message || "")}</span>
+        <span class="notif-dropdown-item-time">${notifRelativeTime(n.created_at)}</span>
+      </div>`
+    )
+    .join("");
+}
+
+function updateNotifBadge(count) {
+  const badge = document.getElementById("notifBellBadge");
+  if (!badge) return;
+  if (count > 0) {
+    badge.textContent = count > 99 ? "99+" : String(count);
+    badge.hidden = false;
+  } else {
+    badge.hidden = true;
+  }
+}
+
+async function refreshNotifications() {
+  const res = await apiGet("/api/notifications");
+  if (!res || !res.ok) return;
+  renderNotifDropdown(res.entries || []);
+  updateNotifBadge(res.unreadCount || 0);
+}
+
+function initNotificationsCenter() {
+  const bellBtn = document.getElementById("notifBellBtn");
+  const panel = document.getElementById("notifDropdownPanel");
+  const markAllBtn = document.getElementById("notifMarkAllReadBtn");
+  const list = document.getElementById("notifDropdownList");
+  if (!bellBtn || !panel) return;
+
+  bellBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    panel.hidden = !panel.hidden;
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!panel.hidden && !panel.contains(e.target) && e.target !== bellBtn) {
+      panel.hidden = true;
+    }
+  });
+
+  markAllBtn?.addEventListener("click", async () => {
+    await apiPost("/api/notifications/mark-read", {});
+    await refreshNotifications();
+  });
+
+  list?.addEventListener("click", async (e) => {
+    const item = e.target.closest(".notif-dropdown-item");
+    if (!item || !item.dataset.id) return;
+    await apiPost("/api/notifications/mark-read", { notificationId: item.dataset.id });
+    await refreshNotifications();
+  });
+
+  refreshNotifications();
+}
+
 bootMe().then(() => loadShiftManagement());
+initNotificationsCenter();

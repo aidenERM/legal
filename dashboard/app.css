@@ -2050,3 +2050,280 @@ body.reduce-motion .loading-overlay-spinner { animation-duration: 0.01s; }
   color: var(--chp-gold-bright, #e0bf80);
   min-height: 2.6em;
 }
+
+/* ── Undo toast (item 1) ── */
+.undo-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  z-index: 600;
+  color: #f2e6cc;
+  font-size: 13.5px;
+  max-width: min(92vw, 420px);
+  animation: undo-toast-in 0.18s ease-out;
+}
+@keyframes undo-toast-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.undo-toast-msg { flex: 1; }
+.undo-toast-btn {
+  background: rgba(201,166,107,0.22);
+  border: 1px solid rgba(201,166,107,0.4);
+  color: var(--chp-gold-bright, #e0bf80);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.undo-toast-btn:hover { background: rgba(201,166,107,0.34); }
+.undo-toast-close {
+  background: none;
+  border: none;
+  color: rgba(242,230,204,0.6);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.undo-toast-close:hover { color: #f2e6cc; }
+
+/* ── Confirm-action modal (item 2) ── */
+.confirm-action-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,8,4,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 700;
+}
+.confirm-action-modal {
+  width: min(92vw, 380px);
+  padding: 22px;
+  border-radius: 14px;
+  text-align: center;
+}
+.confirm-action-message {
+  margin: 0 0 18px;
+  color: #f2e6cc;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+.confirm-action-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.confirm-action-cancel,
+.confirm-action-confirm {
+  flex: 1;
+  padding: 9px 14px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.confirm-action-cancel {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: #f2e6cc;
+}
+.confirm-action-cancel:hover { background: rgba(255,255,255,0.1); }
+.confirm-action-confirm {
+  background: rgba(201,166,107,0.28);
+  border: 1px solid rgba(201,166,107,0.45);
+  color: var(--chp-gold-bright, #e0bf80);
+}
+.confirm-action-confirm:hover { background: rgba(201,166,107,0.42); }
+
+/* ── Sidebar bottom user-area (item 4): Discord/Slack-style fixed footer
+   with a Settings gear + profile avatar, each opening a small floating
+   panel above the icon rather than navigating. ── */
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid rgba(201,166,107,0.16);
+  flex-shrink: 0;
+}
+.shell.collapsed .sidebar-footer { display: none; }
+.sidebar-footer-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(201,166,107,0.28);
+  background: rgba(255,255,255,0.04);
+  color: var(--chp-gold-bright, #e0bf80);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+.sidebar-footer-btn:hover { background: rgba(201,166,107,0.18); }
+.sidebar-footer-btn svg { width: 18px; height: 18px; }
+.sidebar-footer-avatar-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid rgba(201,166,107,0.28);
+  background: rgba(255,255,255,0.04);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+.sidebar-footer-avatar-btn img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sidebar-footer-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  color: rgba(242,230,204,0.8);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-float-panel {
+  position: fixed;
+  bottom: 62px;
+  width: min(88vw, 300px);
+  max-height: 70vh;
+  overflow-y: auto;
+  border-radius: 14px;
+  padding: 14px;
+  z-index: 650;
+}
+.sidebar-float-panel[hidden] { display: none; }
+.sidebar-float-panel h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--chp-gold-bright, #e0bf80);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.sidebar-float-panel-dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  color: #f2e6cc;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.sidebar-float-panel-dropdown-item:hover { background: rgba(201,166,107,0.16); }
+
+/* ── Session Security device list (item 3) ── */
+.session-device-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.session-device-row:last-child { border-bottom: none; }
+.session-device-label { font-weight: 600; color: #f2e6cc; font-size: 13.5px; }
+.session-device-meta { font-size: 12px; color: rgba(242,230,204,0.6); }
+.session-device-revoke-btn {
+  background: rgba(201,166,107,0.16);
+  border: 1px solid rgba(201,166,107,0.32);
+  color: var(--chp-gold-bright, #e0bf80);
+  border-radius: 7px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.session-device-revoke-btn:hover { background: rgba(201,166,107,0.28); }
+
+/* ── Notifications Center - isolated additions, don't touch existing rules ── */
+.notif-bell-btn {
+  position: relative;
+  margin: 4px 16px 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 8px;
+  color: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.notif-bell-btn:hover { background: rgba(255,255,255,0.08); }
+.notif-bell-btn svg { width: 18px; height: 18px; }
+.notif-bell-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #d64545;
+  color: #fff;
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  font-weight: 600;
+}
+.notif-dropdown-panel {
+  position: absolute;
+  top: 56px;
+  left: 16px;
+  width: 280px;
+  max-height: 360px;
+  overflow-y: auto;
+  z-index: 50;
+  background: var(--glass-bg, #1c1708);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+.notif-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  font-size: 13px;
+  font-weight: 600;
+}
+.notif-dropdown-header button {
+  background: transparent;
+  border: none;
+  color: var(--chp-gold-bright, #e0bf80);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+}
+.notif-dropdown-list { display: flex; flex-direction: column; }
+.notif-dropdown-item {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 12px;
+  cursor: pointer;
+}
+.notif-dropdown-item:hover { background: rgba(255,255,255,0.06); }
+.notif-dropdown-item.unread { font-weight: 600; }
+.notif-dropdown-item-time { display: block; margin-top: 3px; font-size: 10px; opacity: 0.65; }
+.notif-dropdown-empty { padding: 16px 12px; font-size: 12px; opacity: 0.65; text-align: center; }

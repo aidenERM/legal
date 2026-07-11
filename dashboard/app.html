@@ -39,6 +39,21 @@
       <span>CHP Dashboard</span>
     </div>
 
+    <!-- Notifications Center bell - isolated addition, does not touch the
+         rest of the sidebar layout. Dropdown panel + badge built/wired in
+         app.js (initNotificationsCenter). -->
+    <button class="notif-bell-btn" id="notifBellBtn" aria-label="Notifications" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      <span class="notif-bell-badge" id="notifBellBadge" hidden>0</span>
+    </button>
+    <div class="notif-dropdown-panel" id="notifDropdownPanel" hidden>
+      <div class="notif-dropdown-header">
+        <span>Notifications</span>
+        <button type="button" id="notifMarkAllReadBtn">Mark all read</button>
+      </div>
+      <div class="notif-dropdown-list" id="notifDropdownList"></div>
+    </div>
+
     <!-- Collapsed-state icon rail: one clickable icon per nav category.
          Hidden while the sidebar is open; shown in place of the nav list
          once collapsed. Populated/kept in sync by app.js. -->
@@ -77,6 +92,46 @@
           <button class="nav-item" data-section="department-feed">Department Feed</button>
         </div>
       </div>
+    </div>
+
+    <!-- Bottom-left "user area" (item 4) - Discord/Slack-style fixed footer,
+         separate from the nav scroll above so it always stays put. Gear
+         opens a floating Personal-Settings shortcut panel; avatar opens a
+         Log Out / theme / switch-accounts dropdown. Both are built+wired in
+         app.js (buildSidebarFooter). -->
+    <div class="sidebar-footer" id="sidebarFooter">
+      <button class="sidebar-footer-btn" id="sidebarGearBtn" aria-label="Settings" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+      <span class="sidebar-footer-name" id="sidebarFooterName"></span>
+      <button class="sidebar-footer-avatar-btn" id="sidebarAvatarBtn" aria-label="Account" type="button">
+        <img src="" alt="" id="sidebarFooterAvatarImg">
+      </button>
+    </div>
+
+    <div class="sidebar-float-panel liquid-glass" id="sidebarGearPanel" hidden>
+      <h3>Quick Settings</h3>
+      <div class="settings-row">
+        <div class="settings-row-text">
+          <span class="settings-row-label">Accent color</span>
+        </div>
+        <div class="accent-picker">
+          <input type="color" id="quickAccentColorInput" value="#c9a66b">
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-text">
+          <span class="settings-row-label">Reduce visual effects</span>
+        </div>
+        <button class="settings-toggle" id="quickReduceEffectsToggle" data-value="false" aria-label="Toggle reduce visual effects"></button>
+      </div>
+      <button class="sidebar-float-panel-dropdown-item" id="sidebarGearFullSettingsBtn" type="button">Open full Personal Settings &rarr;</button>
+    </div>
+
+    <div class="sidebar-float-panel liquid-glass" id="sidebarAccountPanel" hidden>
+      <button class="sidebar-float-panel-dropdown-item" id="sidebarThemeToggleBtn" type="button">Light / Dark Mode</button>
+      <button class="sidebar-float-panel-dropdown-item" id="sidebarSwitchAccountsBtn" type="button">Switch Accounts</button>
+      <button class="sidebar-float-panel-dropdown-item" id="sidebarLogoutBtn" type="button">Log Out</button>
     </div>
   </nav>
 
@@ -271,6 +326,10 @@
               <span class="settings-row-status" id="sessionInfoStatus" data-status>Loading…</span>
             </div>
           </div>
+          <h2 class="settings-section-heading" style="margin-top: 18px;">Devices</h2>
+          <p class="settings-row-desc" style="margin: 0 0 8px;">Devices currently signed in to your account.</p>
+          <div class="skeleton" id="sessionDevicesSkeleton" style="height: 60px;"></div>
+          <div id="sessionDevicesList" hidden></div>
         </div>
       </div>
 
@@ -678,6 +737,12 @@
 
       <div class="dev-panel" id="bocPanel-settings">
         <div class="skeleton" id="bocSettingsSkeleton"></div>
+        <div class="dev-diagnostics-form" id="bocSettingsFields" hidden>
+          <label for="bocRecognizedHoursThreshold">Recognized Hours Threshold</label>
+          <input type="number" id="bocRecognizedHoursThreshold" min="0" step="1" placeholder="100">
+          <label for="bocRecognizedTenureDays">Recognized Tenure (days)</label>
+          <input type="number" id="bocRecognizedTenureDays" min="0" step="1" placeholder="182">
+        </div>
         <pre id="bocSettingsBody" hidden></pre>
       </div>
     </section>
@@ -693,6 +758,7 @@
         <button class="dev-tab" data-dev-tab="deployment-info">Deployment Info</button>
         <button class="dev-tab" data-dev-tab="testers">Testers</button>
         <button class="dev-tab" data-dev-tab="access-control">Access Control</button>
+        <button class="dev-tab" data-dev-tab="anomalous-logins">Anomalous Logins</button>
       </div>
 
       <div class="dev-panel active" id="devPanel-kill-switches">
@@ -767,6 +833,12 @@
           <button class="lookup-search-btn" id="accessControlSaveBtn">Save</button>
           <div id="accessControlMessage"></div>
         </div>
+      </div>
+
+      <div class="dev-panel" id="devPanel-anomalous-logins">
+        <p class="panel-subtitle">Recent logins where a user's country changed since their last login. Informational only - nothing here blocks a login.</p>
+        <div class="skeleton" id="anomalousLoginsSkeleton"></div>
+        <ul class="loa-history-list" id="anomalousLoginsList" hidden></ul>
       </div>
     </section>
   </main>
