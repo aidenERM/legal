@@ -1754,6 +1754,43 @@ body.reduce-motion .loading-overlay { animation: none; }
   from { opacity: 0; }
   to { opacity: 1; }
 }
+.access-control-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+}
+.access-control-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  cursor: pointer;
+}
+.access-control-option input {
+  margin-top: 3px;
+}
+.access-restricted-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+  padding: 40px 24px;
+}
+.access-restricted-screen h1 {
+  color: var(--chp-gold-bright, #e0bf80);
+  margin-bottom: 12px;
+}
+.access-restricted-screen p {
+  max-width: 480px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.6;
+}
 .loading-overlay-card {
   max-width: 340px;
   padding: 28px 26px;

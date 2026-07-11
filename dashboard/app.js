@@ -162,9 +162,31 @@ function showPanel(section) {
 
 let currentMe = null;
 
+function showAccessRestrictedScreen() {
+  document.getElementById("shell").innerHTML = `
+    <div class="access-restricted-screen">
+      <h1>Dashboard Access Restricted</h1>
+      <p>A developer has temporarily limited who can access the CHP Dashboard right now.
+      Your current access tier isn't included. Check back later, or contact a developer if
+      you believe this is a mistake.</p>
+    </div>
+  `;
+}
+
 // Fetched once at boot so both the sidebar (admin/management/developer group)
 // and the Profile panel can use it without re-fetching /api/me repeatedly.
 async function bootMe() {
+  // Raw fetch (not apiGet) so a 403 access_restricted response can be told
+  // apart from any other failure and shown its own clear full-page message,
+  // instead of apiGet's generic "return null" for any non-401 non-ok status.
+  const rawResponse = await fetch(`${WORKER_URL}/api/me`, { credentials: "include" });
+  if (rawResponse.status === 403) {
+    const body = await rawResponse.json().catch(() => null);
+    if (body?.reason === "access_restricted") {
+      showAccessRestrictedScreen();
+      return null;
+    }
+  }
   const me = await apiGet("/api/me");
   if (!me) return null;
   currentMe = me;
@@ -2598,7 +2620,44 @@ document.querySelectorAll(".dev-tab").forEach((tab) => {
     if (tab.dataset.devTab === "system-health") loadDevSystemHealth();
     if (tab.dataset.devTab === "deployment-info") loadDevDeploymentInfo();
     if (tab.dataset.devTab === "testers") loadDevTesters();
+    if (tab.dataset.devTab === "access-control") loadDevAccessControl();
   });
+});
+
+async function loadDevAccessControl() {
+  const skeleton = document.getElementById("accessControlSkeleton");
+  const body = document.getElementById("accessControlBody");
+  const msgEl = document.getElementById("accessControlMessage");
+  skeleton.hidden = false;
+  body.hidden = true;
+  msgEl.textContent = "";
+
+  const res = await apiGet("/api/dev/access-control");
+  skeleton.hidden = true;
+  body.hidden = false;
+  if (!res || !res.ok) {
+    msgEl.textContent = "Failed to load access control settings.";
+    return;
+  }
+
+  const radio = document.querySelector(`input[name="accessControlMode"][value="${res.mode}"]`);
+  if (radio) radio.checked = true;
+}
+
+document.getElementById("accessControlSaveBtn").addEventListener("click", async () => {
+  const msgEl = document.getElementById("accessControlMessage");
+  const selected = document.querySelector('input[name="accessControlMode"]:checked');
+  if (!selected) {
+    msgEl.textContent = "Pick a mode first.";
+    return;
+  }
+  msgEl.textContent = "Saving...";
+  const res = await apiPost("/api/dev/access-control", { mode: selected.value });
+  if (!res || !res.ok || !res.data?.ok) {
+    msgEl.textContent = "Failed to save.";
+    return;
+  }
+  msgEl.textContent = `Saved — mode is now "${selected.value}".`;
 });
 
 async function loadDevKillSwitches() {
