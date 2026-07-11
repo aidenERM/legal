@@ -2640,24 +2640,25 @@ async function loadDevAccessControl() {
     return;
   }
 
-  const radio = document.querySelector(`input[name="accessControlMode"][value="${res.mode}"]`);
-  if (radio) radio.checked = true;
+  document.querySelectorAll('input[name="accessControlTier"]').forEach((box) => {
+    if (box.disabled) return; // developer - always checked, never toggled
+    box.checked = (res.allowedTiers || []).includes(box.value);
+  });
+  document.getElementById("accessControlTesters").checked = !!res.allowTesters;
 }
 
 document.getElementById("accessControlSaveBtn").addEventListener("click", async () => {
   const msgEl = document.getElementById("accessControlMessage");
-  const selected = document.querySelector('input[name="accessControlMode"]:checked');
-  if (!selected) {
-    msgEl.textContent = "Pick a mode first.";
-    return;
-  }
+  const allowedTiers = [...document.querySelectorAll('input[name="accessControlTier"]:checked')].map((b) => b.value);
+  const allowTesters = document.getElementById("accessControlTesters").checked;
+
   msgEl.textContent = "Saving...";
-  const res = await apiPost("/api/dev/access-control", { mode: selected.value });
+  const res = await apiPost("/api/dev/access-control", { allowedTiers, allowTesters });
   if (!res || !res.ok || !res.data?.ok) {
     msgEl.textContent = "Failed to save.";
     return;
   }
-  msgEl.textContent = `Saved — mode is now "${selected.value}".`;
+  msgEl.textContent = "Saved.";
 });
 
 async function loadDevKillSwitches() {
