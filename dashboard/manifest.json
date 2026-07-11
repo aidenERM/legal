@@ -1,0 +1,20 @@
+{
+  "name": "CHP Dashboard",
+  "short_name": "CHP",
+  "start_url": "app.html",
+  "display": "standalone",
+  "background_color": "#08080b",
+  "theme_color": "#c9a66b",
+  "icons": [
+    {
+      "src": "../assets/images/chp-badge.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "../assets/images/chp-badge.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1323,7 +1323,7 @@ select option {
   font-family: "Inter", sans-serif;
   font-size: 13px;
 }
-.loa-form textarea, .contact-form textarea {
+.loa-form textarea, .contact-form textarea, .contact-form input[type="text"] {
   padding: 10px 12px;
   border-radius: 10px;
   background: rgba(255,255,255,0.04);
@@ -1333,6 +1333,7 @@ select option {
   font-size: 13px;
   resize: vertical;
   width: 100%;
+  box-sizing: border-box;
 }
 .loa-form select:focus, .loa-form input:focus, .loa-form textarea:focus, .contact-form textarea:focus {
   outline: none; border-color: rgba(201,166,107,0.4);
@@ -2326,4 +2327,41 @@ body.reduce-motion .loading-overlay-spinner { animation-duration: 0.01s; }
 .notif-dropdown-item:hover { background: rgba(255,255,255,0.06); }
 .notif-dropdown-item.unread { font-weight: 600; }
 .notif-dropdown-item-time { display: block; margin-top: 3px; font-size: 10px; opacity: 0.65; }
+
+/* ── Emergency Lockdown (Dev Tools) — deliberately alarming, red/warning
+   accent, distinct from the neutral kill-switch rows above it. ── */
+.emergency-lockdown-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(220,60,60,0.45);
+  background: rgba(220,60,60,0.10);
+  margin-bottom: 16px;
+}
+.emergency-lockdown-info { display: flex; flex-direction: column; gap: 4px; }
+.emergency-lockdown-info strong { color: rgba(255,140,140,0.95); font-size: 14px; }
+.emergency-lockdown-info span { font-size: 12px; opacity: 0.75; }
+.emergency-lockdown-btn {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(220,60,60,0.6);
+  background: rgba(220,60,60,0.18);
+  color: rgba(255,150,150,0.95);
+  font-family: "Manrope", sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.emergency-lockdown-btn:hover { background: rgba(220,60,60,0.30); }
+.emergency-lockdown-btn[data-enabled="true"] {
+  background: rgba(220,60,60,0.85);
+  color: #fff;
+  border-color: rgba(220,60,60,0.9);
+}
+.emergency-lockdown-btn[data-enabled="true"]:hover { background: rgba(220,60,60,0.95); }
 .notif-dropdown-empty { padding: 16px 12px; font-size: 12px; opacity: 0.65; text-align: center; }

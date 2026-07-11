@@ -9,7 +9,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260710k">
+<link rel="stylesheet" href="app.css?v=20260710l">
+<link rel="manifest" href="manifest.json">
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 </head>
 <body>
 
@@ -75,7 +77,8 @@
           <button class="nav-item" data-section="history">History</button>
           <button class="nav-item" data-section="profile">Profile</button>
           <button class="nav-item" data-section="settings">Personal Settings</button>
-          <button class="nav-item" data-section="contact">Contact Us</button>
+          <button class="nav-item" data-section="anonymous-feedback">Anonymous Feedback</button>
+          <button class="nav-item" data-section="contact">Contact</button>
         </div>
       </div>
       <div class="nav-group" data-category="officers">
@@ -338,7 +341,7 @@
     </section>
 
     <section class="panel" id="panel-contact">
-      <h1>Contact Us</h1>
+      <h1>Contact</h1>
       <form class="contact-form" id="contactForm">
         <select id="contactCategorySelect">
           <option value="Bug Report">Bug Report</option>
@@ -346,11 +349,23 @@
           <option value="Access Issue">Access Issue</option>
           <option value="Other">Other</option>
         </select>
+        <input type="text" id="contactReason" placeholder="Brief summary — what's this about?" maxlength="120">
         <textarea id="contactMessage" rows="6" placeholder="What do you need help with?"></textarea>
         <button type="submit" class="lookup-search-btn" id="contactSubmitBtn">Send</button>
       </form>
       <div id="contactFormSuccess" class="form-message success" hidden>&#10003; Message sent — we'll get back to you</div>
       <div id="contactFormMessage"></div>
+    </section>
+
+    <section class="panel" id="panel-anonymous-feedback">
+      <h1>Anonymous Feedback</h1>
+      <p class="panel-subtitle">This is fully anonymous — we cannot see who submitted this.</p>
+      <form class="contact-form" id="anonFeedbackForm">
+        <textarea id="anonFeedbackMessage" rows="6" placeholder="Share your feedback..."></textarea>
+        <button type="submit" class="lookup-search-btn" id="anonFeedbackSubmitBtn">Submit</button>
+      </form>
+      <div id="anonFeedbackSuccess" class="form-message success" hidden>&#10003; Feedback submitted anonymously — thank you</div>
+      <div id="anonFeedbackMessageResult"></div>
     </section>
 
     <section class="panel" id="panel-leaderboard">
@@ -617,6 +632,7 @@
         <div class="officer-action-group-heading" style="margin-top: 0;">Personnel &amp; Oversight</div>
         <div class="dev-tabs liquid-glass">
           <button class="dev-tab" data-boc-tab="hr-review">HR Promotion Review</button>
+          <button class="dev-tab" data-boc-tab="promotion-recommendations">Promotion Recommendations</button>
           <button class="dev-tab" data-boc-tab="hr-oversight">HR Oversight</button>
           <button class="dev-tab active" data-boc-tab="quota-enforcement">Quota Enforcement</button>
           <button class="dev-tab" data-boc-tab="applications">Applications</button>
@@ -632,6 +648,7 @@
           <button class="dev-tab" data-boc-tab="dm-officers">DM Officers</button>
           <button class="dev-tab" data-boc-tab="announcement">Announcement</button>
           <button class="dev-tab" data-boc-tab="audit-log">Audit Log</button>
+          <button class="dev-tab" data-boc-tab="anonymous-feedback">Anonymous Feedback</button>
           <button class="dev-tab" data-boc-tab="settings">Settings</button>
         </div>
       </div>
@@ -692,6 +709,12 @@
         <div id="bocApplicationsBody" hidden></div>
       </div>
 
+      <div class="dev-panel" id="bocPanel-promotion-recommendations">
+        <p class="panel-subtitle">Officers flagged as promotion candidates. This is a recommendation surface only — act on it manually via HR Promotion Review.</p>
+        <div class="skeleton" id="bocPromotionRecsSkeleton"></div>
+        <div id="bocPromotionRecsList" hidden></div>
+      </div>
+
       <div class="dev-panel" id="bocPanel-audit-log">
         <div class="lookup-search-row">
           <input type="text" id="bocAuditActionFilter" placeholder="Filter by action/command...">
@@ -699,6 +722,12 @@
         </div>
         <div class="skeleton" id="bocAuditSkeleton"></div>
         <div id="bocAuditList" hidden></div>
+      </div>
+
+      <div class="dev-panel" id="bocPanel-anonymous-feedback">
+        <p class="panel-subtitle">Anonymous feedback submitted by staff, newest first. Submitter identity is never recorded.</p>
+        <div class="skeleton" id="bocAnonFeedbackSkeleton"></div>
+        <ul class="loa-history-list" id="bocAnonFeedbackList" hidden></ul>
       </div>
 
       <div class="dev-panel" id="bocPanel-dm-officers">
@@ -762,6 +791,13 @@
       </div>
 
       <div class="dev-panel active" id="devPanel-kill-switches">
+        <div class="emergency-lockdown-row liquid-glass" id="emergencyLockdownRow">
+          <div class="emergency-lockdown-info">
+            <strong>Emergency Lockdown</strong>
+            <span>Blocks ALL writes dashboard-wide, immediately, for everyone. Use only in a true emergency.</span>
+          </div>
+          <button class="emergency-lockdown-btn" id="emergencyLockdownBtn" type="button" data-enabled="false">Enable Lockdown</button>
+        </div>
         <div class="skeleton" id="killSwitchesSkeleton"></div>
         <div id="killSwitchesList" hidden></div>
       </div>
@@ -878,6 +914,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260710k"></script>
+<script src="app.js?v=20260710l"></script>
 </body>
 </html>

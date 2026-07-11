@@ -1836,15 +1836,42 @@ document.getElementById("contactForm").addEventListener("submit", async (e) => {
   const formEl = document.getElementById("contactForm");
   const message = document.getElementById("contactMessage").value.trim();
   const category = document.getElementById("contactCategorySelect").value;
+  const reason = document.getElementById("contactReason").value.trim();
   if (!message) return;
 
-  const res = await apiPost("/api/contact", { message, page: "contact", category });
+  const res = await apiPost("/api/contact", { message, page: "contact", category, reason });
   if (!res || !res.ok || !res.data || res.data.ok === false) {
     messageEl.innerHTML = `<div class="form-message error">Could not send your message. Please try again.</div>`;
     return;
   }
   messageEl.innerHTML = "";
   document.getElementById("contactMessage").value = "";
+  document.getElementById("contactReason").value = "";
+  formEl.hidden = true;
+  successEl.hidden = false;
+  setTimeout(() => {
+    successEl.hidden = true;
+    formEl.hidden = false;
+  }, 3000);
+});
+
+// ── Anonymous Feedback ──
+
+document.getElementById("anonFeedbackForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const messageEl = document.getElementById("anonFeedbackMessageResult");
+  const successEl = document.getElementById("anonFeedbackSuccess");
+  const formEl = document.getElementById("anonFeedbackForm");
+  const message = document.getElementById("anonFeedbackMessage").value.trim();
+  if (!message) return;
+
+  const res = await apiPost("/api/feedback/anonymous", { message });
+  if (!res || !res.ok || !res.data || res.data.ok === false) {
+    messageEl.innerHTML = `<div class="form-message error">Could not submit feedback. Please try again.</div>`;
+    return;
+  }
+  messageEl.innerHTML = "";
+  document.getElementById("anonFeedbackMessage").value = "";
   formEl.hidden = true;
   successEl.hidden = false;
   setTimeout(() => {
@@ -2516,13 +2543,18 @@ function aiShowTyping() {
   typing.innerHTML = '<span class="ai-typing-label">Thinking...</span><span></span><span></span><span></span>';
   messages.appendChild(typing);
   messages.scrollTop = messages.scrollHeight;
+}
 
-  if (aiTypingSlowTimer) clearTimeout(aiTypingSlowTimer);
-  aiTypingSlowTimer = setTimeout(() => {
-    const indicator = document.getElementById("aiTypingIndicator");
-    const label = indicator ? indicator.querySelector(".ai-typing-label") : null;
-    if (label) label.textContent = "Still working...";
-  }, 3000);
+// Live status text pushed by SSE `status` events from the backend (e.g.
+// "Thinking...", "Looking up your shift history...") - replaces the old
+// timeout-based "Still working..." guess now that the backend actually
+// tells us what it's doing.
+function aiUpdateTypingText(text) {
+  const indicator = document.getElementById("aiTypingIndicator");
+  const label = indicator ? indicator.querySelector(".ai-typing-label") : null;
+  if (label && text) label.textContent = text;
+  const messages = document.getElementById("aiMessages");
+  if (messages) messages.scrollTop = messages.scrollHeight;
 }
 
 function aiHideTyping() {
@@ -2582,20 +2614,85 @@ async function aiSendMessage(message) {
   }
   aiShowTyping();
 
-  const res = await apiPost("/api/ai/chat", { message, conversationId: aiActiveConversationId });
-  aiHideTyping();
-  if (!res) return; // 401 redirect already handled by apiPost
-  if (!res.ok || !res.data) {
-    const errText = "Sorry, the assistant is unavailable right now. Please try again later.";
+  const onError = (errText) => {
+    aiHideTyping();
     typewriterReveal(aiAppendBubble("assistant", ""), errText);
     if (convo) {
       convo.messages.push({ role: "assistant", content: errText, timestamp: Date.now() });
       aiSaveConversations();
     }
+  };
+
+  let response;
+  try {
+    response = await fetch(`${WORKER_URL}/api/ai/chat`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ message, conversationId: aiActiveConversationId }),
+    });
+  } catch {
+    onError("Sorry, the assistant is unavailable right now. Please try again later.");
     return;
   }
 
-  const data = res.data;
+  if (response.status === 401) {
+    window.location.href = "index.html";
+    return;
+  }
+  if (!response.ok || !response.body) {
+    onError("Sorry, the assistant is unavailable right now. Please try again later.");
+    return;
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let doneData = null;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      let sepIndex;
+      while ((sepIndex = buffer.indexOf("\n\n")) !== -1) {
+        const rawEvent = buffer.slice(0, sepIndex);
+        buffer = buffer.slice(sepIndex + 2);
+
+        const dataLine = rawEvent
+          .split("\n")
+          .find((line) => line.startsWith("data:"));
+        if (!dataLine) continue;
+
+        let evt;
+        try {
+          evt = JSON.parse(dataLine.slice(5).trim());
+        } catch {
+          continue;
+        }
+
+        if (evt.type === "status") {
+          aiUpdateTypingText(evt.text);
+        } else if (evt.type === "done") {
+          doneData = evt;
+        }
+      }
+    }
+  } catch {
+    onError("Sorry, something went wrong while the assistant was responding. Please try again.");
+    return;
+  }
+
+  aiHideTyping();
+
+  if (!doneData) {
+    onError("Sorry, the assistant is unavailable right now. Please try again later.");
+    return;
+  }
+
+  const data = doneData;
   if (convo) {
     convo.messages.push({ role: "assistant", content: data.text || "", timestamp: Date.now() });
     aiSaveConversations();
@@ -2836,13 +2933,78 @@ function loadBocActiveTab() {
   bocClearDenied();
   if (bocActiveTab === "quota-enforcement") return loadBocQuotaEnforcement();
   if (bocActiveTab === "hr-review") return loadBocHrSubTab();
+  if (bocActiveTab === "promotion-recommendations") return loadBocPromotionRecommendations();
   if (bocActiveTab === "hr-oversight") return loadBocHrOversight();
   if (bocActiveTab === "leaderboard-control") return; // static panel, no data to load
   if (bocActiveTab === "schedules") return loadBocSchedules();
   if (bocActiveTab === "applications") return loadBocApplications();
   if (bocActiveTab === "audit-log") return loadBocAuditLog();
+  if (bocActiveTab === "anonymous-feedback") return loadBocAnonymousFeedback();
   if (bocActiveTab === "ra-stats") return loadBocRaStats();
   if (bocActiveTab === "settings") return loadBocSettings();
+}
+
+async function loadBocPromotionRecommendations() {
+  const skeleton = document.getElementById("bocPromotionRecsSkeleton");
+  const list = document.getElementById("bocPromotionRecsList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await bocGet("/api/boc/promotion-recommendations");
+  if (!res) return;
+  if (res.reason) return bocShowDenied(res.reason);
+
+  skeleton.hidden = true;
+  list.hidden = false;
+
+  if (!res.ok || !res.recommendations || !res.recommendations.length) {
+    list.innerHTML = `<div class="empty-state">No promotion recommendations right now.</div>`;
+    return;
+  }
+
+  list.innerHTML = `<ul class="loa-history-list">${res.recommendations
+    .map(
+      (r) => `
+    <li class="loa-history-item">
+      <strong>${escapeHtml(r.username || "Unknown")}</strong>
+      <span>${formatDuration(r.totalSeconds || 0)} total duty time</span>
+      <span>Current rank: ${escapeHtml(r.currentRank || "Unknown")}</span>
+      <span>${r.daysSinceLastPromotion != null ? `${r.daysSinceLastPromotion} days since last promotion` : "No prior promotion on record"}</span>
+    </li>
+  `
+    )
+    .join("")}</ul>`;
+}
+
+async function loadBocAnonymousFeedback() {
+  const skeleton = document.getElementById("bocAnonFeedbackSkeleton");
+  const list = document.getElementById("bocAnonFeedbackList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await bocGet("/api/boc/anonymous-feedback");
+  if (!res) return;
+  if (res.reason) return bocShowDenied(res.reason);
+
+  skeleton.hidden = true;
+  list.hidden = false;
+
+  if (!res.ok || !res.entries || !res.entries.length) {
+    list.innerHTML = `<div class="empty-state">No anonymous feedback submitted yet.</div>`;
+    return;
+  }
+
+  const sorted = [...res.entries].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  list.innerHTML = sorted
+    .map(
+      (e) => `
+    <li class="loa-history-item">
+      <span>${escapeHtml(e.message || "")}</span>
+      <span class="notif-dropdown-item-time">${e.createdAt ? new Date(e.createdAt).toLocaleString() : ""}</span>
+    </li>
+  `
+    )
+    .join("");
 }
 
 // Shared by the in-panel #bocTabs strip and the sidebar's per-subcategory
@@ -3355,7 +3517,45 @@ document.getElementById("accessControlSaveBtn").addEventListener("click", async 
   msgEl.textContent = "Saved.";
 });
 
+// ── Emergency Lockdown (Dev Tools) — a single big-hammer toggle that blocks
+// all writes dashboard-wide. Assumes GET mirrors the kill-switches pattern
+// (loadDevKillSwitches above) for reading current state on load; if no such
+// GET route exists yet, this just falls back to tracking state locally from
+// the button's own data-enabled attribute after the first successful POST.
+async function loadEmergencyLockdownState() {
+  const btn = document.getElementById("emergencyLockdownBtn");
+  if (!btn) return;
+  const res = await apiGet("/api/dev/emergency-lockdown");
+  if (res && res.ok && typeof res.enabled === "boolean") {
+    setEmergencyLockdownBtnState(res.enabled);
+  }
+}
+
+function setEmergencyLockdownBtnState(enabled) {
+  const btn = document.getElementById("emergencyLockdownBtn");
+  if (!btn) return;
+  btn.dataset.enabled = String(enabled);
+  btn.textContent = enabled ? "Disable Lockdown" : "Enable Lockdown";
+}
+
+document.getElementById("emergencyLockdownBtn")?.addEventListener("click", () => {
+  const btn = document.getElementById("emergencyLockdownBtn");
+  const nextEnabled = btn.dataset.enabled !== "true";
+  const message = nextEnabled
+    ? "Enable EMERGENCY LOCKDOWN? This immediately blocks ALL writes dashboard-wide for everyone."
+    : "Disable emergency lockdown and restore normal write access?";
+  confirmAction(message, async () => {
+    btn.disabled = true;
+    const res = await apiPost("/api/dev/emergency-lockdown", { enabled: nextEnabled });
+    btn.disabled = false;
+    if (res && res.ok && res.data && res.data.ok) {
+      setEmergencyLockdownBtnState(typeof res.data.enabled === "boolean" ? res.data.enabled : nextEnabled);
+    }
+  });
+});
+
 async function loadDevKillSwitches() {
+  loadEmergencyLockdownState();
   const skeleton = document.getElementById("killSwitchesSkeleton");
   const list = document.getElementById("killSwitchesList");
   skeleton.hidden = false;
