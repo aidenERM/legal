@@ -126,7 +126,7 @@ const TIER_BADGE_COPY = {
 // "developer" as satisfying every lower tier's gate. `tester` is a parallel
 // flag (see loadBoc's confidential-panel check) and deliberately NOT part of
 // this ordering - it doesn't rank above or below any tier.
-const TIER_ORDER = ["staff", "admin", "management", "developer"];
+const TIER_ORDER = ["staff", "admin", "command-team", "management", "developer"];
 function tierAtLeast(userTier, requiredTier) {
   const userRank = TIER_ORDER.indexOf(userTier);
   const requiredRank = TIER_ORDER.indexOf(requiredTier);
@@ -187,7 +187,7 @@ function renderHistoryTabsHtml(idPrefix, buckets, includeShifts, shiftsHtml) {
       return `<div class="dev-panel${i === 0 ? " active" : ""}" id="${idPrefix}Panel-${key}">${inner}</div>`;
     })
     .join("");
-  return `<div class="dev-tabs" id="${idPrefix}Tabs">${tabsHtml}</div>${panelsHtml}`;
+  return `<div class="dev-tabs liquid-glass" id="${idPrefix}Tabs">${tabsHtml}</div>${panelsHtml}`;
 }
 
 // Wires click delegation for a renderHistoryTabsHtml()-produced tab group.
@@ -323,11 +323,22 @@ async function bootMe() {
     // ("High Ranks") should NOT see quota data. Moved to the BOC nav group
     // below; the Worker route (routes/promotionQuota.js) was updated to
     // require management+ to match.
+    // Cleanup fix: LOA Management/RA Oversight are also listed in the
+    // Command Team nav group below, and tierAtLeast is cumulative (admin,
+    // command-team, management, developer all pass tierAtLeast(..., "admin")),
+    // so anyone command-team+ was seeing these two items twice in the
+    // sidebar. Scope them to the admin tier exactly here; Command Team's own
+    // group remains the single copy for command-team and above. Officers and
+    // Transfer Requests stay visible for every admin+ tier as before.
     const phase4Items = [
       { section: "officers-mgmt", label: "Officers", onOpen: loadOfficersRoster },
-      { section: "loa-mgmt", label: "LOA Management", onOpen: loadLoaManagement },
+      ...(me.tier === "admin"
+        ? [
+            { section: "loa-mgmt", label: "LOA Management", onOpen: loadLoaManagement },
+            { section: "ra-oversight", label: "RA Oversight", onOpen: loadRaOversight },
+          ]
+        : []),
       { section: "transfers", label: "Transfer Requests", onOpen: loadTransfersQueue },
-      { section: "ra-oversight", label: "RA Oversight", onOpen: loadRaOversight },
     ];
     phase4Items.forEach(({ section, label, onOpen }) => {
       const btn = document.createElement("button");
@@ -339,6 +350,45 @@ async function bootMe() {
         onOpen();
       });
       itemsWrap.appendChild(btn);
+    });
+  }
+
+  // Command Team tier (Chief / Assistant Chief role) - sits between High
+  // Ranks (admin) and Board of Commissioners (management). Gets LOA
+  // Management + RA Oversight only (same panels/sections as the High Ranks
+  // group above, not duplicated) - no Officers roster, no Transfer Requests,
+  // no quota/HR per the plan.
+  if (tierAtLeast(me.tier, "command-team")) {
+    const sidebar = document.getElementById("sidebarNavScroll");
+    const group = document.createElement("div");
+    group.className = "nav-group";
+    group.dataset.category = "command-team";
+    group.innerHTML = `
+      <button class="nav-category-header" type="button" data-category="command-team" aria-expanded="true">
+        <span class="nav-category-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.2-5.4 3.2 1.3-6-4.6-4.1 6.1-.6L12 3z"/></svg>
+        </span>
+        <span class="nav-category-label">Command Team</span>
+        <svg class="nav-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="nav-category-items"></div>
+    `;
+    sidebar.appendChild(group);
+    const ctItemsWrap = group.querySelector(".nav-category-items");
+    const commandTeamItems = [
+      { section: "loa-mgmt", label: "LOA Management", onOpen: loadLoaManagement },
+      { section: "ra-oversight", label: "RA Oversight", onOpen: loadRaOversight },
+    ];
+    commandTeamItems.forEach(({ section, label, onOpen }) => {
+      const btn = document.createElement("button");
+      btn.className = "nav-item";
+      btn.dataset.section = section;
+      btn.textContent = label;
+      btn.addEventListener("click", () => {
+        showPanel(section);
+        onOpen();
+      });
+      ctItemsWrap.appendChild(btn);
     });
   }
 
@@ -652,12 +702,16 @@ async function loadLookupDetail(userId) {
     ${liveHtml}
     <h2 class="lookup-detail-heading" style="margin-top: 22px;">Shifts</h2>
     ${renderShiftsSummaryHtml(shifts)}
+    <h2 class="lookup-detail-heading" style="margin-top: 22px;">Recent Shifts</h2>
+    <div id="lookupRecentShiftsWrap">${renderLookupRecentShiftsHtml(shifts.recent || [])}</div>
     <h2 class="lookup-detail-heading" style="margin-top: 22px;">Linked Roblox</h2>
     ${robloxHtml}
     <h2 class="lookup-detail-heading" style="margin-top: 22px;">History</h2>
     <div id="lookupHistoryWrap"></div>
     <div class="lookup-actions">
       <button class="lookup-action-btn" data-action="force_end">Force End Shift</button>
+      <button class="lookup-action-btn" data-action="force_start">Start Shift</button>
+      <button class="lookup-action-btn" data-action="toggle_break">Toggle Break</button>
       <button class="lookup-action-btn" data-action="reset">Reset Period</button>
     </div>
     <div id="lookupActionMessage"></div>
@@ -672,6 +726,81 @@ async function loadLookupDetail(userId) {
 
   detailWrap.querySelectorAll(".lookup-action-btn").forEach((btn) => {
     btn.addEventListener("click", () => handleAdminActionClick(btn));
+  });
+  wireLookupRecentShiftActions(detailWrap);
+}
+
+// Per-shift Void/Edit admin picker for Member Lookup - lists the target's
+// recent shifts (from the same /api/lookup/:id/shifts fetch the summary
+// above already uses, now extended with a `recent` array of individual
+// shift docs) with a Void button and an inline Edit form for StartEpoch/
+// EndEpoch.
+function renderLookupRecentShiftsHtml(recent) {
+  if (!recent.length) {
+    return `<div class="empty-state">No recent shifts found.</div>`;
+  }
+  return `
+    <ul class="lookup-recent-shifts-list">
+      ${recent
+        .map((shift) => {
+          const status = !shift.endEpoch
+            ? "In progress"
+            : shift.voided
+            ? "Voided"
+            : new Date(shift.endEpoch * 1000).toLocaleString();
+          return `
+        <li class="lookup-recent-shift-row" data-shift-id="${shift.shiftId}">
+          <span>${shift.type || "Default"}</span>
+          <span>${new Date((shift.startEpoch || 0) * 1000).toLocaleString()}</span>
+          <span>${status}</span>
+          <button class="lookup-shift-void-btn" data-shift-id="${shift.shiftId}" ${shift.voided ? "disabled" : ""}>Void</button>
+          <button class="lookup-shift-edit-btn" data-shift-id="${shift.shiftId}" data-start="${shift.startEpoch || ""}" data-end="${shift.endEpoch || ""}">Edit</button>
+          <div class="lookup-shift-edit-form" data-shift-id="${shift.shiftId}" hidden>
+            <input type="number" class="lookup-shift-edit-start" placeholder="Start epoch" value="${shift.startEpoch || ""}" />
+            <input type="number" class="lookup-shift-edit-end" placeholder="End epoch" value="${shift.endEpoch || ""}" />
+            <button class="lookup-shift-edit-save-btn" data-shift-id="${shift.shiftId}">Save</button>
+          </div>
+        </li>
+      `;
+        })
+        .join("")}
+    </ul>
+  `;
+}
+
+function wireLookupRecentShiftActions(detailWrap) {
+  detailWrap.querySelectorAll(".lookup-shift-void-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!btn.classList.contains("confirming")) {
+        btn.classList.add("confirming");
+        btn.textContent = "Confirm void?";
+        setTimeout(() => {
+          btn.classList.remove("confirming");
+          btn.textContent = "Void";
+        }, 4000);
+        return;
+      }
+      btn.classList.remove("confirming");
+      await fireAdminAction("void_shift", { shiftId: btn.dataset.shiftId });
+      loadLookupDetail(lookupSelectedUserId);
+    });
+  });
+
+  detailWrap.querySelectorAll(".lookup-shift-edit-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const form = detailWrap.querySelector(`.lookup-shift-edit-form[data-shift-id="${btn.dataset.shiftId}"]`);
+      if (form) form.hidden = !form.hidden;
+    });
+  });
+
+  detailWrap.querySelectorAll(".lookup-shift-edit-save-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const form = btn.closest(".lookup-shift-edit-form");
+      const startEpoch = Number(form.querySelector(".lookup-shift-edit-start").value) || null;
+      const endEpoch = Number(form.querySelector(".lookup-shift-edit-end").value) || null;
+      await fireAdminAction("edit_shift_time", { shiftId: btn.dataset.shiftId, startEpoch, endEpoch });
+      loadLookupDetail(lookupSelectedUserId);
+    });
   });
 }
 
@@ -694,9 +823,9 @@ function handleAdminActionClick(btn) {
   fireAdminAction(btn.dataset.action);
 }
 
-async function fireAdminAction(action) {
+async function fireAdminAction(action, extra) {
   const messageEl = document.getElementById("lookupActionMessage");
-  const res = await apiPost("/api/admin/shift-action", { userId: lookupSelectedUserId, action });
+  const res = await apiPost("/api/admin/shift-action", { userId: lookupSelectedUserId, action, ...(extra || {}) });
   if (!res || !res.ok || !res.data || !res.data.ok) {
     messageEl.innerHTML = `<div class="lookup-action-message error">Action failed. Please try again.</div>`;
     return;
@@ -957,6 +1086,7 @@ async function loadMiniLeaderboard() {
     return;
   }
   list.innerHTML = renderLeaderboardRows((leaderboard.entries || []).slice(0, 15), "weekly");
+  animateLeaderboardCounts(list);
 }
 
 // ── Quota progress ring + quick stats (Shift Management right column) ──
@@ -1602,16 +1732,25 @@ async function loadSettings() {
 document.getElementById("contactForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const messageEl = document.getElementById("contactFormMessage");
+  const successEl = document.getElementById("contactFormSuccess");
+  const formEl = document.getElementById("contactForm");
   const message = document.getElementById("contactMessage").value.trim();
+  const category = document.getElementById("contactCategorySelect").value;
   if (!message) return;
 
-  const res = await apiPost("/api/contact", { message, page: "contact" });
+  const res = await apiPost("/api/contact", { message, page: "contact", category });
   if (!res || !res.ok || !res.data || res.data.ok === false) {
     messageEl.innerHTML = `<div class="form-message error">Could not send your message. Please try again.</div>`;
     return;
   }
-  messageEl.innerHTML = `<div class="form-message success">Message sent. We'll get back to you soon.</div>`;
+  messageEl.innerHTML = "";
   document.getElementById("contactMessage").value = "";
+  formEl.hidden = true;
+  successEl.hidden = false;
+  setTimeout(() => {
+    successEl.hidden = true;
+    formEl.hidden = false;
+  }, 3000);
 });
 
 // ── Nav wiring ──
@@ -1998,8 +2137,91 @@ document.getElementById("lookupSearchInput").addEventListener("keydown", (e) => 
 
 // ── AI Assistant (floating panel, present on every page) ──
 
-const aiConversationId = crypto.randomUUID();
+const AI_CONVERSATIONS_KEY = "chp_ai_conversations";
+let aiConversations = []; // [{id, title, messages: [{role, content, timestamp}]}]
+let aiActiveConversationId = null;
 let aiPendingProposal = null; // { proposalId } for the most recent unconfirmed proposal
+let aiTypingSlowTimer = null; // pending "Still working..." swap for the in-flight request
+
+function aiLoadConversations() {
+  try {
+    const raw = localStorage.getItem(AI_CONVERSATIONS_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (Array.isArray(parsed) && parsed.length) {
+      aiConversations = parsed;
+      return;
+    }
+  } catch (e) {
+    // corrupt/unreadable storage - fall through to a fresh conversation
+  }
+  aiConversations = [aiCreateConversationObject()];
+}
+
+function aiSaveConversations() {
+  try {
+    localStorage.setItem(AI_CONVERSATIONS_KEY, JSON.stringify(aiConversations));
+  } catch (e) {
+    // storage full/unavailable - conversations still work for this page load
+  }
+}
+
+function aiCreateConversationObject() {
+  return { id: crypto.randomUUID(), title: "New Chat", messages: [] };
+}
+
+function aiGetActiveConversation() {
+  return aiConversations.find((c) => c.id === aiActiveConversationId) || aiConversations[0];
+}
+
+function aiPopulateConvoSelect() {
+  const select = document.getElementById("aiConvoSelect");
+  if (!select) return;
+  select.innerHTML = "";
+  aiConversations.forEach((c) => {
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = c.title || "New Chat";
+    select.appendChild(opt);
+  });
+  select.value = aiActiveConversationId;
+}
+
+function aiRenderActiveConversation() {
+  const messages = document.getElementById("aiMessages");
+  if (!messages) return;
+  messages.innerHTML = "";
+  const convo = aiGetActiveConversation();
+  if (!convo) return;
+  convo.messages.forEach((m) => {
+    aiAppendBubble(m.role, m.content);
+  });
+}
+
+function aiInitConversations() {
+  aiLoadConversations();
+  if (!aiActiveConversationId || !aiConversations.some((c) => c.id === aiActiveConversationId)) {
+    aiActiveConversationId = aiConversations[0].id;
+  }
+  aiPopulateConvoSelect();
+  aiRenderActiveConversation();
+}
+
+function aiNewChat() {
+  const convo = aiCreateConversationObject();
+  aiConversations.push(convo);
+  aiActiveConversationId = convo.id;
+  aiSaveConversations();
+  aiPopulateConvoSelect();
+  aiRenderActiveConversation();
+  const input = document.getElementById("aiInput");
+  if (input) input.focus();
+}
+
+function aiSwitchConversation(id) {
+  if (!aiConversations.some((c) => c.id === id)) return;
+  aiActiveConversationId = id;
+  aiRenderActiveConversation();
+}
 
 function aiAppendBubble(role, text) {
   const messages = document.getElementById("aiMessages");
@@ -2055,12 +2277,23 @@ function aiShowTyping() {
   const typing = document.createElement("div");
   typing.className = "ai-typing";
   typing.id = "aiTypingIndicator";
-  typing.innerHTML = "<span></span><span></span><span></span>";
+  typing.innerHTML = '<span class="ai-typing-label">Thinking...</span><span></span><span></span><span></span>';
   messages.appendChild(typing);
   messages.scrollTop = messages.scrollHeight;
+
+  if (aiTypingSlowTimer) clearTimeout(aiTypingSlowTimer);
+  aiTypingSlowTimer = setTimeout(() => {
+    const indicator = document.getElementById("aiTypingIndicator");
+    const label = indicator ? indicator.querySelector(".ai-typing-label") : null;
+    if (label) label.textContent = "Still working...";
+  }, 3000);
 }
 
 function aiHideTyping() {
+  if (aiTypingSlowTimer) {
+    clearTimeout(aiTypingSlowTimer);
+    aiTypingSlowTimer = null;
+  }
   const typing = document.getElementById("aiTypingIndicator");
   if (typing) typing.remove();
 }
@@ -2101,18 +2334,36 @@ async function aiConfirmProposal(proposalId, actionsEl) {
 }
 
 async function aiSendMessage(message) {
+  const convo = aiGetActiveConversation();
   aiAppendBubble("user", message);
+  if (convo) {
+    convo.messages.push({ role: "user", content: message, timestamp: Date.now() });
+    if ((!convo.title || convo.title === "New Chat") && convo.messages.filter((m) => m.role === "user").length === 1) {
+      convo.title = message.length > 30 ? `${message.slice(0, 30).trim()}...` : message.trim();
+      aiPopulateConvoSelect();
+    }
+    aiSaveConversations();
+  }
   aiShowTyping();
 
-  const res = await apiPost("/api/ai/chat", { message, conversationId: aiConversationId });
+  const res = await apiPost("/api/ai/chat", { message, conversationId: aiActiveConversationId });
   aiHideTyping();
   if (!res) return; // 401 redirect already handled by apiPost
   if (!res.ok || !res.data) {
-    typewriterReveal(aiAppendBubble("assistant", ""), "Sorry, the assistant is unavailable right now. Please try again later.");
+    const errText = "Sorry, the assistant is unavailable right now. Please try again later.";
+    typewriterReveal(aiAppendBubble("assistant", ""), errText);
+    if (convo) {
+      convo.messages.push({ role: "assistant", content: errText, timestamp: Date.now() });
+      aiSaveConversations();
+    }
     return;
   }
 
   const data = res.data;
+  if (convo) {
+    convo.messages.push({ role: "assistant", content: data.text || "", timestamp: Date.now() });
+    aiSaveConversations();
+  }
   typewriterReveal(aiAppendBubble("assistant", ""), data.text || "", () => {
     if (data.type === "proposal" && data.proposalId) {
       aiPendingProposal = { proposalId: data.proposalId };
@@ -2272,6 +2523,7 @@ aiInitPanelDragResize();
 
 function aiOpenPanel() {
   aiRestorePanelGeometry();
+  aiInitConversations();
   document.getElementById("aiPanel").classList.add("open");
   attachGlassPointerTracking(document.getElementById("aiPanel"));
   document.getElementById("aiInput").focus();
@@ -2291,6 +2543,12 @@ document.getElementById("aiFab").addEventListener("click", () => {
 });
 
 document.getElementById("aiPanelClose").addEventListener("click", aiClosePanel);
+
+document.getElementById("aiNewChatBtn").addEventListener("click", aiNewChat);
+
+document.getElementById("aiConvoSelect").addEventListener("change", (e) => {
+  aiSwitchConversation(e.target.value);
+});
 
 document.getElementById("aiInputForm").addEventListener("submit", (e) => {
   e.preventDefault();

@@ -57,7 +57,7 @@
           <button class="nav-item active" data-section="shift-management">Shift Management</button>
           <button class="nav-item" data-section="loa">Leave of Absence</button>
           <button class="nav-item" data-section="ra">RA</button>
-          <button class="nav-item" data-section="history">Shift History</button>
+          <button class="nav-item" data-section="history">History</button>
           <button class="nav-item" data-section="profile">Profile</button>
           <button class="nav-item" data-section="settings">Personal Settings</button>
           <button class="nav-item" data-section="contact">Contact Us</button>
@@ -187,7 +187,7 @@
     </section>
 
     <section class="panel" id="panel-history">
-      <h1>Shift History</h1>
+      <h1>History</h1>
       <div class="skeleton" id="historySkeleton"></div>
       <div id="historyList" hidden></div>
     </section>
@@ -281,9 +281,16 @@
     <section class="panel" id="panel-contact">
       <h1>Contact Us</h1>
       <form class="contact-form" id="contactForm">
+        <select id="contactCategorySelect">
+          <option value="Bug Report">Bug Report</option>
+          <option value="Feature Request">Feature Request</option>
+          <option value="Access Issue">Access Issue</option>
+          <option value="Other">Other</option>
+        </select>
         <textarea id="contactMessage" rows="6" placeholder="What do you need help with?"></textarea>
         <button type="submit" class="lookup-search-btn" id="contactSubmitBtn">Send</button>
       </form>
+      <div id="contactFormSuccess" class="form-message success" hidden>&#10003; Message sent — we'll get back to you</div>
       <div id="contactFormMessage"></div>
     </section>
 
@@ -360,14 +367,14 @@
 
       <div id="ftoToolsTabs">
         <div class="officer-action-group-heading" style="margin-top: 0;">Sessions</div>
-        <div class="dev-tabs">
+        <div class="dev-tabs liquid-glass">
           <button class="dev-tab active" data-fto-tools-tab="host">Host Session</button>
           <button class="dev-tab" data-fto-tools-tab="results">Log Result</button>
           <button class="dev-tab" data-fto-tools-tab="session">Session Lookup</button>
           <button class="dev-tab" data-fto-tools-tab="history">History</button>
         </div>
         <div class="officer-action-group-heading">Program</div>
-        <div class="dev-tabs">
+        <div class="dev-tabs liquid-glass">
           <button class="dev-tab" data-fto-tools-tab="leaderboard">Leaderboard</button>
           <button class="dev-tab" data-fto-tools-tab="feedback">Feedback</button>
         </div>
@@ -446,7 +453,7 @@
       <h1>IA Tools</h1>
       <p class="panel-subtitle">Visible because you hold the Office of Internal Affairs role - independent of your staff tier.</p>
 
-      <div class="dev-tabs" id="iaToolsTabs">
+      <div class="dev-tabs liquid-glass" id="iaToolsTabs">
         <button class="dev-tab active" data-ia-tools-tab="detect">AI Detect</button>
         <button class="dev-tab" data-ia-tools-tab="summarize">Summarize</button>
         <button class="dev-tab" data-ia-tools-tab="rewrite">Rewrite</button>
@@ -547,18 +554,27 @@
       <h1>Board of Commissioners</h1>
       <p class="panel-subtitle">Confidential - visible only to management/developer tier, and never to testers.</p>
 
-      <div class="dev-tabs" id="bocTabs">
-        <button class="dev-tab active" data-boc-tab="quota-enforcement">Quota Enforcement</button>
-        <button class="dev-tab" data-boc-tab="hr-review">HR Promotion Review</button>
-        <button class="dev-tab" data-boc-tab="hr-oversight">HR Oversight</button>
-        <button class="dev-tab" data-boc-tab="leaderboard-control">Leaderboard Control</button>
-        <button class="dev-tab" data-boc-tab="schedules">Scheduled Actions</button>
-        <button class="dev-tab" data-boc-tab="applications">Applications</button>
-        <button class="dev-tab" data-boc-tab="audit-log">Audit Log</button>
-        <button class="dev-tab" data-boc-tab="dm-officers">DM Officers</button>
-        <button class="dev-tab" data-boc-tab="announcement">Announcement</button>
-        <button class="dev-tab" data-boc-tab="ra-stats">RA Program Stats</button>
-        <button class="dev-tab" data-boc-tab="settings">Settings</button>
+      <div id="bocTabs">
+        <div class="officer-action-group-heading" style="margin-top: 0;">Personnel &amp; Oversight</div>
+        <div class="dev-tabs liquid-glass">
+          <button class="dev-tab" data-boc-tab="hr-review">HR Promotion Review</button>
+          <button class="dev-tab" data-boc-tab="hr-oversight">HR Oversight</button>
+          <button class="dev-tab active" data-boc-tab="quota-enforcement">Quota Enforcement</button>
+          <button class="dev-tab" data-boc-tab="applications">Applications</button>
+        </div>
+        <div class="officer-action-group-heading">Leaderboard &amp; Scheduling</div>
+        <div class="dev-tabs liquid-glass">
+          <button class="dev-tab" data-boc-tab="leaderboard-control">Leaderboard Control</button>
+          <button class="dev-tab" data-boc-tab="schedules">Scheduled Actions</button>
+          <button class="dev-tab" data-boc-tab="ra-stats">RA Program Stats</button>
+        </div>
+        <div class="officer-action-group-heading">Communications &amp; Admin</div>
+        <div class="dev-tabs liquid-glass">
+          <button class="dev-tab" data-boc-tab="dm-officers">DM Officers</button>
+          <button class="dev-tab" data-boc-tab="announcement">Announcement</button>
+          <button class="dev-tab" data-boc-tab="audit-log">Audit Log</button>
+          <button class="dev-tab" data-boc-tab="settings">Settings</button>
+        </div>
       </div>
 
       <div id="bocDenied" class="empty-state" hidden></div>
@@ -598,7 +614,7 @@
       </div>
 
       <div class="dev-panel" id="bocPanel-hr-review">
-        <div class="dev-tabs" id="bocHrSubTabs">
+        <div class="dev-tabs liquid-glass" id="bocHrSubTabs">
           <button class="dev-tab active" data-boc-hr-tab="promotion-list">Promotion List</button>
           <button class="dev-tab" data-boc-hr-tab="review">5-Period Review</button>
         </div>
@@ -670,7 +686,7 @@
       <h1>Developer Tools</h1>
       <p class="panel-subtitle">Visible only to the Developer tier.</p>
 
-      <div class="dev-tabs" id="devTabs">
+      <div class="dev-tabs liquid-glass" id="devTabs">
         <button class="dev-tab active" data-dev-tab="kill-switches">Kill Switches</button>
         <button class="dev-tab" data-dev-tab="system-health">System Health</button>
         <button class="dev-tab" data-dev-tab="diagnostics">Diagnostics</button>
@@ -757,12 +773,14 @@
 </div>
 
 <button class="ai-fab" id="aiFab" aria-label="Open AI Assistant">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2v1.06a7 7 0 0 1 4.94 4.94H20a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2h-1.06a7 7 0 0 1-4.94 4.94V20a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-1.06A7 7 0 0 1 5.06 14H4a2 2 0 0 1-2-2 2 2 0 0 1 2-2h1.06A7 7 0 0 1 10 5.06V4a2 2 0 0 1 2-2Z"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/></svg>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18 9.4l-4.2 1.8L12 16l-1.8-4.8L6 9.4l4.2-1.8L12 3Z"/><path d="M19 14.5l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9.9-2.3Z"/><path d="M5 14.5l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6.6-1.5Z"/></svg>
 </button>
 
 <div class="ai-panel liquid-glass liquid-glass-distort" id="aiPanel">
   <div class="ai-panel-header" id="aiPanelHeader">
     <span>CHP AI Assistant</span>
+    <select class="ai-convo-select" id="aiConvoSelect" aria-label="Select conversation"></select>
+    <button class="ai-new-chat-btn" id="aiNewChatBtn" type="button" aria-label="New Chat">New Chat</button>
     <button class="ai-panel-close" id="aiPanelClose" aria-label="Close">&times;</button>
   </div>
   <div class="ai-messages" id="aiMessages"></div>

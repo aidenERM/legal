@@ -1647,6 +1647,43 @@ select option {
 }
 .ai-panel-close:hover { color: #fff; }
 
+.ai-convo-select {
+  flex: 1;
+  min-width: 0;
+  margin: 0 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  color: #fff;
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+.ai-new-chat-btn {
+  background: none;
+  border: 1px solid var(--chp-gold-bright, #e0bf80);
+  color: var(--chp-gold-bright, #e0bf80);
+  border-radius: 6px;
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.ai-new-chat-btn:hover { background: rgba(201,166,107,0.14); }
+
+.ai-typing-label {
+  display: block;
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 4px;
+}
+
 .ai-messages {
   flex: 1;
   overflow-y: auto;
@@ -1820,19 +1857,39 @@ select option {
   transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
 }
 
-/* Developer tools (Phase 6) */
-.dev-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+/* Developer tools (Phase 6) - shared tab-bar pattern (also used by FTO
+   Tools, IA Tools, History's Shifts/Promotions/Infractions/Other sub-tabs,
+   the BOC in-panel tab bar/HR sub-tabs, and Dev Tools tabs - `.dev-tabs`/
+   `.dev-tab` is the one class pair reused everywhere, not per-feature CSS).
+   The bar itself is a rounded-pill `.liquid-glass` surface (cheap variant,
+   no `.liquid-glass-distort`); the active tab is its own smaller pill that
+   transitions in via the shared --transition-fast/--transition-base tokens
+   instead of an instant class swap. */
+.dev-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 20px;
+  padding: 5px;
+  border-radius: 999px;
+}
 .dev-tab {
   box-sizing: border-box;
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: 1px solid rgba(201,166,107,0.25);
-  background: rgba(255,255,255,0.03);
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
   color: inherit;
   cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast);
+  transition: background var(--transition-base), border-color var(--transition-base), color var(--transition-fast), transform var(--transition-fast);
 }
-.dev-tab.active { background: rgba(201,166,107,0.16); border-color: var(--chp-gold-bright); }
+.dev-tab:hover:not(.active) { background: rgba(255,255,255,0.06); }
+.dev-tab.active {
+  background: rgba(201,166,107,0.18);
+  border-color: rgba(201,166,107,0.4);
+  color: var(--chp-gold-bright);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+}
 .dev-panel { display: none; }
 .dev-panel.active { display: block; animation: panel-in var(--transition-base) both; }
 .dev-health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
