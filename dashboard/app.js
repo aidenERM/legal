@@ -1,5 +1,49 @@
 ﻿const WORKER_URL = "https://chp-dashboard-api.aidenspearb.workers.dev";
 
+// ── Liquid Glass pointer tracking (item 7) ──────────────────────────────
+// Generalized version of the mouse-tracked specular highlight that used to
+// live only in index.html's .login-card script. Moves --mx/--my custom
+// properties on `el` so the `.liquid-glass` CSS highlight (app.css) follows
+// the pointer, with a short debounce that drops `will-change: transform`
+// again once the pointer stops moving (never left on permanently) and two
+// escape hatches: prefers-reduced-motion, and a manual localStorage opt-out
+// (Personal Settings > Appearance > "Reduce visual effects").
+const GLASS_REDUCE_KEY = "chp_reduce_effects";
+
+function glassEffectsDisabled() {
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
+  return localStorage.getItem(GLASS_REDUCE_KEY) === "true";
+}
+
+function attachGlassPointerTracking(el) {
+  if (!el || el._glassTrackingAttached) return;
+  if (glassEffectsDisabled()) return;
+  el._glassTrackingAttached = true;
+
+  let rafId = null;
+  let willChangeTimeout = null;
+
+  el.addEventListener("pointermove", (e) => {
+    if (rafId) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      const rect = el.getBoundingClientRect();
+      el.style.setProperty("--mx", `${((e.clientX - rect.left) / rect.width) * 100}%`);
+      el.style.setProperty("--my", `${((e.clientY - rect.top) / rect.height) * 100}%`);
+    });
+    el.classList.add("glass-tracking");
+    clearTimeout(willChangeTimeout);
+    willChangeTimeout = setTimeout(() => el.classList.remove("glass-tracking"), 200);
+  });
+
+  el.addEventListener("mouseleave", () => {
+    clearTimeout(willChangeTimeout);
+    el.classList.remove("glass-tracking");
+  });
+}
+
+attachGlassPointerTracking(document.getElementById("sidebar"));
+
 function formatDuration(totalSeconds) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -112,6 +156,52 @@ function renderHistoryEntries(entries) {
       `
     )
     .join("");
+}
+
+// Buckets flat /api/history entries by the bot-supplied "category" field
+// ("promotion" | "infraction" | "other") - anything unrecognized falls back
+// to "other" so nothing silently disappears if a category is ever missing.
+function categorizeHistoryEntries(entries) {
+  const buckets = { promotion: [], infraction: [], other: [] };
+  (entries || []).forEach((entry) => {
+    const cat = buckets[entry.category] ? entry.category : "other";
+    buckets[cat].push(entry);
+  });
+  return buckets;
+}
+
+// Builds a dev-tabs/dev-panel tab switcher (same classes/markup pattern as
+// FTO/IA Tools) for history sub-tabs. When includeShifts is true, an extra
+// leading "Shifts" tab is rendered from shiftsHtml (already-fetched shift
+// summary markup) alongside the 3 category tabs derived from /api/history.
+function renderHistoryTabsHtml(idPrefix, buckets, includeShifts, shiftsHtml) {
+  const tabs = [];
+  if (includeShifts) tabs.push(["shifts", "Shifts"]);
+  tabs.push(["promotion", "Promotions"], ["infraction", "Infractions"], ["other", "Other"]);
+  const tabsHtml = tabs
+    .map(([key, label], i) => `<button class="dev-tab${i === 0 ? " active" : ""}" data-history-subtab="${key}">${label}</button>`)
+    .join("");
+  const panelsHtml = tabs
+    .map(([key], i) => {
+      const inner = key === "shifts" ? shiftsHtml || "" : `<ol class="history-list" style="margin: 0;">${renderHistoryEntries(buckets[key])}</ol>`;
+      return `<div class="dev-panel${i === 0 ? " active" : ""}" id="${idPrefix}Panel-${key}">${inner}</div>`;
+    })
+    .join("");
+  return `<div class="dev-tabs" id="${idPrefix}Tabs">${tabsHtml}</div>${panelsHtml}`;
+}
+
+// Wires click delegation for a renderHistoryTabsHtml()-produced tab group.
+// Must be (re-)called after every innerHTML replacement since the buttons
+// are freshly created DOM nodes each time.
+function wireHistorySubTabs(idPrefix) {
+  document.getElementById(`${idPrefix}Tabs`)?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-history-subtab]");
+    if (!btn) return;
+    document.querySelectorAll(`#${idPrefix}Tabs [data-history-subtab]`).forEach((b) => b.classList.toggle("active", b === btn));
+    document.querySelectorAll(`[id^="${idPrefix}Panel-"]`).forEach((panel) => {
+      panel.classList.toggle("active", panel.id === `${idPrefix}Panel-${btn.dataset.historySubtab}`);
+    });
+  });
 }
 
 function renderShiftsSummaryHtml(shifts) {
@@ -462,13 +552,17 @@ async function loadProfile() {
 }
 
 async function loadHistory() {
-  const history = await apiGet("/api/history");
+  const [shifts, history] = await Promise.all([apiGet("/api/shifts"), apiGet("/api/history")]);
   if (!history) return;
 
   document.getElementById("historySkeleton").hidden = true;
   const list = document.getElementById("historyList");
   list.hidden = false;
-  list.innerHTML = renderHistoryEntries(history.entries);
+
+  const buckets = categorizeHistoryEntries(history.entries);
+  const shiftsHtml = shifts ? renderShiftsSummaryHtml(shifts) : `<div class="empty-state">Shift data unavailable right now.</div>`;
+  list.innerHTML = renderHistoryTabsHtml("history", buckets, true, shiftsHtml);
+  wireHistorySubTabs("history");
 }
 
 let lookupSelectedUserId = null;
@@ -561,13 +655,20 @@ async function loadLookupDetail(userId) {
     <h2 class="lookup-detail-heading" style="margin-top: 22px;">Linked Roblox</h2>
     ${robloxHtml}
     <h2 class="lookup-detail-heading" style="margin-top: 22px;">History</h2>
-    <ol class="history-list">${renderHistoryEntries(history.entries)}</ol>
+    <div id="lookupHistoryWrap"></div>
     <div class="lookup-actions">
       <button class="lookup-action-btn" data-action="force_end">Force End Shift</button>
       <button class="lookup-action-btn" data-action="reset">Reset Period</button>
     </div>
     <div id="lookupActionMessage"></div>
   `;
+
+  // Shifts already have their own section above (via /api/lookup/:id/shifts),
+  // so History here only needs the 3 category sub-tabs derived from the
+  // flat /api/history-style entries, not a redundant Shifts tab.
+  const lookupBuckets = categorizeHistoryEntries(history.entries);
+  document.getElementById("lookupHistoryWrap").innerHTML = renderHistoryTabsHtml("lookupHistory", lookupBuckets, false);
+  wireHistorySubTabs("lookupHistory");
 
   detailWrap.querySelectorAll(".lookup-action-btn").forEach((btn) => {
     btn.addEventListener("click", () => handleAdminActionClick(btn));
@@ -1762,6 +1863,25 @@ function initPersonalPrefs() {
     applyReduceMotion(next);
   });
 
+  const reduceEffectsToggle = document.getElementById("reduceEffectsToggle");
+  if (reduceEffectsToggle) {
+    const on = localStorage.getItem(GLASS_REDUCE_KEY) === "true";
+    reduceEffectsToggle.classList.toggle("on", on);
+    reduceEffectsToggle.dataset.value = String(on);
+    if (on) {
+      document.querySelectorAll(".liquid-glass-distort").forEach((el) => el.classList.add("liquid-glass-distort-off"));
+    }
+    reduceEffectsToggle.addEventListener("click", () => {
+      const next = localStorage.getItem(GLASS_REDUCE_KEY) !== "true";
+      localStorage.setItem(GLASS_REDUCE_KEY, String(next));
+      reduceEffectsToggle.classList.toggle("on", next);
+      reduceEffectsToggle.dataset.value = String(next);
+      document.querySelectorAll(".liquid-glass-distort").forEach((el) => {
+        el.classList.toggle("liquid-glass-distort-off", next);
+      });
+    });
+  }
+
   document.getElementById("accentColorInput")?.addEventListener("input", (e) => {
     localStorage.setItem(ACCENT_COLOR_KEY, e.target.value);
     applyAccentColor(e.target.value);
@@ -2153,6 +2273,7 @@ aiInitPanelDragResize();
 function aiOpenPanel() {
   aiRestorePanelGeometry();
   document.getElementById("aiPanel").classList.add("open");
+  attachGlassPointerTracking(document.getElementById("aiPanel"));
   document.getElementById("aiInput").focus();
 }
 
@@ -3069,22 +3190,13 @@ async function loadPromotionQuota() {
 
 // ── Officers roster + per-officer action panel ──
 
-async function loadOfficersRoster() {
-  const skeleton = document.getElementById("officersRosterSkeleton");
+function renderOfficersRosterRows(officers) {
   const list = document.getElementById("officersRosterList");
-  officerDetailUserId = null;
-  const res = await apiGet("/api/hr/officers/roster");
-  skeleton.hidden = true;
-  list.hidden = false;
-  if (!res || !res.ok || !res.officers || res.officers.length === 0) {
-    list.innerHTML = `<li class="empty-state">No officers found (or the staff role isn't configured).</li>`;
+  if (!officers.length) {
+    list.innerHTML = `<li class="empty-state">No officers match that search.</li>`;
     return;
   }
-  const officersById = {};
-  res.officers.forEach((o) => (officersById[o.userId] = o));
-  window._officersById = officersById;
-
-  list.innerHTML = res.officers
+  list.innerHTML = officers
     .map(
       (o) => `
       <li class="lookup-result-row officer-row" data-user-id="${o.userId}">
@@ -3103,6 +3215,45 @@ async function loadOfficersRoster() {
     row.addEventListener("click", () => openOfficerDetail(row.dataset.userId));
   });
 }
+
+async function loadOfficersRoster() {
+  const skeleton = document.getElementById("officersRosterSkeleton");
+  const list = document.getElementById("officersRosterList");
+  const searchInput = document.getElementById("officersRosterSearch");
+  officerDetailUserId = null;
+  const res = await apiGet("/api/hr/officers/roster");
+  skeleton.hidden = true;
+  list.hidden = false;
+  if (searchInput) searchInput.value = "";
+  if (!res || !res.ok || !res.officers || res.officers.length === 0) {
+    window._officersRosterAll = [];
+    list.innerHTML = `<li class="empty-state">No officers found (or the staff role isn't configured).</li>`;
+    return;
+  }
+  const officersById = {};
+  res.officers.forEach((o) => (officersById[o.userId] = o));
+  window._officersById = officersById;
+  window._officersRosterAll = res.officers;
+
+  renderOfficersRosterRows(res.officers);
+}
+
+// Client-side substring filter over the roster already fetched by
+// loadOfficersRoster - matches name/nickname, no network call, live as-you-type.
+document.getElementById("officersRosterSearch")?.addEventListener("input", (e) => {
+  const query = e.target.value.trim().toLowerCase();
+  const all = window._officersRosterAll || [];
+  if (!query) {
+    renderOfficersRosterRows(all);
+    return;
+  }
+  const filtered = all.filter((o) => {
+    const name = (o.displayName || "").toLowerCase();
+    const nick = (o.nickname || "").toLowerCase();
+    return name.includes(query) || nick.includes(query);
+  });
+  renderOfficersRosterRows(filtered);
+});
 
 let officerDetailUserId = null;
 
@@ -3451,6 +3602,71 @@ function switchIaToolsTab(tab) {
 document.getElementById("iaToolsTabs")?.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-ia-tools-tab]");
   if (btn) switchIaToolsTab(btn.dataset.iaToolsTab);
+});
+
+// Shared "Find Member" search for IA Tools. NOTE: none of the IA endpoints
+// (/api/ia/detect|summarize|rewrite|tone) take a target-user-id parameter -
+// they operate purely on pasted text/screenshots, not a specific member - so
+// there's no target-user text input to auto-fill here (unlike FTO Tools'
+// traineeId/ftoId fields). Best-effort behavior: selecting a match inserts
+// an "@Name: " mention prefix into the active tab's text field, so IA staff
+// can quickly tag whose message they're analyzing without retyping it.
+const IA_TAB_TEXT_INPUT_ID = {
+  detect: "iaDetectText",
+  summarize: "iaSummarizeText",
+  rewrite: "iaRewriteText",
+  tone: "iaToneText",
+};
+
+let iaFindMemberDebounce = null;
+document.getElementById("iaFindMemberInput")?.addEventListener("input", (e) => {
+  const query = e.target.value.trim();
+  const resultsWrap = document.getElementById("iaFindMemberResultsWrap");
+  clearTimeout(iaFindMemberDebounce);
+  if (!query) {
+    resultsWrap.innerHTML = "";
+    return;
+  }
+  iaFindMemberDebounce = setTimeout(async () => {
+    const res = await apiPost("/api/lookup/search", { query });
+    if (!res || !res.ok) {
+      resultsWrap.innerHTML = `<div class="empty-state">Search failed. Try again.</div>`;
+      return;
+    }
+    const results = res.data.results || [];
+    if (results.length === 0) {
+      resultsWrap.innerHTML = `<div class="empty-state">No matching members found.</div>`;
+      return;
+    }
+    resultsWrap.innerHTML = `
+      <ul class="lookup-results-list">
+        ${results
+          .map(
+            (r) => `
+          <li class="lookup-result-row" data-user-id="${r.userId}" data-username="${escapeHtml(r.username)}">
+            <span class="lookup-result-name">${r.username}</span>
+            ${r.nickname ? `<span class="lookup-result-nick">${r.nickname}</span>` : ""}
+            <span class="lookup-result-nick">${r.topRole || "No rank"}</span>
+          </li>
+        `
+          )
+          .join("")}
+      </ul>
+    `;
+    resultsWrap.querySelectorAll(".lookup-result-row").forEach((row) => {
+      row.addEventListener("click", () => {
+        const inputId = IA_TAB_TEXT_INPUT_ID[currentIaToolsTab];
+        const textEl = inputId && document.getElementById(inputId);
+        if (textEl) {
+          const prefix = `@${row.dataset.username}: `;
+          textEl.value = textEl.value.startsWith(prefix) ? textEl.value : prefix + textEl.value;
+          textEl.focus();
+        }
+        document.getElementById("iaFindMemberInput").value = "";
+        resultsWrap.innerHTML = "";
+      });
+    });
+  }, 0);
 });
 
 // Reads a <input type="file"> into {imageBase64, imageFormat}, or nulls if

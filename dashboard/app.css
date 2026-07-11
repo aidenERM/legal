@@ -1,5 +1,92 @@
 * { box-sizing: border-box; }
 
+/* ── Liquid Glass system ──────────────────────────────────────────────
+   One shared set of tokens + a `.liquid-glass` class used everywhere the
+   dashboard wants the "real" Apple liquid-glass look (specular highlight +
+   depth), instead of the ~6 ad hoc `backdrop-filter: blur() saturate()`
+   declarations that used to be duplicated across .sidebar and friends.
+   --glass-bg is derived from the user's chosen --chp-bg-* vars (Personal
+   Settings > Appearance) rather than a hardcoded color, so the glass tint
+   always matches whatever background the user picked. */
+:root {
+  --glass-blur: 16px;
+  --glass-sat: 180%;
+  --glass-bg: color-mix(in srgb, var(--chp-bg-1, #1c1708) 45%, transparent);
+  --glass-border: rgba(255,255,255,0.14);
+  --glass-shadow-outer: 0 20px 60px rgba(0,0,0,0.45), 0 4px 16px rgba(0,0,0,0.25);
+  --glass-shadow-inset: inset 0 1px 0 rgba(255,255,255,0.30), inset 0 -1px 0 rgba(0,0,0,0.12);
+
+  /* Shared transition durations (item 12) - reuse --ease-smooth from
+     assets/chp-theme.css so panel/tab/hover motion reads as one system
+     instead of hand-tuned per element. */
+  --transition-fast: 150ms var(--ease-smooth, ease);
+  --transition-base: 250ms var(--ease-smooth, ease);
+}
+
+/* Base surface: translucent tint + layered shadow for depth. No SVG filter
+   here on purpose - `.liquid-glass-distort` (below) is the opt-in for the
+   handful of "hero" surfaces that get the real refraction look; this class
+   alone is cheap enough to use on repeating rows. */
+.liquid-glass {
+  position: relative;
+  --mx: 50%;
+  --my: 0%;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.015)),
+    var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--glass-shadow-outer), var(--glass-shadow-inset);
+}
+
+/* Top-edge specular highlight - a thin refracted-light rim, brighter where
+   the pointer currently is (attachGlassPointerTracking in app.js moves
+   --mx/--my on hero surfaces; on untracked surfaces it just sits centered
+   at the top edge). */
+.liquid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,0.22) 0%, transparent 55%),
+    linear-gradient(90deg, transparent 8%, rgba(255,255,255,0.45) 48%, rgba(201,166,107,0.4) 55%, transparent 92%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%, 100% 1px;
+  background-position: 0 0, 0 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+}
+.liquid-glass > * { position: relative; z-index: 1; }
+
+/* Low-intensity SVG refraction/displacement - opt-in only, and only on the
+   small fixed set of hero surfaces named in the plan (sidebar, login card,
+   AI panel, loading overlay card). Never on repeating rows for performance. */
+.liquid-glass-distort {
+  filter: url(#liquid-glass-distort);
+}
+
+/* will-change is only ever turned on while a pointer is actively tracked
+   (see attachGlassPointerTracking in app.js), and removed again shortly
+   after the last move - never left on permanently. */
+.glass-tracking {
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass-distort {
+    filter: none;
+  }
+}
+
+/* Manual opt-out (Personal Settings > Appearance > Reduce visual effects),
+   toggled live by app.js so it takes effect without a page reload. */
+.liquid-glass-distort.liquid-glass-distort-off {
+  filter: none;
+}
+
 html, body {
   height: 100%;
   overflow: hidden;
@@ -28,11 +115,8 @@ html, body {
   flex-direction: column;
   gap: 4px;
   padding: 20px 14px;
-  background: rgba(255,255,255,0.035);
   border-right: 1px solid rgba(255,255,255,0.10);
-  backdrop-filter: blur(6px) saturate(200%);
-  -webkit-backdrop-filter: blur(6px) saturate(200%);
-  transition: transform 0.35s var(--ease-smooth), width 0.35s var(--ease-smooth);
+  transition: transform var(--transition-base), width var(--transition-base);
 }
 
 .shell.collapsed .sidebar {
@@ -65,7 +149,7 @@ html, body {
   font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
 .nav-item.active { background: rgba(201,166,107,0.14); color: var(--chp-gold-bright); }
@@ -114,7 +198,7 @@ html, body {
   color: rgba(255,255,255,0.32);
   cursor: pointer;
   user-select: none;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 .nav-category-header:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.55); }
 .nav-category-icon {
@@ -131,7 +215,7 @@ html, body {
   width: 12px;
   height: 12px;
   flex-shrink: 0;
-  transition: transform 0.25s var(--ease-smooth);
+  transition: transform var(--transition-base);
 }
 .nav-group.cat-collapsed .nav-category-chevron { transform: rotate(-90deg); }
 
@@ -181,7 +265,7 @@ html, body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
 }
 .rail-icon-btn .nav-category-icon { width: 18px; height: 18px; }
 .rail-icon-btn:hover {
@@ -213,10 +297,10 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 .sidebar-toggle:hover { background: rgba(201,166,107,0.18); border-color: rgba(201,166,107,0.4); }
-.sidebar-toggle svg { width: 16px; height: 16px; transition: transform 0.3s var(--ease-smooth); }
+.sidebar-toggle svg { width: 16px; height: 16px; transition: transform var(--transition-base); }
 
 /* Second, always-visible toggle pinned to the content area's top-left edge -
    only shown once the sidebar is collapsed (its own in-sidebar button is
@@ -237,7 +321,7 @@ html, body {
   display: none;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 .content-sidebar-toggle:hover { background: rgba(201,166,107,0.14); border-color: rgba(201,166,107,0.35); }
 .content-sidebar-toggle svg { width: 18px; height: 18px; }
@@ -277,7 +361,7 @@ html, body {
   padding: 60px 40px 40px;
 }
 
-.panel { display: none; animation: panel-in 0.35s ease both; }
+.panel { display: none; animation: panel-in var(--transition-base) both; }
 .panel.active { display: block; }
 
 @keyframes panel-in {
@@ -389,8 +473,8 @@ body.reduce-motion, body.reduce-motion * {
   border-radius: 16px;
   background: rgba(255,255,255,0.045);
   border: 1px solid rgba(255,255,255,0.12);
-  backdrop-filter: blur(6px) saturate(200%);
-  -webkit-backdrop-filter: blur(6px) saturate(200%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
 }
 .stat-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.4); }
 .stat-card .value { font-family: "Manrope", sans-serif; font-weight: 800; font-size: 22px; color: #fff; margin-top: 6px; }
@@ -420,7 +504,7 @@ body.reduce-motion, body.reduce-motion * {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 .period-btn:hover { background: rgba(255,255,255,0.06); color: #fff; }
 .period-btn.active { background: rgba(201,166,107,0.16); color: var(--chp-gold-bright); }
@@ -514,7 +598,7 @@ select option {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-fast);
 }
 .leaderboard-list.is-loading { opacity: 0; }
 
@@ -586,7 +670,7 @@ select option {
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 .shift-type-filter-btn:hover { background: rgba(255,255,255,0.06); color: #fff; }
 .shift-type-filter-btn.active { background: rgba(201,166,107,0.16); color: var(--chp-gold-bright); }
@@ -725,8 +809,8 @@ select option {
   border-radius: 18px;
   background: rgba(255,255,255,0.045);
   border: 1px solid rgba(201,166,107,0.20);
-  backdrop-filter: blur(6px) saturate(200%);
-  -webkit-backdrop-filter: blur(6px) saturate(200%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
 }
 
 .shifts-summary-stat { flex: 1; }
@@ -848,7 +932,7 @@ select option {
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background var(--transition-fast);
 }
 .lookup-search-btn:hover { background: rgba(201,166,107,0.22); }
 
@@ -870,7 +954,7 @@ select option {
   background: rgba(255,255,255,0.035);
   border: 1px solid rgba(255,255,255,0.08);
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 .lookup-result-row:hover { background: rgba(255,255,255,0.06); border-color: rgba(201,166,107,0.22); }
 .lookup-result-name { font-size: 13.5px; font-weight: 600; color: #fff; }
@@ -952,7 +1036,7 @@ select option {
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background var(--transition-fast);
 }
 .lookup-action-btn:hover { background: rgba(220,90,90,0.20); }
 .lookup-action-btn.confirming {
@@ -998,9 +1082,9 @@ select option {
   border-radius: 18px;
   background: rgba(255,255,255,0.045);
   border: 1px solid rgba(201,166,107,0.20);
-  backdrop-filter: blur(6px) saturate(200%);
-  -webkit-backdrop-filter: blur(6px) saturate(200%);
-  transition: border-color 0.25s ease;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  transition: border-color var(--transition-fast);
 }
 .current-shift-card:hover { border-color: rgba(201,166,107,0.32); }
 
@@ -1017,7 +1101,7 @@ select option {
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background var(--transition-fast);
 }
 .shift-type-btn:hover { background: rgba(201,166,107,0.22); }
 
@@ -1061,7 +1145,7 @@ select option {
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background var(--transition-fast);
 }
 .shift-end-btn:hover { background: rgba(220,90,90,0.20); }
 .shift-end-btn.confirming { background: rgba(220,90,90,0.28); border-color: rgba(220,90,90,0.5); }
@@ -1071,7 +1155,7 @@ select option {
   border-radius: 18px;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.09);
-  transition: transform 0.25s var(--ease-smooth), border-color 0.25s ease;
+  transition: transform var(--transition-base), border-color var(--transition-fast);
 }
 .mini-leaderboard-card:hover { transform: translateY(-2px); border-color: rgba(201,166,107,0.22); }
 
@@ -1081,7 +1165,7 @@ select option {
   border-radius: 18px;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.09);
-  transition: transform 0.25s var(--ease-smooth), border-color 0.25s ease;
+  transition: transform var(--transition-base), border-color var(--transition-fast);
 }
 .quota-ring-card:hover, .quick-stats-card:hover { transform: translateY(-2px); border-color: rgba(201,166,107,0.22); }
 
@@ -1148,7 +1232,7 @@ select option {
   border-radius: 18px;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.09);
-  transition: transform 0.25s var(--ease-smooth), border-color 0.25s ease;
+  transition: transform var(--transition-base), border-color var(--transition-fast);
 }
 .on-duty-card:hover { transform: translateY(-2px); border-color: rgba(201,166,107,0.22); }
 .on-duty-card-count {
@@ -1165,7 +1249,7 @@ select option {
   border-radius: 12px;
   background: rgba(255,255,255,0.035);
   border: 1px solid rgba(255,255,255,0.08);
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 .on-duty-row:hover { background: rgba(201,166,107,0.10); border-color: rgba(201,166,107,0.25); }
 .on-duty-row img { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; }
@@ -1261,7 +1345,7 @@ select option {
   border-radius: 999px;
   background: rgba(255,255,255,0.035);
   border: 1px solid rgba(255,255,255,0.08);
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 .ra-fto-chip:hover { background: rgba(201,166,107,0.10); border-color: rgba(201,166,107,0.25); transform: translateY(-1px); }
 .ra-fto-chip img { width: 24px; height: 24px; border-radius: 50%; }
@@ -1332,7 +1416,7 @@ select option {
   border-radius: 18px;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.09);
-  transition: transform 0.25s var(--ease-smooth), border-color 0.25s ease;
+  transition: transform var(--transition-base), border-color var(--transition-fast);
 }
 .settings-card:hover { transform: translateY(-2px); border-color: rgba(201,166,107,0.22); }
 
@@ -1389,7 +1473,7 @@ select option {
   width: 18px; height: 18px;
   border-radius: 50%;
   background: #fff;
-  transition: transform 0.2s ease;
+  transition: transform var(--transition-fast);
 }
 .settings-toggle.on { background: rgba(201,166,107,0.5); }
 .settings-toggle.on::after { transform: translateX(18px); }
@@ -1427,7 +1511,7 @@ select option {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 .accent-reset-btn:hover { background: rgba(201,166,107,0.14); color: #fff; }
 
@@ -1448,15 +1532,15 @@ select option {
   border-radius: 50%;
   border: 1px solid rgba(201,166,107,0.35);
   background: rgba(201,166,107,0.16);
-  backdrop-filter: blur(6px) saturate(200%);
-  -webkit-backdrop-filter: blur(6px) saturate(200%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   color: var(--chp-gold-bright);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 18px rgba(0,0,0,0.35);
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition: background var(--transition-fast), transform var(--transition-fast);
 }
 .ai-fab:hover { background: rgba(201,166,107,0.26); transform: scale(1.05); }
 .ai-fab svg { width: 24px; height: 24px; }
@@ -1472,27 +1556,16 @@ select option {
   z-index: 31;
   display: flex;
   flex-direction: column;
-  /* "Liquid glass" per user feedback - matches the login card's language
-     (index.html .login-card): a translucent tinted background (not opaque
-     black) plus a soft top-left highlight pool and a subtle inset rim, so
-     whatever's behind the panel bleeds through while message text stays
-     fully legible against the dark gold/black tint. */
-  background:
-    radial-gradient(circle at 20% 0%, rgba(255,255,255,0.08) 0%, transparent 45%),
-    rgba(20,16,10,0.75);
-  border: 1px solid rgba(255,255,255,0.14);
+  /* Background/border/blur/shadow now come from the shared `.liquid-glass`
+     class (applied in app.html) instead of a bespoke duplicate - see the
+     Liquid Glass system at the top of this file. */
   border-radius: 16px;
   overflow: hidden;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.10),
-    0 12px 40px rgba(0,0,0,0.45);
-  backdrop-filter: blur(18px) saturate(220%) brightness(1.05);
-  -webkit-backdrop-filter: blur(18px) saturate(220%) brightness(1.05);
   opacity: 0;
   transform: scale(0.92);
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
 }
 .ai-panel.open {
   opacity: 1;
@@ -1632,7 +1705,7 @@ select option {
   font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background var(--transition-fast);
 }
 .ai-confirm-btn {
   border: 1px solid rgba(201,166,107,0.30);
@@ -1700,6 +1773,32 @@ select option {
   .ai-panel-resize-handle { display: none; }
 }
 
+/* ── Shared hover lift (item 12) ── one broad rule instead of hand-tuning
+   every card/row individually - covers the repeating-row classes used by
+   the roster, leaderboard, history, and lookup lists plus the plain
+   .card-ish surfaces (.stat-card etc already have their own transform
+   transitions via --ease-smooth further up; this adds the same treatment
+   to the row-style lists that didn't have one yet). */
+.leaderboard-row:hover,
+.officer-row:hover,
+.history-row:hover,
+.department-feed-row:hover,
+.loa-history-row:hover,
+.ra-session-row:hover,
+.lookup-result-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.22);
+}
+.leaderboard-row,
+.officer-row,
+.history-row,
+.department-feed-row,
+.loa-history-row,
+.ra-session-row,
+.lookup-result-row {
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+}
+
 /* Developer tools (Phase 6) */
 .dev-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
 .dev-tab {
@@ -1710,10 +1809,11 @@ select option {
   background: rgba(255,255,255,0.03);
   color: inherit;
   cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 .dev-tab.active { background: rgba(201,166,107,0.16); border-color: var(--chp-gold-bright); }
 .dev-panel { display: none; }
-.dev-panel.active { display: block; }
+.dev-panel.active { display: block; animation: panel-in var(--transition-base) both; }
 .dev-health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
 .dev-health-card {
   box-sizing: border-box;
@@ -1780,7 +1880,7 @@ select option {
   justify-content: center;
   background: rgba(10, 8, 3, 0.55);
   backdrop-filter: blur(3px);
-  animation: loading-overlay-fade-in 0.25s ease both;
+  animation: loading-overlay-fade-in var(--transition-fast) both;
 }
 /* Author `display: flex` above beats the browser's default [hidden]
    {display:none} UA rule (author styles always win over UA styles), so
@@ -1835,9 +1935,7 @@ body.reduce-motion .loading-overlay { animation: none; }
   max-width: 340px;
   padding: 28px 26px;
   border-radius: 16px;
-  background: rgba(28, 23, 8, 0.92);
-  border: 1px solid rgba(201,166,107,0.30);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+  /* background/border/box-shadow/blur come from .liquid-glass (app.html) */
   text-align: center;
   display: flex;
   flex-direction: column;

@@ -9,16 +9,28 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260710h">
+<link rel="stylesheet" href="app.css?v=20260710j">
 </head>
 <body>
+
+<!-- Liquid Glass distortion filter (item 7): a subtle, low-intensity
+     refraction used only via the `.liquid-glass-distort` class on a small
+     fixed set of hero surfaces (sidebar, AI panel, loading overlay card) -
+     never on repeating rows. Kept as one shared <svg><filter> so every
+     surface references the same definition instead of duplicating it. -->
+<svg style="position:absolute; width:0; height:0; overflow:hidden" aria-hidden="true">
+  <filter id="liquid-glass-distort">
+    <feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="2" result="noise"></feTurbulence>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="5"></feDisplacementMap>
+  </filter>
+</svg>
 
 <div class="shell" id="shell">
   <button class="content-sidebar-toggle" id="sidebarToggleCollapsed" aria-label="Open menu">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
   </button>
 
-  <nav class="sidebar" id="sidebar">
+  <nav class="sidebar liquid-glass liquid-glass-distort" id="sidebar">
     <button class="sidebar-toggle" id="sidebarToggle" aria-label="Collapse menu">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>
     </button>
@@ -177,7 +189,7 @@
     <section class="panel" id="panel-history">
       <h1>Shift History</h1>
       <div class="skeleton" id="historySkeleton"></div>
-      <ol class="history-list" id="historyList" hidden></ol>
+      <div id="historyList" hidden></div>
     </section>
 
     <section class="panel" id="panel-profile">
@@ -217,6 +229,13 @@
                 <span class="settings-row-desc">Collapse animations/transitions across the dashboard.</span>
               </div>
               <button class="settings-toggle" id="reduceMotionToggle" data-value="false" aria-label="Toggle reduce motion"></button>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-text">
+                <span class="settings-row-label">Reduce visual effects</span>
+                <span class="settings-row-desc">Turns off the liquid-glass refraction/pointer-highlight effect on the sidebar, AI panel, and loading screen.</span>
+              </div>
+              <button class="settings-toggle" id="reduceEffectsToggle" data-value="false" aria-label="Toggle reduce visual effects"></button>
             </div>
             <div class="settings-row">
               <div class="settings-row-text">
@@ -339,18 +358,25 @@
       <h1>FTO Tools</h1>
       <p class="panel-subtitle">Visible because you hold the Field Training Officer role - independent of your staff tier.</p>
 
-      <div class="dev-tabs" id="ftoToolsTabs">
-        <button class="dev-tab active" data-fto-tools-tab="host">Host Session</button>
-        <button class="dev-tab" data-fto-tools-tab="results">Log Result</button>
-        <button class="dev-tab" data-fto-tools-tab="leaderboard">Leaderboard</button>
-        <button class="dev-tab" data-fto-tools-tab="history">History</button>
-        <button class="dev-tab" data-fto-tools-tab="session">Session Lookup</button>
-        <button class="dev-tab" data-fto-tools-tab="feedback">Feedback</button>
+      <div id="ftoToolsTabs">
+        <div class="officer-action-group-heading" style="margin-top: 0;">Sessions</div>
+        <div class="dev-tabs">
+          <button class="dev-tab active" data-fto-tools-tab="host">Host Session</button>
+          <button class="dev-tab" data-fto-tools-tab="results">Log Result</button>
+          <button class="dev-tab" data-fto-tools-tab="session">Session Lookup</button>
+          <button class="dev-tab" data-fto-tools-tab="history">History</button>
+        </div>
+        <div class="officer-action-group-heading">Program</div>
+        <div class="dev-tabs">
+          <button class="dev-tab" data-fto-tools-tab="leaderboard">Leaderboard</button>
+          <button class="dev-tab" data-fto-tools-tab="feedback">Feedback</button>
+        </div>
       </div>
 
       <div id="ftoToolsDenied" class="empty-state" hidden></div>
 
       <div class="dev-panel active" id="ftoToolsPanel-host">
+        <p class="panel-subtitle">Host Session: post a Host Session embed announcing an FTO session is open (individual or bulk).</p>
         <div class="dev-diagnostics-form">
           <select id="ftoHostMode">
             <option value="Individual">Individual</option>
@@ -362,6 +388,7 @@
       </div>
 
       <div class="dev-panel" id="ftoToolsPanel-results">
+        <p class="panel-subtitle">Log Result: record a trainee's pass/fail outcome and performance notes for a completed session.</p>
         <div class="dev-diagnostics-form">
           <input type="text" id="ftoResultsTraineeId" placeholder="Trainee Discord user ID">
           <select id="ftoResultsOutcome">
@@ -374,12 +401,17 @@
         <div id="ftoResultsResult"></div>
       </div>
 
-      <div class="dev-panel" id="ftoToolsPanel-leaderboard">
-        <div class="skeleton" id="ftoLeaderboardSkeleton"></div>
-        <ol class="loa-history-list" id="ftoLeaderboardList" hidden></ol>
+      <div class="dev-panel" id="ftoToolsPanel-session">
+        <p class="panel-subtitle">Session Lookup: pull the full record for a specific FTO session by its session ID.</p>
+        <div class="dev-diagnostics-form">
+          <input type="text" id="ftoSessionLookupId" placeholder="Session ID (e.g. RA-12)">
+          <button id="ftoSessionLookupBtn">Look Up</button>
+        </div>
+        <div id="ftoSessionLookupResult"></div>
       </div>
 
       <div class="dev-panel" id="ftoToolsPanel-history">
+        <p class="panel-subtitle">History: search past FTO sessions by FTO, trainee, result, or session ID.</p>
         <div class="dev-diagnostics-form">
           <input type="text" id="ftoHistoryFtoId" placeholder="FTO user ID (optional)">
           <input type="text" id="ftoHistoryTraineeId" placeholder="Trainee user ID (optional)">
@@ -394,15 +426,14 @@
         <ol class="loa-history-list" id="ftoHistoryList"></ol>
       </div>
 
-      <div class="dev-panel" id="ftoToolsPanel-session">
-        <div class="dev-diagnostics-form">
-          <input type="text" id="ftoSessionLookupId" placeholder="Session ID (e.g. RA-12)">
-          <button id="ftoSessionLookupBtn">Look Up</button>
-        </div>
-        <div id="ftoSessionLookupResult"></div>
+      <div class="dev-panel" id="ftoToolsPanel-leaderboard">
+        <p class="panel-subtitle">Leaderboard: ranks FTOs by RA sessions logged this period, with pass/fail counts.</p>
+        <div class="skeleton" id="ftoLeaderboardSkeleton"></div>
+        <ol class="loa-history-list" id="ftoLeaderboardList" hidden></ol>
       </div>
 
       <div class="dev-panel" id="ftoToolsPanel-feedback">
+        <p class="panel-subtitle">Feedback: view anonymous trainee feedback averages for yourself or another FTO.</p>
         <div class="dev-diagnostics-form">
           <input type="text" id="ftoFeedbackTargetId" placeholder="FTO user ID (blank = your own feedback)">
           <button id="ftoFeedbackViewBtn">View Feedback</button>
@@ -424,7 +455,13 @@
 
       <div id="iaToolsDenied" class="empty-state" hidden></div>
 
+      <div id="iaToolsFindMember" class="lookup-search-row" style="margin-bottom: 16px;">
+        <input type="text" class="lookup-search-input" id="iaFindMemberInput" placeholder="Find member (tags whoever you select into the text below)...">
+      </div>
+      <div id="iaFindMemberResultsWrap"></div>
+
       <div class="dev-panel active" id="iaToolsPanel-detect">
+        <p class="panel-subtitle">Detect: scan a message (text or screenshot) for signs of AI-generated writing.</p>
         <div class="dev-diagnostics-form">
           <textarea id="iaDetectText" rows="6" placeholder="Paste text to analyze..."></textarea>
           <input type="file" id="iaDetectImage" accept="image/png,image/jpeg,image/gif,image/webp">
@@ -434,6 +471,7 @@
       </div>
 
       <div class="dev-panel" id="iaToolsPanel-summarize">
+        <p class="panel-subtitle">Summarize: condense a long message or report into a short summary.</p>
         <div class="dev-diagnostics-form">
           <textarea id="iaSummarizeText" rows="6" placeholder="Paste text to summarize..."></textarea>
           <button id="iaSummarizeBtn">Summarize</button>
@@ -442,6 +480,7 @@
       </div>
 
       <div class="dev-panel" id="iaToolsPanel-rewrite">
+        <p class="panel-subtitle">Rewrite: polish a draft message for grammar, clarity, and tone.</p>
         <div class="dev-diagnostics-form">
           <textarea id="iaRewriteText" rows="6" placeholder="Paste a draft to polish..."></textarea>
           <button id="iaRewriteBtn">Rewrite</button>
@@ -450,6 +489,7 @@
       </div>
 
       <div class="dev-panel" id="iaToolsPanel-tone">
+        <p class="panel-subtitle">Tone Check: flag hostile, unprofessional, or concerning tone in a message or screenshot.</p>
         <div class="dev-diagnostics-form">
           <textarea id="iaToneText" rows="6" placeholder="Paste text to check tone..."></textarea>
           <input type="file" id="iaToneImage" accept="image/png,image/jpeg,image/gif,image/webp">
@@ -462,6 +502,9 @@
     <section class="panel" id="panel-officers-mgmt">
       <h1>Officers</h1>
       <p class="panel-subtitle">All staff, highest rank to lowest. Click an officer to manage their shift, LOA/RA, promotion, or send a DM.</p>
+      <div class="lookup-search-row">
+        <input type="text" class="lookup-search-input" id="officersRosterSearch" placeholder="Filter by name or nickname...">
+      </div>
       <div class="skeleton" id="officersRosterSkeleton"></div>
       <ul class="lookup-results-list" id="officersRosterList" hidden></ul>
     </section>
@@ -717,7 +760,7 @@
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2v1.06a7 7 0 0 1 4.94 4.94H20a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2h-1.06a7 7 0 0 1-4.94 4.94V20a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-1.06A7 7 0 0 1 5.06 14H4a2 2 0 0 1-2-2 2 2 0 0 1 2-2h1.06A7 7 0 0 1 10 5.06V4a2 2 0 0 1 2-2Z"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/></svg>
 </button>
 
-<div class="ai-panel" id="aiPanel">
+<div class="ai-panel liquid-glass liquid-glass-distort" id="aiPanel">
   <div class="ai-panel-header" id="aiPanelHeader">
     <span>CHP AI Assistant</span>
     <button class="ai-panel-close" id="aiPanelClose" aria-label="Close">&times;</button>
@@ -737,7 +780,7 @@
      page just sitting there with a bare skeleton. Rotates through short
      CHP/dashboard tips while waiting. -->
 <div class="loading-overlay" id="loadingOverlay" hidden aria-live="polite">
-  <div class="loading-overlay-card">
+  <div class="loading-overlay-card liquid-glass liquid-glass-distort">
     <div class="loading-overlay-spinner"></div>
     <p class="loading-overlay-status" id="loadingOverlayStatus"></p>
     <p class="loading-overlay-elapsed" id="loadingOverlayElapsed"></p>
@@ -745,6 +788,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260710h"></script>
+<script src="app.js?v=20260710j"></script>
 </body>
 </html>

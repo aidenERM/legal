@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
+<link rel="stylesheet" href="app.css?v=20260710j">
 <style>
   * {
     box-sizing: border-box;
@@ -117,6 +118,10 @@
        Less blur (so it stays clear, not foggy), higher saturation (colors
        bleeding through stay vivid), and multiple soft pooled highlights
        that drift slowly, plus one that tracks the pointer. ── */
+  /* Background/border/blur/shadow/specular-highlight now come from the
+     shared `.liquid-glass` + `.liquid-glass-distort` classes (app.css +
+     the SVG filter below) instead of a bespoke duplicate - see app.css's
+     "Liquid Glass system" for the shared tokens. */
   .login-card {
     position: relative;
     z-index: 10;
@@ -126,76 +131,7 @@
     padding: clamp(24px, 4vh, 38px) clamp(26px, 4.4vw, 40px);
     border-radius: 32px;
     text-align: center;
-    background:
-      radial-gradient(circle at 18% 12%, rgba(255,255,255,0.16) 0%, transparent 40%),
-      radial-gradient(circle at 85% 90%, rgba(201,166,107,0.12) 0%, transparent 45%),
-      rgba(255,255,255,0.035);
-    border: 1px solid rgba(255,255,255,0.22);
-    backdrop-filter: blur(6px) saturate(220%) brightness(1.05);
-    -webkit-backdrop-filter: blur(6px) saturate(220%) brightness(1.05);
-    box-shadow:
-      inset 0 1.5px 0 rgba(255,255,255,0.35),
-      inset 0 -1.5px 0 rgba(0,0,0,0.25),
-      inset 0 0 40px rgba(255,255,255,0.03),
-      0 28px 70px rgba(0,0,0,0.65),
-      0 6px 18px rgba(0,0,0,0.4);
     animation: fade-up 0.8s var(--ease-smooth) 0.15s both;
-    --mx: 50%;
-    --my: 0%;
-  }
-
-  .login-card::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background:
-      radial-gradient(circle at var(--mx) var(--my),
-        rgba(255,255,255,0.28) 0%,
-        rgba(255,255,255,0.08) 30%,
-        transparent 60%);
-    mix-blend-mode: overlay;
-    pointer-events: none;
-    transition: background 0.15s var(--ease-smooth);
-  }
-
-  .login-card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background:
-      linear-gradient(115deg,
-        rgba(255,255,255,0.16) 0%,
-        transparent 22%,
-        transparent 60%,
-        rgba(201,166,107,0.10) 85%,
-        rgba(255,255,255,0.10) 100%);
-    background-size: 250% 250%;
-    animation: liquid-drift 10s ease-in-out infinite;
-    pointer-events: none;
-  }
-
-  @keyframes liquid-drift {
-    0%   { background-position: 0% 0%; }
-    50%  { background-position: 100% 60%; }
-    100% { background-position: 0% 0%; }
-  }
-
-  .login-card > * { position: relative; z-index: 1; }
-
-  .login-card-edge {
-    position: absolute;
-    top: 0; left: 16%; right: 16%;
-    height: 1px;
-    background: linear-gradient(90deg,
-      transparent,
-      rgba(201,166,107,0.7) 30%,
-      rgba(255,255,255,0.55) 50%,
-      rgba(201,166,107,0.7) 70%,
-      transparent);
-    pointer-events: none;
-    z-index: 2;
   }
 
   .login-status {
@@ -219,69 +155,30 @@
     margin: 0 0 24px;
   }
 
-  /* ── Decorative field rows (server / access level) ── */
-  .field-row {
+  /* ── "What you can do here" strip (between hero and login card) ── */
+  .capability-strip {
+    position: relative;
+    z-index: 10;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    padding: 14px 18px;
-    border-radius: 16px;
-    background: rgba(255,255,255,0.045);
-    border: 1px solid rgba(255,255,255,0.09);
-    transition: background 0.25s var(--ease-smooth), border-color 0.25s var(--ease-smooth), transform 0.3s var(--ease-spring);
-    animation: fade-up 0.6s var(--ease-smooth) both;
-    margin-bottom: 14px;
-    text-align: left;
-  }
-
-  .field-row:hover {
-    background: rgba(255,255,255,0.07);
-    border-color: rgba(201,166,107,0.22);
-    transform: translateY(-1px);
-  }
-
-  .field-row:nth-of-type(1) { animation-delay: 0.05s; }
-  .field-row:nth-of-type(2) { animation-delay: 0.12s; }
-
-  .field-row-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-  }
-
-  .field-row-label {
-    font-family: "Manrope", sans-serif;
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.32);
-  }
-
-  .field-row-value {
-    font-size: 13.5px;
-    font-weight: 500;
-    color: rgba(255,255,255,0.82);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .field-row-icon {
-    display: flex;
-    align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
-    flex-shrink: 0;
-    border-radius: 10px;
-    background: rgba(201,166,107,0.12);
-    border: 1px solid rgba(201,166,107,0.22);
-    color: var(--chp-gold-bright);
+    gap: clamp(10px, 2vw, 22px);
+    margin-bottom: clamp(14px, 2.4vh, 22px);
+    animation: fade-up 0.7s var(--ease-smooth) 0.08s both;
   }
-  .field-row-icon svg { width: 16px; height: 16px; }
+  .capability-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.045);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: rgba(255,255,255,0.6);
+    font-family: "Manrope", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .capability-item svg { width: 14px; height: 14px; color: var(--chp-gold-bright); flex-shrink: 0; }
 
   /* ── Remember + help row ── */
   .field-row-meta {
@@ -504,6 +401,16 @@
 </head>
 <body>
 
+<!-- Liquid Glass distortion filter (item 7) - shared definition, same id
+     used by app.css's `.liquid-glass-distort` class. Kept in sync with the
+     one in app.html so the login card gets the same subtle refraction. -->
+<svg style="position:absolute; width:0; height:0; overflow:hidden" aria-hidden="true">
+  <filter id="liquid-glass-distort">
+    <feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="2" result="noise"></feTurbulence>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="5"></feDisplacementMap>
+  </filter>
+</svg>
+
 <main class="page">
   <img class="badge-backdrop" src="../assets/images/chp-badge.png" alt="" aria-hidden="true" draggable="false">
 
@@ -512,35 +419,23 @@
     <p class="hero-sub">Welcome to the <span>CHP Dashboard</span> — sign in to find out everything about you.</p>
   </div>
 
-  <div class="login-card" id="loginCard">
-    <div class="login-card-edge" aria-hidden="true"></div>
+  <div class="capability-strip" aria-hidden="true">
+    <span class="capability-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3.5 2"></path></svg>
+      Shifts
+    </span>
+    <span class="capability-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="16" rx="2.2"></rect><path d="M3.5 9.5h17"></path><path d="M8 3v3M16 3v3"></path></svg>
+      LOA / RA
+    </span>
+    <span class="capability-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a2 2 0 0 1 2 2v1a5 5 0 0 1 3.5 4.7c.9.3 1.5 1.1 1.5 2.1v0a2 2 0 0 1-2 2h-.4A5 5 0 0 1 12 18a5 5 0 0 1-4.6-3.2H7a2 2 0 0 1-2-2v0c0-1 .6-1.8 1.5-2.1A5 5 0 0 1 10 5V4a2 2 0 0 1 2-2Z"></path><circle cx="9.5" cy="11" r="0.8" fill="currentColor" stroke="none"></circle><circle cx="14.5" cy="11" r="0.8" fill="currentColor" stroke="none"></circle></svg>
+      AI Assistant
+    </span>
+  </div>
 
+  <div class="login-card liquid-glass liquid-glass-distort" id="loginCard">
     <p class="login-status" id="loginStatus" hidden></p>
-
-    <div class="field-row">
-      <div class="field-row-text">
-        <span class="field-row-label">Server</span>
-        <span class="field-row-value">California Highway Patrol</span>
-      </div>
-      <span class="field-row-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-          <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
-        </svg>
-      </span>
-    </div>
-
-    <div class="field-row">
-      <div class="field-row-text">
-        <span class="field-row-label">Access Level</span>
-        <span class="field-row-value">Officer Rank &amp; Above</span>
-      </div>
-      <span class="field-row-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="4.5" y="10.5" width="15" height="10" rx="2.2"></rect>
-          <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"></path>
-        </svg>
-      </span>
-    </div>
 
     <div class="field-row-meta">
       <label class="remember">
@@ -604,25 +499,19 @@
     loginBtn.classList.add("hidden");
     loginProcessing.classList.add("active");
 
-    fetch(`${WORKER_URL}/auth/callback`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ code: params.get("code"), remember: !!(rememberMe && rememberMe.checked) }),
-    })
-      .then(async (response) => {
-        const body = await response.json();
-        if (body.ok) {
-          window.location.href = "app.html";
-        } else if (response.status === 403) {
-          window.location.href = "index.html?denied=1";
-        } else {
-          window.location.href = "index.html?error=1";
-        }
-      })
-      .catch(() => {
-        window.location.href = "index.html?error=1";
-      });
+    // Top-level navigation (not fetch()) so the Worker's 302 + Set-Cookie
+    // response sets the session cookie on a real navigation. iOS Safari's
+    // Intelligent Tracking Prevention blocks cookies set via a cross-site
+    // fetch() response, which silently broke login on mobile Safari - the
+    // Worker's GET /auth/callback handler does the same token exchange and
+    // then 302s straight to app.html (or back here with ?denied=1/?error=1)
+    // with the cookie already attached.
+    const remember = !!(rememberMe && rememberMe.checked);
+    const redirectUrl =
+      `${WORKER_URL}/auth/callback` +
+      `?code=${encodeURIComponent(params.get("code"))}` +
+      `&remember=${remember ? "true" : "false"}`;
+    window.location.href = redirectUrl;
   }
 
   const loginStatus = document.getElementById("loginStatus");
@@ -634,44 +523,70 @@
     loginStatus.hidden = false;
   }
 
-  // Smooth 3-D parallax tilt + specular highlight on the login card
+  // Smooth 3-D parallax tilt - kept as index.html-only flourish (the tilt
+  // itself isn't part of the shared Liquid Glass system, just this page's
+  // existing touch). Respects the same reduced-motion/manual opt-out as the
+  // shared specular-highlight tracking below.
   const card = document.getElementById("loginCard");
-  let raf = null;
-  let tx = 0, ty = 0, cx = 0, cy = 0;
+  const reduceEffects = () =>
+    (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) ||
+    localStorage.getItem("chp_reduce_effects") === "true";
 
-  document.addEventListener("mousemove", (e) => {
-    const mx = (e.clientX / window.innerWidth  - 0.5) * 2;
-    const my = (e.clientY / window.innerHeight - 0.5) * 2;
-    tx = mx * 8;
-    ty = my * -8;
-    if (!raf) raf = requestAnimationFrame(tick);
-  });
+  if (!reduceEffects()) {
+    let raf = null;
+    let tx = 0, ty = 0, cx = 0, cy = 0;
 
-  document.addEventListener("mouseleave", () => {
-    tx = 0; ty = 0;
-    if (!raf) raf = requestAnimationFrame(tick);
-  });
+    document.addEventListener("mousemove", (e) => {
+      const mx = (e.clientX / window.innerWidth  - 0.5) * 2;
+      const my = (e.clientY / window.innerHeight - 0.5) * 2;
+      tx = mx * 8;
+      ty = my * -8;
+      if (!raf) raf = requestAnimationFrame(tick);
+    });
 
-  function tick() {
-    raf = null;
-    cx += (tx - cx) * 0.10;
-    cy += (ty - cy) * 0.10;
-    card.style.transform = `perspective(900px) rotateY(${cx}deg) rotateX(${cy}deg)`;
-    if (Math.abs(tx - cx) > 0.05 || Math.abs(ty - cy) > 0.05) {
-      raf = requestAnimationFrame(tick);
+    document.addEventListener("mouseleave", () => {
+      tx = 0; ty = 0;
+      if (!raf) raf = requestAnimationFrame(tick);
+    });
+
+    function tick() {
+      raf = null;
+      cx += (tx - cx) * 0.10;
+      cy += (ty - cy) * 0.10;
+      card.style.transform = `perspective(900px) rotateY(${cx}deg) rotateX(${cy}deg)`;
+      if (Math.abs(tx - cx) > 0.05 || Math.abs(ty - cy) > 0.05) {
+        raf = requestAnimationFrame(tick);
+      }
     }
   }
 
-  let highlightRaf = null;
-  card.addEventListener("pointermove", (e) => {
-    if (highlightRaf) return;
-    highlightRaf = requestAnimationFrame(() => {
-      highlightRaf = null;
-      const rect = card.getBoundingClientRect();
-      card.style.setProperty("--mx", `${((e.clientX - rect.left) / rect.width) * 100}%`);
-      card.style.setProperty("--my", `${((e.clientY - rect.top) / rect.height) * 100}%`);
+  // Shared Liquid Glass specular-highlight tracking (item 7) - same
+  // will-change guardrails as attachGlassPointerTracking in app.js (which
+  // this page doesn't load, since app.js is dashboard-only), duplicated
+  // here in minimal form so index.html stays a standalone login page.
+  if (!reduceEffects()) {
+    let highlightRaf = null;
+    let willChangeTimeout = null;
+    card.addEventListener("pointermove", (e) => {
+      if (!highlightRaf) {
+        highlightRaf = requestAnimationFrame(() => {
+          highlightRaf = null;
+          const rect = card.getBoundingClientRect();
+          card.style.setProperty("--mx", `${((e.clientX - rect.left) / rect.width) * 100}%`);
+          card.style.setProperty("--my", `${((e.clientY - rect.top) / rect.height) * 100}%`);
+        });
+      }
+      card.classList.add("glass-tracking");
+      clearTimeout(willChangeTimeout);
+      willChangeTimeout = setTimeout(() => card.classList.remove("glass-tracking"), 200);
     });
-  });
+    card.addEventListener("mouseleave", () => {
+      clearTimeout(willChangeTimeout);
+      card.classList.remove("glass-tracking");
+    });
+  } else {
+    card.classList.add("liquid-glass-distort-off");
+  }
 </script>
 </body>
 </html>
