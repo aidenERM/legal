@@ -2455,6 +2455,7 @@ document.getElementById("lookupSearchInput").addEventListener("keydown", (e) => 
 // ── AI Assistant (floating panel, present on every page) ──
 
 const AI_CONVERSATIONS_KEY = "chp_ai_conversations";
+const AI_ACTIVE_CONVERSATION_KEY = "chp_ai_active_conversation_id";
 let aiConversations = []; // [{id, title, messages: [{role, content, timestamp}]}]
 let aiActiveConversationId = null;
 let aiPendingProposal = null; // { proposalId } for the most recent unconfirmed proposal
@@ -2503,6 +2504,23 @@ function aiPopulateConvoSelect() {
   select.value = aiActiveConversationId;
 }
 
+function aiUpdateEmptyState() {
+  const messages = document.getElementById("aiMessages");
+  if (!messages) return;
+  const hasContent = messages.querySelector(".ai-bubble, .ai-typing, .ai-proposal-actions");
+  let empty = messages.querySelector(".ai-empty-state");
+  if (hasContent) {
+    if (empty) empty.remove();
+    return;
+  }
+  if (!empty) {
+    empty = document.createElement("div");
+    empty.className = "empty-state ai-empty-state";
+    empty.textContent = "Ask me anything about CHP — shifts, ranks, quota, and more.";
+    messages.appendChild(empty);
+  }
+}
+
 function aiRenderActiveConversation() {
   const messages = document.getElementById("aiMessages");
   if (!messages) return;
@@ -2512,11 +2530,28 @@ function aiRenderActiveConversation() {
   convo.messages.forEach((m) => {
     aiAppendBubble(m.role, m.content);
   });
+  aiUpdateEmptyState();
+}
+
+function aiSaveActiveConversationId() {
+  try {
+    localStorage.setItem(AI_ACTIVE_CONVERSATION_KEY, aiActiveConversationId || "");
+  } catch (e) {
+    // ignore storage errors (e.g. private mode quota)
+  }
 }
 
 function aiInitConversations() {
   aiLoadConversations();
-  if (!aiActiveConversationId || !aiConversations.some((c) => c.id === aiActiveConversationId)) {
+  let savedActiveId = null;
+  try {
+    savedActiveId = localStorage.getItem(AI_ACTIVE_CONVERSATION_KEY);
+  } catch (e) {
+    savedActiveId = null;
+  }
+  if (savedActiveId && aiConversations.some((c) => c.id === savedActiveId)) {
+    aiActiveConversationId = savedActiveId;
+  } else if (!aiActiveConversationId || !aiConversations.some((c) => c.id === aiActiveConversationId)) {
     aiActiveConversationId = aiConversations[0].id;
   }
   aiPopulateConvoSelect();
@@ -2528,6 +2563,7 @@ function aiNewChat() {
   aiConversations.push(convo);
   aiActiveConversationId = convo.id;
   aiSaveConversations();
+  aiSaveActiveConversationId();
   aiPopulateConvoSelect();
   aiRenderActiveConversation();
   const input = document.getElementById("aiInput");
@@ -2537,11 +2573,14 @@ function aiNewChat() {
 function aiSwitchConversation(id) {
   if (!aiConversations.some((c) => c.id === id)) return;
   aiActiveConversationId = id;
+  aiSaveActiveConversationId();
   aiRenderActiveConversation();
 }
 
 function aiAppendBubble(role, text) {
   const messages = document.getElementById("aiMessages");
+  const empty = messages ? messages.querySelector(".ai-empty-state") : null;
+  if (empty) empty.remove();
   const bubble = document.createElement("div");
   bubble.className = `ai-bubble ${role}`;
   bubble.textContent = text;
@@ -2561,9 +2600,12 @@ function typewriterReveal(bubbleEl, fullText, onComplete) {
     if (onComplete) onComplete();
     return;
   }
-  // Tuned so a ~200-char message takes ~1.5-3s: reveal a small chunk of
-  // characters every ~20ms.
-  const CHUNK_MS = 20;
+  // Tuned so a ~200-char message takes ~1.5-3s while still reading as
+  // distinct letter-by-letter typing rather than word-sized chunks: reveal
+  // 1 character per tick whenever the overall duration clamp allows it,
+  // only growing the chunk size for very long messages that would
+  // otherwise blow past the outer duration bound.
+  const CHUNK_MS = 32;
   const totalDurationMs = Math.min(3000, Math.max(1500, text.length * 12));
   const chunkSize = Math.max(1, Math.ceil(text.length / (totalDurationMs / CHUNK_MS)));
 
@@ -2661,7 +2703,8 @@ async function aiSendMessage(message) {
   if (convo) {
     convo.messages.push({ role: "user", content: message, timestamp: Date.now() });
     if ((!convo.title || convo.title === "New Chat") && convo.messages.filter((m) => m.role === "user").length === 1) {
-      convo.title = message.length > 30 ? `${message.slice(0, 30).trim()}...` : message.trim();
+      const trimmed = message.trim();
+      convo.title = trimmed.length > 40 ? `${trimmed.slice(0, 37).trim()}…` : trimmed;
       aiPopulateConvoSelect();
     }
     aiSaveConversations();
@@ -2677,13 +2720,25 @@ async function aiSendMessage(message) {
     }
   };
 
+  // Fix 1 (conversation memory): send the active conversation's prior turns
+  // (excluding the just-pushed new user message) so the bot can build a
+  // multi-turn Bedrock request. Capped client-side to the last 15 turns -
+  // full history already lives in localStorage for display, but only a
+  // bounded tail needs to go over the wire on every request.
+  const historyPayload = convo
+    ? convo.messages
+        .slice(0, -1) // drop the user message we just pushed above - it's sent as `message`
+        .slice(-15)
+        .map((m) => ({ role: m.role, content: m.content }))
+    : [];
+
   let response;
   try {
     response = await fetch(`${WORKER_URL}/api/ai/chat`, {
       method: "POST",
       credentials: "include",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message, conversationId: aiActiveConversationId }),
+      body: JSON.stringify({ message, conversationId: aiActiveConversationId, history: historyPayload }),
     });
   } catch {
     onError("Sorry, the assistant is unavailable right now. Please try again later.");
@@ -2703,6 +2758,23 @@ async function aiSendMessage(message) {
   const decoder = new TextDecoder();
   let buffer = "";
   let doneData = null;
+
+  // Fix 3 (real streaming) SSE consumer contract, for whoever builds chat UI
+  // polish (section 6) on top of this next:
+  //   - {"type": "status", "text": "..."}  -> checkpoint text only (no bubble content yet)
+  //   - {"type": "chunk",  "text": "..."}  -> incremental text delta; append directly to the
+  //                                            assistant bubble as it arrives (see below) - this
+  //                                            REPLACES the old single-shot typewriter reveal
+  //   - {"type": "done", ...fullResultPayload}  -> stream complete; same payload shape as
+  //                                            before (text/type/proposalId/conversationId) for
+  //                                            proposal/tool-result finalization
+  // On the first "chunk" we swap the typing indicator for a live assistant
+  // bubble and append into it incrementally; if no "chunk" events arrive at
+  // all (e.g. the whole answer came back as tool-call JSON with no visible
+  // text), we fall back to revealing "done"'s text via the old typewriter
+  // effect so there's still a smooth reveal instead of a jarring pop-in.
+  let streamingBubble = null;
+  let streamedText = "";
 
   try {
     while (true) {
@@ -2729,6 +2801,15 @@ async function aiSendMessage(message) {
 
         if (evt.type === "status") {
           aiUpdateTypingText(evt.text);
+        } else if (evt.type === "chunk") {
+          if (!streamingBubble) {
+            aiHideTyping();
+            streamingBubble = aiAppendBubble("assistant", "");
+          }
+          streamedText += evt.text || "";
+          streamingBubble.textContent = streamedText;
+          const messagesEl = document.getElementById("aiMessages");
+          if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
         } else if (evt.type === "done") {
           doneData = evt;
         }
@@ -2751,17 +2832,31 @@ async function aiSendMessage(message) {
     convo.messages.push({ role: "assistant", content: data.text || "", timestamp: Date.now() });
     aiSaveConversations();
   }
-  typewriterReveal(aiAppendBubble("assistant", ""), data.text || "", () => {
+
+  const finalize = () => {
     if (data.type === "proposal" && data.proposalId) {
       aiPendingProposal = { proposalId: data.proposalId };
       aiAppendProposalActions(data.proposalId);
     }
-  });
+  };
+
+  if (streamingBubble) {
+    // Chunks already streamed the text in live - just make sure the final
+    // bubble matches the authoritative "done" text exactly (covers e.g. the
+    // one-shot confidentiality-retry answer, whose text never went through
+    // the delta path), then finalize.
+    streamingBubble.textContent = data.text || streamedText;
+    finalize();
+  } else {
+    // No chunk events arrived at all - fall back to the old typewriter
+    // reveal of "done"'s full text instead of a jarring instant pop-in.
+    typewriterReveal(aiAppendBubble("assistant", ""), data.text || "", finalize);
+  }
 }
 
 const AI_PANEL_GEOMETRY_KEY = "chp-dashboard-ai-panel-geometry";
-const AI_PANEL_DEFAULT_WIDTH = 360;
-const AI_PANEL_DEFAULT_HEIGHT = 480;
+const AI_PANEL_DEFAULT_WIDTH = 500;
+const AI_PANEL_DEFAULT_HEIGHT = 650;
 const AI_PANEL_MIN_WIDTH = 300;
 const AI_PANEL_MIN_HEIGHT = 360;
 const AI_PANEL_MAX_WIDTH = 720;

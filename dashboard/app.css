@@ -1580,8 +1580,8 @@ select option {
 
 .ai-panel {
   position: fixed;
-  width: 360px;
-  height: 480px;
+  width: 500px;
+  height: 650px;
   min-width: 300px;
   min-height: 360px;
   max-width: 720px;
