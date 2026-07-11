@@ -500,6 +500,17 @@ body.reduce-motion, body.reduce-motion * {
 .stat-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.4); }
 .stat-card .value { font-family: "Manrope", sans-serif; font-weight: 800; font-size: 22px; color: #fff; margin-top: 6px; }
 
+/* ── Weekly hours trend chart (Tier 3 #13) ── */
+.weekly-trend-chart-wrap {
+  padding: 16px 18px;
+  border-radius: 16px;
+  min-height: 120px;
+}
+.weekly-trend-svg { width: 100%; height: auto; display: block; }
+.weekly-trend-area { fill: color-mix(in srgb, var(--chp-gold, #c9a66b) 22%, transparent); stroke: none; }
+.weekly-trend-line { fill: none; stroke: var(--chp-gold-bright, #e0bf80); stroke-width: 2; }
+.weekly-trend-dot { fill: var(--chp-gold-bright, #e0bf80); }
+
 /* ── Leaderboard period selector ── */
 .period-selector {
   display: flex;

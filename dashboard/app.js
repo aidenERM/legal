@@ -611,6 +611,55 @@ async function bootMe() {
   return me;
 }
 
+// Tier 3 #13: renders a small SVG line chart of weekly worked hours from
+// /api/lookup/{userId}/weekly-trend's `points` array. Plain inline SVG (no
+// charting library) to keep this dependency-free - the dashboard has no
+// build step, so pulling in a chart package isn't worth it for one graph.
+function renderWeeklyTrendChart(points) {
+  if (!points || points.length === 0) {
+    return `<div class="empty-state">No shift history yet to chart.</div>`;
+  }
+  const width = 560;
+  const height = 160;
+  const padding = 28;
+  const hours = points.map((p) => p.totalSeconds / 3600);
+  const maxHours = Math.max(...hours, 1);
+  const stepX = (width - padding * 2) / Math.max(points.length - 1, 1);
+
+  const coords = hours.map((h, i) => {
+    const x = padding + i * stepX;
+    const y = height - padding - (h / maxHours) * (height - padding * 2);
+    return [x, y];
+  });
+  const linePath = coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const areaPath = `${linePath} L${coords[coords.length - 1][0].toFixed(1)},${height - padding} L${padding},${height - padding} Z`;
+
+  const dots = coords
+    .map(([x, y], i) => {
+      const weekLabel = points[i].weekStart ? new Date(points[i].weekStart * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "";
+      return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" class="weekly-trend-dot"><title>${weekLabel}: ${hours[i].toFixed(1)}h</title></circle>`;
+    })
+    .join("");
+
+  return `
+    <svg viewBox="0 0 ${width} ${height}" class="weekly-trend-svg" preserveAspectRatio="xMidYMid meet">
+      <path d="${areaPath}" class="weekly-trend-area"></path>
+      <path d="${linePath}" class="weekly-trend-line"></path>
+      ${dots}
+    </svg>
+  `;
+}
+
+async function loadWeeklyTrendChart(userId) {
+  const skeleton = document.getElementById("weeklyTrendSkeleton");
+  const wrap = document.getElementById("weeklyTrendWrap");
+  if (!wrap) return;
+  const res = await apiGet(`/api/lookup/${encodeURIComponent(userId)}/weekly-trend?weeks=10`);
+  if (skeleton) skeleton.hidden = true;
+  wrap.hidden = false;
+  wrap.innerHTML = res ? renderWeeklyTrendChart(res.points) : `<div class="empty-state">Trend data is unavailable right now.</div>`;
+}
+
 async function loadProfile() {
   const me = currentMe || (await bootMe());
   const [shifts, badgesRes] = await Promise.all([apiGet("/api/shifts"), apiGet("/api/profile")]);
@@ -639,6 +688,8 @@ async function loadProfile() {
   const body = document.getElementById("shiftsBody");
   body.hidden = false;
   body.innerHTML = renderShiftsSummaryHtml(shifts);
+
+  loadWeeklyTrendChart(me.userId);
 
   document.getElementById("badgesSkeleton").hidden = true;
   const badgesGrid = document.getElementById("badgesGrid");
@@ -732,11 +783,12 @@ async function loadLookupDetail(userId) {
   const detailWrap = document.getElementById("lookupDetailWrap");
   detailWrap.innerHTML = `<div class="skeleton" style="height: 120px; margin-top: 20px;"></div>`;
 
-  const [shifts, history, roblox, live] = await Promise.all([
+  const [shifts, history, roblox, live, weeklyTrend] = await Promise.all([
     apiGet(`/api/lookup/${userId}/shifts`),
     apiGet(`/api/lookup/${userId}/history`),
     apiGet(`/api/lookup/${userId}/roblox`),
     apiGet(`/api/lookup/${userId}/live`),
+    apiGet(`/api/lookup/${userId}/weekly-trend?weeks=10`),
   ]);
 
   if (!shifts || !history) {
@@ -771,6 +823,8 @@ async function loadLookupDetail(userId) {
     ${liveHtml}
     <h2 class="lookup-detail-heading" style="margin-top: 22px;">Shifts</h2>
     ${renderShiftsSummaryHtml(shifts)}
+    <h2 class="lookup-detail-heading" style="margin-top: 22px;">Weekly Hours Trend</h2>
+    <div class="weekly-trend-chart-wrap liquid-glass">${weeklyTrend ? renderWeeklyTrendChart(weeklyTrend.points) : `<div class="empty-state">Trend data is unavailable right now.</div>`}</div>
     <h2 class="lookup-detail-heading" style="margin-top: 22px;">Recent Shifts</h2>
     <div id="lookupRecentShiftsWrap">${renderLookupRecentShiftsHtml(shifts.recent || [])}</div>
     <h2 class="lookup-detail-heading" style="margin-top: 22px;">Linked Roblox</h2>
