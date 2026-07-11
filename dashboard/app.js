@@ -347,6 +347,57 @@ async function bootMe() {
     });
   }
 
+  // FTO Tools / IA Tools - role-based (not tier-based): shown to whoever
+  // holds the FTO/IA Discord role, regardless of tier, so these get their
+  // own nav groups instead of living inside any tier group above.
+  if (me.isFto) {
+    const sidebar = document.getElementById("sidebarNavScroll");
+    const group = document.createElement("div");
+    group.className = "nav-group";
+    group.dataset.category = "fto-tools";
+    group.innerHTML = `
+      <button class="nav-category-header" type="button" data-category="fto-tools" aria-expanded="true">
+        <span class="nav-category-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14a4 4 0 100-8 4 4 0 000 8z"/><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6"/></svg>
+        </span>
+        <span class="nav-category-label">FTO Tools</span>
+        <svg class="nav-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="nav-category-items">
+        <button class="nav-item" data-section="fto-tools">FTO Tools</button>
+      </div>
+    `;
+    sidebar.appendChild(group);
+    group.querySelector(".nav-item").addEventListener("click", () => {
+      showPanel("fto-tools");
+      loadFtoTools("host");
+    });
+  }
+
+  if (me.isIa) {
+    const sidebar = document.getElementById("sidebarNavScroll");
+    const group = document.createElement("div");
+    group.className = "nav-group";
+    group.dataset.category = "ia-tools";
+    group.innerHTML = `
+      <button class="nav-category-header" type="button" data-category="ia-tools" aria-expanded="true">
+        <span class="nav-category-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4z"/></svg>
+        </span>
+        <span class="nav-category-label">IA Tools</span>
+        <svg class="nav-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="nav-category-items">
+        <button class="nav-item" data-section="ia-tools">IA Tools</button>
+      </div>
+    `;
+    sidebar.appendChild(group);
+    group.querySelector(".nav-item").addEventListener("click", () => {
+      showPanel("ia-tools");
+      switchIaToolsTab("detect");
+    });
+  }
+
   refreshSidebarCategories();
   return me;
 }
@@ -3238,5 +3289,257 @@ async function sendOfficerDm() {
   messageEl.innerHTML = `<div class="lookup-action-message success">DM sent.</div>`;
   document.getElementById("officerDmMessage").value = "";
 }
+
+// ── FTO Tools (role-based - visible to anyone holding the FTO role) ──
+
+let currentFtoToolsTab = "host";
+
+function switchFtoToolsTab(tab) {
+  currentFtoToolsTab = tab;
+  document.querySelectorAll("#ftoToolsTabs [data-fto-tools-tab]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.ftoToolsTab === tab);
+  });
+  document.querySelectorAll("#panel-fto-tools .dev-panel").forEach((panel) => {
+    panel.classList.toggle("active", panel.id === `ftoToolsPanel-${tab}`);
+  });
+}
+
+function loadFtoTools(tab) {
+  switchFtoToolsTab(tab || currentFtoToolsTab);
+  if (currentFtoToolsTab === "leaderboard") loadFtoLeaderboard();
+}
+
+document.getElementById("ftoToolsTabs")?.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-fto-tools-tab]");
+  if (btn) loadFtoTools(btn.dataset.ftoToolsTab);
+});
+
+document.getElementById("ftoHostBtn")?.addEventListener("click", async () => {
+  const resultEl = document.getElementById("ftoHostResult");
+  const mode = document.getElementById("ftoHostMode").value;
+  resultEl.innerHTML = `<div class="empty-state">Posting...</div>`;
+  const res = await apiPost("/api/fto/host", { mode });
+  if (!res || !res.data || !res.data.ok) {
+    resultEl.innerHTML = `<div class="lookup-action-message error">Failed${res && res.data && res.data.error ? `: ${res.data.error}` : ""}.</div>`;
+    return;
+  }
+  resultEl.innerHTML = `<div class="lookup-action-message success">Posted - session <code>${escapeHtml(res.data.sessionId)}</code>.</div>`;
+});
+
+document.getElementById("ftoResultsSubmitBtn")?.addEventListener("click", async () => {
+  const resultEl = document.getElementById("ftoResultsResult");
+  const traineeId = document.getElementById("ftoResultsTraineeId").value.trim();
+  const performance = document.getElementById("ftoResultsPerformance").value.trim();
+  const result = document.getElementById("ftoResultsOutcome").value;
+  if (!traineeId || !performance) {
+    resultEl.innerHTML = `<div class="lookup-action-message error">Trainee ID and performance notes are required.</div>`;
+    return;
+  }
+  resultEl.innerHTML = `<div class="empty-state">Submitting...</div>`;
+  const res = await apiPost("/api/fto/results", { traineeId, performance, result });
+  if (!res || !res.data || !res.data.ok) {
+    resultEl.innerHTML = `<div class="lookup-action-message error">Failed${res && res.data && res.data.error ? `: ${res.data.error}` : ""}.</div>`;
+    return;
+  }
+  resultEl.innerHTML = `<div class="lookup-action-message success">Submitted - session <code>${escapeHtml(res.data.sessionId)}</code> (${escapeHtml(res.data.result)}).</div>`;
+  document.getElementById("ftoResultsPerformance").value = "";
+});
+
+async function loadFtoLeaderboard() {
+  const skeleton = document.getElementById("ftoLeaderboardSkeleton");
+  const list = document.getElementById("ftoLeaderboardList");
+  skeleton.hidden = false;
+  list.hidden = true;
+  const data = await apiGet("/api/fto/leaderboard");
+  skeleton.hidden = true;
+  list.hidden = false;
+  const entries = (data && data.entries) || [];
+  if (entries.length === 0) {
+    list.innerHTML = `<li class="empty-state">No RA sessions logged this period yet.</li>`;
+    return;
+  }
+  list.innerHTML = entries
+    .map(
+      (e, i) => `
+      <li class="loa-history-row">
+        <span class="history-desc">#${i + 1} - <code>${escapeHtml(e.displayName)}</code></span>
+        <span class="history-date">${e.total} session(s) - ${e.pass} pass / ${e.fail} fail</span>
+      </li>`
+    )
+    .join("");
+}
+
+document.getElementById("ftoHistorySearchBtn")?.addEventListener("click", async () => {
+  const list = document.getElementById("ftoHistoryList");
+  list.innerHTML = `<li class="empty-state">Searching...</li>`;
+  const body = {
+    ftoId: document.getElementById("ftoHistoryFtoId").value.trim() || undefined,
+    traineeId: document.getElementById("ftoHistoryTraineeId").value.trim() || undefined,
+    result: document.getElementById("ftoHistoryResult").value || undefined,
+    sessionId: document.getElementById("ftoHistorySessionId").value.trim() || undefined,
+  };
+  const res = await apiPost("/api/fto/history", body);
+  const entries = (res && res.data && res.data.entries) || [];
+  if (entries.length === 0) {
+    list.innerHTML = `<li class="empty-state">No matching sessions found.</li>`;
+    return;
+  }
+  list.innerHTML = entries
+    .map((doc) => {
+      const ftoText = doc.fto_id ? `<@${doc.fto_id}>` : "Unclaimed";
+      const traineeIds = doc.trainee_ids && doc.trainee_ids.length ? doc.trainee_ids : (doc.trainee_id ? [doc.trainee_id] : []);
+      const traineeText = traineeIds.length ? traineeIds.map((t) => `<@${t}>`).join(", ") : "None";
+      const resultText = doc.result === "pass" ? "Pass" : doc.result === "fail" ? "Fail" : "-";
+      return `<li class="loa-history-row">
+        <span class="history-desc"><code>${escapeHtml(doc.session_id)}</code> (${escapeHtml(doc.type)})</span>
+        <span class="history-date">FTO: ${escapeHtml(ftoText)} - Trainee(s): ${escapeHtml(traineeText)} - Result: ${escapeHtml(resultText)}</span>
+      </li>`;
+    })
+    .join("");
+});
+
+document.getElementById("ftoSessionLookupBtn")?.addEventListener("click", async () => {
+  const resultEl = document.getElementById("ftoSessionLookupResult");
+  const sessionId = document.getElementById("ftoSessionLookupId").value.trim();
+  if (!sessionId) return;
+  resultEl.innerHTML = `<div class="empty-state">Looking up...</div>`;
+  const res = await apiPost("/api/fto/session", { sessionId });
+  if (!res || !res.data || !res.data.ok) {
+    resultEl.innerHTML = `<div class="empty-state">No matching session found.</div>`;
+    return;
+  }
+  const s = res.data.session;
+  resultEl.innerHTML = `<pre class="dev-diagnostics-output">${escapeHtml(JSON.stringify(s, null, 2))}</pre>`;
+});
+
+document.getElementById("ftoFeedbackViewBtn")?.addEventListener("click", async () => {
+  const resultEl = document.getElementById("ftoFeedbackResult");
+  const targetFtoId = document.getElementById("ftoFeedbackTargetId").value.trim() || undefined;
+  resultEl.innerHTML = `<div class="empty-state">Loading...</div>`;
+  const res = await apiPost("/api/fto/feedback", { targetFtoId });
+  if (!res || !res.data || !res.data.ok) {
+    resultEl.innerHTML = `<div class="lookup-action-message error">Failed${res && res.data && res.data.error ? `: ${res.data.error}` : ""}.</div>`;
+    return;
+  }
+  if (!res.data.averages) {
+    resultEl.innerHTML = `<div class="empty-state">No feedback submitted yet.</div>`;
+    return;
+  }
+  const avg = res.data.averages;
+  resultEl.innerHTML = `
+    <div class="stat-card"><div class="label">Communication</div><div class="value">${avg.communication.toFixed(1)}/5</div></div>
+    <div class="stat-card"><div class="label">Patience</div><div class="value">${avg.patience.toFixed(1)}/5</div></div>
+    <div class="stat-card"><div class="label">Clarity</div><div class="value">${avg.clarity.toFixed(1)}/5</div></div>
+    <p class="panel-subtitle">${res.data.count} response(s) - anonymous.</p>
+  `;
+});
+
+// ── IA Tools (role-based - visible to anyone holding the IA role) ──
+
+let currentIaToolsTab = "detect";
+
+function switchIaToolsTab(tab) {
+  currentIaToolsTab = tab;
+  document.querySelectorAll("#iaToolsTabs [data-ia-tools-tab]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.iaToolsTab === tab);
+  });
+  document.querySelectorAll("#panel-ia-tools .dev-panel").forEach((panel) => {
+    panel.classList.toggle("active", panel.id === `iaToolsPanel-${tab}`);
+  });
+}
+
+document.getElementById("iaToolsTabs")?.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-ia-tools-tab]");
+  if (btn) switchIaToolsTab(btn.dataset.iaToolsTab);
+});
+
+// Reads a <input type="file"> into {imageBase64, imageFormat}, or nulls if
+// no file was chosen - shared by AI Detect and Tone Check, the two IA tools
+// that accept a screenshot instead of/alongside typed text.
+function readImageInput(inputEl) {
+  return new Promise((resolve) => {
+    const file = inputEl?.files?.[0];
+    if (!file) return resolve({ imageBase64: null, imageFormat: null });
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result || "";
+      const commaIdx = dataUrl.indexOf(",");
+      const base64 = commaIdx >= 0 ? dataUrl.slice(commaIdx + 1) : "";
+      const fmt = (file.type.split("/")[1] || "png").toLowerCase();
+      resolve({ imageBase64: base64, imageFormat: fmt });
+    };
+    reader.onerror = () => resolve({ imageBase64: null, imageFormat: null });
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById("iaDetectBtn")?.addEventListener("click", async () => {
+  const resultEl = document.getElementById("iaDetectResult");
+  const text = document.getElementById("iaDetectText").value.trim();
+  const { imageBase64, imageFormat } = await readImageInput(document.getElementById("iaDetectImage"));
+  if (!text && !imageBase64) {
+    resultEl.innerHTML = `<div class="lookup-action-message error">Provide text or attach a screenshot.</div>`;
+    return;
+  }
+  resultEl.innerHTML = `<div class="empty-state">Sending to AI model...</div>`;
+  const res = await apiPost("/api/ia/detect", { text, imageBase64, imageFormat });
+  if (!res || !res.data || !res.data.ok) {
+    resultEl.innerHTML = `<div class="lookup-action-message error">Failed${res && res.data && res.data.error ? `: ${res.data.error}` : ""}.</div>`;
+    return;
+  }
+  const d = res.data;
+  resultEl.innerHTML = `
+    <div class="stat-card"><div class="label">Score</div><div class="value">${d.score != null ? `${d.score}/100` : "N/A"}</div></div>
+    <p class="panel-subtitle">${escapeHtml(d.confidence || "Unknown")} confidence - ${escapeHtml(d.reasoning || "")}</p>
+  `;
+});
+
+document.getElementById("iaSummarizeBtn")?.addEventListener("click", async () => {
+  const resultEl = document.getElementById("iaSummarizeResult");
+  const text = document.getElementById("iaSummarizeText").value.trim();
+  if (!text) return;
+  resultEl.innerHTML = `<div class="empty-state">Sending to AI model...</div>`;
+  const res = await apiPost("/api/ia/summarize", { text });
+  if (!res || !res.data || !res.data.ok) {
+    resultEl.innerHTML = `<div class="lookup-action-message error">Failed${res && res.data && res.data.error ? `: ${res.data.error}` : ""}.</div>`;
+    return;
+  }
+  resultEl.innerHTML = `<div class="ai-panel-preview">${escapeHtml(res.data.summary).replace(/\n/g, "<br>")}</div>`;
+});
+
+document.getElementById("iaRewriteBtn")?.addEventListener("click", async () => {
+  const resultEl = document.getElementById("iaRewriteResult");
+  const text = document.getElementById("iaRewriteText").value.trim();
+  if (!text) return;
+  resultEl.innerHTML = `<div class="empty-state">Sending to AI model...</div>`;
+  const res = await apiPost("/api/ia/rewrite", { text });
+  if (!res || !res.data || !res.data.ok) {
+    resultEl.innerHTML = `<div class="lookup-action-message error">Failed${res && res.data && res.data.error ? `: ${res.data.error}` : ""}.</div>`;
+    return;
+  }
+  resultEl.innerHTML = `<div class="ai-panel-preview">${escapeHtml(res.data.rewritten).replace(/\n/g, "<br>")}</div>`;
+});
+
+document.getElementById("iaToneBtn")?.addEventListener("click", async () => {
+  const resultEl = document.getElementById("iaToneResult");
+  const text = document.getElementById("iaToneText").value.trim();
+  const { imageBase64, imageFormat } = await readImageInput(document.getElementById("iaToneImage"));
+  if (!text && !imageBase64) {
+    resultEl.innerHTML = `<div class="lookup-action-message error">Provide text or attach a screenshot.</div>`;
+    return;
+  }
+  resultEl.innerHTML = `<div class="empty-state">Sending to AI model...</div>`;
+  const res = await apiPost("/api/ia/tone", { text, imageBase64, imageFormat });
+  if (!res || !res.data || !res.data.ok) {
+    resultEl.innerHTML = `<div class="lookup-action-message error">Failed${res && res.data && res.data.error ? `: ${res.data.error}` : ""}.</div>`;
+    return;
+  }
+  const d = res.data;
+  resultEl.innerHTML = `
+    <div class="stat-card"><div class="label">Tone</div><div class="value">${escapeHtml(d.tone)}</div></div>
+    <p class="panel-subtitle">${escapeHtml(d.summary || "")}</p>
+    <div class="ai-panel-preview">${escapeHtml(d.concerns || "None noted.").replace(/\n/g, "<br>")}</div>
+  `;
+});
 
 bootMe().then(() => loadShiftManagement());

@@ -335,6 +335,130 @@
       <div id="lookupDetailWrap"></div>
     </section>
 
+    <section class="panel" id="panel-fto-tools">
+      <h1>FTO Tools</h1>
+      <p class="panel-subtitle">Visible because you hold the Field Training Officer role - independent of your staff tier.</p>
+
+      <div class="dev-tabs" id="ftoToolsTabs">
+        <button class="dev-tab active" data-fto-tools-tab="host">Host Session</button>
+        <button class="dev-tab" data-fto-tools-tab="results">Log Result</button>
+        <button class="dev-tab" data-fto-tools-tab="leaderboard">Leaderboard</button>
+        <button class="dev-tab" data-fto-tools-tab="history">History</button>
+        <button class="dev-tab" data-fto-tools-tab="session">Session Lookup</button>
+        <button class="dev-tab" data-fto-tools-tab="feedback">Feedback</button>
+      </div>
+
+      <div id="ftoToolsDenied" class="empty-state" hidden></div>
+
+      <div class="dev-panel active" id="ftoToolsPanel-host">
+        <div class="dev-diagnostics-form">
+          <select id="ftoHostMode">
+            <option value="Individual">Individual</option>
+            <option value="Bulk">Bulk</option>
+          </select>
+          <button id="ftoHostBtn">Post Host Session</button>
+        </div>
+        <div id="ftoHostResult"></div>
+      </div>
+
+      <div class="dev-panel" id="ftoToolsPanel-results">
+        <div class="dev-diagnostics-form">
+          <input type="text" id="ftoResultsTraineeId" placeholder="Trainee Discord user ID">
+          <select id="ftoResultsOutcome">
+            <option value="Pass">Pass</option>
+            <option value="Fail">Fail</option>
+          </select>
+          <textarea id="ftoResultsPerformance" rows="4" placeholder="Performance notes..."></textarea>
+          <button id="ftoResultsSubmitBtn">Submit Result</button>
+        </div>
+        <div id="ftoResultsResult"></div>
+      </div>
+
+      <div class="dev-panel" id="ftoToolsPanel-leaderboard">
+        <div class="skeleton" id="ftoLeaderboardSkeleton"></div>
+        <ol class="loa-history-list" id="ftoLeaderboardList" hidden></ol>
+      </div>
+
+      <div class="dev-panel" id="ftoToolsPanel-history">
+        <div class="dev-diagnostics-form">
+          <input type="text" id="ftoHistoryFtoId" placeholder="FTO user ID (optional)">
+          <input type="text" id="ftoHistoryTraineeId" placeholder="Trainee user ID (optional)">
+          <select id="ftoHistoryResult">
+            <option value="">Any result</option>
+            <option value="Pass">Pass</option>
+            <option value="Fail">Fail</option>
+          </select>
+          <input type="text" id="ftoHistorySessionId" placeholder="Session ID (optional)">
+          <button id="ftoHistorySearchBtn">Search</button>
+        </div>
+        <ol class="loa-history-list" id="ftoHistoryList"></ol>
+      </div>
+
+      <div class="dev-panel" id="ftoToolsPanel-session">
+        <div class="dev-diagnostics-form">
+          <input type="text" id="ftoSessionLookupId" placeholder="Session ID (e.g. RA-12)">
+          <button id="ftoSessionLookupBtn">Look Up</button>
+        </div>
+        <div id="ftoSessionLookupResult"></div>
+      </div>
+
+      <div class="dev-panel" id="ftoToolsPanel-feedback">
+        <div class="dev-diagnostics-form">
+          <input type="text" id="ftoFeedbackTargetId" placeholder="FTO user ID (blank = your own feedback)">
+          <button id="ftoFeedbackViewBtn">View Feedback</button>
+        </div>
+        <div id="ftoFeedbackResult"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-ia-tools">
+      <h1>IA Tools</h1>
+      <p class="panel-subtitle">Visible because you hold the Office of Internal Affairs role - independent of your staff tier.</p>
+
+      <div class="dev-tabs" id="iaToolsTabs">
+        <button class="dev-tab active" data-ia-tools-tab="detect">AI Detect</button>
+        <button class="dev-tab" data-ia-tools-tab="summarize">Summarize</button>
+        <button class="dev-tab" data-ia-tools-tab="rewrite">Rewrite</button>
+        <button class="dev-tab" data-ia-tools-tab="tone">Tone Check</button>
+      </div>
+
+      <div id="iaToolsDenied" class="empty-state" hidden></div>
+
+      <div class="dev-panel active" id="iaToolsPanel-detect">
+        <div class="dev-diagnostics-form">
+          <textarea id="iaDetectText" rows="6" placeholder="Paste text to analyze..."></textarea>
+          <input type="file" id="iaDetectImage" accept="image/png,image/jpeg,image/gif,image/webp">
+          <button id="iaDetectBtn">Analyze</button>
+        </div>
+        <div id="iaDetectResult"></div>
+      </div>
+
+      <div class="dev-panel" id="iaToolsPanel-summarize">
+        <div class="dev-diagnostics-form">
+          <textarea id="iaSummarizeText" rows="6" placeholder="Paste text to summarize..."></textarea>
+          <button id="iaSummarizeBtn">Summarize</button>
+        </div>
+        <div id="iaSummarizeResult"></div>
+      </div>
+
+      <div class="dev-panel" id="iaToolsPanel-rewrite">
+        <div class="dev-diagnostics-form">
+          <textarea id="iaRewriteText" rows="6" placeholder="Paste a draft to polish..."></textarea>
+          <button id="iaRewriteBtn">Rewrite</button>
+        </div>
+        <div id="iaRewriteResult"></div>
+      </div>
+
+      <div class="dev-panel" id="iaToolsPanel-tone">
+        <div class="dev-diagnostics-form">
+          <textarea id="iaToneText" rows="6" placeholder="Paste text to check tone..."></textarea>
+          <input type="file" id="iaToneImage" accept="image/png,image/jpeg,image/gif,image/webp">
+          <button id="iaToneBtn">Check Tone</button>
+        </div>
+        <div id="iaToneResult"></div>
+      </div>
+    </section>
+
     <section class="panel" id="panel-officers-mgmt">
       <h1>Officers</h1>
       <p class="panel-subtitle">All staff, highest rank to lowest. Click an officer to manage their shift, LOA/RA, promotion, or send a DM.</p>
