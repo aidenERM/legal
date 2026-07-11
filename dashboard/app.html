@@ -384,6 +384,9 @@
       <div class="dev-tabs" id="bocTabs">
         <button class="dev-tab active" data-boc-tab="quota-enforcement">Quota Enforcement</button>
         <button class="dev-tab" data-boc-tab="hr-review">HR Promotion Review</button>
+        <button class="dev-tab" data-boc-tab="hr-oversight">HR Oversight</button>
+        <button class="dev-tab" data-boc-tab="leaderboard-control">Leaderboard Control</button>
+        <button class="dev-tab" data-boc-tab="schedules">Scheduled Actions</button>
         <button class="dev-tab" data-boc-tab="applications">Applications</button>
         <button class="dev-tab" data-boc-tab="audit-log">Audit Log</button>
         <button class="dev-tab" data-boc-tab="dm-officers">DM Officers</button>
@@ -397,6 +400,35 @@
       <div class="dev-panel active" id="bocPanel-quota-enforcement">
         <div class="skeleton" id="bocQuotaSkeleton"></div>
         <div id="bocQuotaList" hidden></div>
+      </div>
+
+      <div class="dev-panel" id="bocPanel-hr-oversight">
+        <p class="panel-subtitle">
+          Every High Rank at a glance: quota compliance, current duty status, and recent Watch-session history.
+          Ticket activity is not shown here — ticket management runs on a separate external bot with no data
+          this dashboard can read.
+        </p>
+        <div class="skeleton" id="bocHrOversightSkeleton"></div>
+        <div id="bocHrOversightList" hidden></div>
+      </div>
+
+      <div class="dev-panel" id="bocPanel-leaderboard-control">
+        <p class="panel-subtitle">
+          Manually reset the current duty leaderboard period. This zeroes everyone's hours toward the
+          <em>current</em> period only — history is preserved. This cannot be undone.
+        </p>
+        <div class="lookup-actions">
+          <button class="lookup-action-btn" id="bocResetPeriodBtn">Reset Period</button>
+        </div>
+        <div id="bocResetPeriodResult"></div>
+      </div>
+
+      <div class="dev-panel" id="bocPanel-schedules">
+        <p class="panel-subtitle">
+          Configure automatic recurring runs. All three share the same schedule shape: either a specific weekday
+          + time each week, or every N days from the last run.
+        </p>
+        <div id="bocScheduleGroups"></div>
       </div>
 
       <div class="dev-panel" id="bocPanel-hr-review">
