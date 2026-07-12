@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260715">
+<link rel="stylesheet" href="app.css?v=20260716">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 <style>
@@ -260,10 +260,10 @@
     padding: 16px 26px;
     border-radius: 15px;
     animation: fade-up 0.6s var(--ease-smooth) 0.24s both;
-    background: linear-gradient(160deg, #5865F2 0%, #4752c4 100%);
+    background: linear-gradient(160deg, var(--chp-gold-bright, #e0bf80) 0%, var(--chp-gold, #c9a66b) 45%, #100d06 100%);
     border: 1px solid rgba(255,255,255,0.18);
     text-decoration: none;
-    color: #fff;
+    color: #100d06;
     font-family: "Manrope", sans-serif;
     font-size: 15.5px;
     font-weight: 700;
@@ -274,7 +274,7 @@
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,0.35),
       inset 0 -2px 6px rgba(0,0,0,0.25),
-      0 10px 28px rgba(88,101,242,0.35),
+      0 10px 28px rgba(201,166,107,0.35),
       0 4px 12px rgba(0,0,0,0.35);
     transition:
       transform 0.35s var(--ease-spring),
@@ -297,7 +297,7 @@
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,0.4),
       inset 0 -2px 6px rgba(0,0,0,0.25),
-      0 16px 38px rgba(88,101,242,0.50),
+      0 16px 38px rgba(201,166,107,0.50),
       0 6px 16px rgba(0,0,0,0.4);
   }
   .login-btn:hover::before { opacity: 1; }
@@ -620,13 +620,16 @@
         const show = (entry) => {
           const incoming = showingA ? imgB : imgA;
           const outgoing = showingA ? imgA : imgB;
-          incoming.src = `assets/banners/${entry.file}`;
-          incoming.alt = "";
+          // Bug fix: onload must be attached BEFORE .src, or an already-cached
+          // image's load event can fire before the handler exists, leaving it
+          // stuck invisible forever (see app.js's initDashboardBanner).
           incoming.onload = () => {
             incoming.classList.add("dashboard-banner-visible");
             outgoing.classList.remove("dashboard-banner-visible");
           };
-          credit.textContent = `Credits: ${entry.credits}`;
+          incoming.alt = "";
+          incoming.src = `assets/banners/${entry.file}`;
+          credit.innerHTML = `Credits: <strong>${entry.credits}</strong>`;
           showingA = !showingA;
         };
         show(order[index]);

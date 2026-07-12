@@ -47,13 +47,20 @@ async function initDashboardBanner(containerId) {
   const show = (entry) => {
     const incoming = showingA ? imgB : imgA;
     const outgoing = showingA ? imgA : imgB;
-    incoming.src = `assets/banners/${entry.file}`;
-    incoming.alt = "";
+    // Bug fix: onload was attached AFTER setting .src. For an image already
+    // in the browser's HTTP cache (very likely here, since multiple banner
+    // slots on the page pull from the same shared image set), the load can
+    // resolve before the handler is attached, so the "reveal" class never
+    // gets added and that image stays invisible (opacity: 0) forever - the
+    // banner looked "transparent"/empty even though the fetch succeeded.
+    // Attaching onload first guarantees it can't be missed either way.
     incoming.onload = () => {
       incoming.classList.add("dashboard-banner-visible");
       outgoing.classList.remove("dashboard-banner-visible");
     };
-    credit.textContent = `Credits: ${entry.credits}`;
+    incoming.alt = "";
+    incoming.src = `assets/banners/${entry.file}`;
+    credit.innerHTML = `Credits: <strong>${entry.credits}</strong>`;
     showingA = !showingA;
   };
 
