@@ -1,5 +1,69 @@
 ﻿const WORKER_URL = "https://chp-dashboard-api.aidenspearb.workers.dev";
 
+// ── Rotating community banners ──────────────────────────────────────────
+// Community-submitted photos, hand-picked by the developer from the
+// official-media Discord channel (credited photographer(s) shown in the
+// corner). One shared manifest (assets/banners/manifest.json) drives every
+// banner slot on the page - each slot gets its own independently-shuffled,
+// independently-timed rotation (30s per image) so multiple banners on
+// screen at once don't all flip in lockstep. Static content (developer adds
+// entries to manifest.json as new photos are chosen), so no backend/API
+// call is needed here beyond fetching that one JSON file.
+let _dashboardBannerManifestPromise = null;
+function _loadBannerManifest() {
+  if (!_dashboardBannerManifestPromise) {
+    _dashboardBannerManifestPromise = fetch("assets/banners/manifest.json")
+      .then((r) => (r.ok ? r.json() : []))
+      .catch(() => []);
+  }
+  return _dashboardBannerManifestPromise;
+}
+
+function _shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+async function initDashboardBanner(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const entries = await _loadBannerManifest();
+  if (!entries || entries.length === 0) return;
+
+  const order = _shuffle(entries);
+  let index = 0;
+
+  const imgA = document.createElement("img");
+  const imgB = document.createElement("img");
+  const credit = document.createElement("div");
+  credit.className = "dashboard-banner-credit";
+  container.append(imgA, imgB, credit);
+  let showingA = true;
+
+  const show = (entry) => {
+    const incoming = showingA ? imgB : imgA;
+    const outgoing = showingA ? imgA : imgB;
+    incoming.src = `assets/banners/${entry.file}`;
+    incoming.alt = "";
+    incoming.onload = () => {
+      incoming.classList.add("dashboard-banner-visible");
+      outgoing.classList.remove("dashboard-banner-visible");
+    };
+    credit.textContent = `Credits: ${entry.credits}`;
+    showingA = !showingA;
+  };
+
+  show(order[index]);
+  setInterval(() => {
+    index = (index + 1) % order.length;
+    show(order[index]);
+  }, 30000);
+}
+
 // ── Liquid Glass pointer tracking (item 7) ──────────────────────────────
 // Generalized version of the mouse-tracked specular highlight that used to
 // live only in index.html's .login-card script. Moves --mx/--my custom
@@ -4800,3 +4864,10 @@ function initNotificationsCenter() {
 
 bootMe().then(() => loadShiftManagement());
 initNotificationsCenter();
+
+// Rotating community banners - each panel's slot rotates independently.
+// Harmless to start all of them at once even though only one panel is
+// visible at a time (hidden panels just rotate quietly in the background).
+["shift-management", "loa", "ra", "history", "profile", "contact", "leaderboard", "recognized-officers", "department-feed"].forEach(
+  (section) => initDashboardBanner(`banner-${section}`)
+);

@@ -511,6 +511,50 @@ body.reduce-motion, body.reduce-motion * {
 .weekly-trend-line { fill: none; stroke: var(--chp-gold-bright, #e0bf80); stroke-width: 2; }
 .weekly-trend-dot { fill: var(--chp-gold-bright, #e0bf80); }
 
+/* ── Rotating community banners ──────────────────────────────────────
+   One image at a time, cross-faded every 30s (see initDashboardBanner in
+   app.js), with a small bottom-corner credit caption. Same box everywhere
+   it's used (login page + the 9 dashboard panels it's wired into). */
+.dashboard-banner {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 5;
+  min-height: 90px;
+  max-height: 220px;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 18px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-outer), var(--glass-shadow-inset);
+}
+.dashboard-banner img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 900ms var(--ease-smooth, ease);
+}
+.dashboard-banner img.dashboard-banner-visible { opacity: 1; }
+.dashboard-banner-credit {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(8,8,11,0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: rgba(255,255,255,0.85);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  z-index: 1;
+  pointer-events: none;
+}
+
 /* ── Leaderboard period selector ── */
 .period-selector {
   display: flex;

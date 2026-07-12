@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260710k">
+<link rel="stylesheet" href="app.css?v=20260715">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 <style>
@@ -436,6 +436,8 @@
     </span>
   </div>
 
+  <div class="dashboard-banner" id="banner-login" style="max-width: 420px; margin: 0 auto 18px;"></div>
+
   <div class="login-card liquid-glass liquid-glass-distort" id="loginCard">
     <p class="login-status" id="loginStatus" hidden></p>
 
@@ -589,6 +591,51 @@
   } else {
     card.classList.add("liquid-glass-distort-off");
   }
+</script>
+
+<script>
+  // Same rotating-banner behavior as the dashboard's initDashboardBanner
+  // (app.js) - duplicated in miniature here since this page doesn't load
+  // app.js. Keep in sync if the rotation/fade logic there ever changes.
+  (function () {
+    const container = document.getElementById("banner-login");
+    if (!container) return;
+    fetch("assets/banners/manifest.json")
+      .then((r) => (r.ok ? r.json() : []))
+      .catch(() => [])
+      .then((entries) => {
+        if (!entries || entries.length === 0) return;
+        const order = entries.slice();
+        for (let i = order.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [order[i], order[j]] = [order[j], order[i]];
+        }
+        let index = 0;
+        const imgA = document.createElement("img");
+        const imgB = document.createElement("img");
+        const credit = document.createElement("div");
+        credit.className = "dashboard-banner-credit";
+        container.append(imgA, imgB, credit);
+        let showingA = true;
+        const show = (entry) => {
+          const incoming = showingA ? imgB : imgA;
+          const outgoing = showingA ? imgA : imgB;
+          incoming.src = `assets/banners/${entry.file}`;
+          incoming.alt = "";
+          incoming.onload = () => {
+            incoming.classList.add("dashboard-banner-visible");
+            outgoing.classList.remove("dashboard-banner-visible");
+          };
+          credit.textContent = `Credits: ${entry.credits}`;
+          showingA = !showingA;
+        };
+        show(order[index]);
+        setInterval(() => {
+          index = (index + 1) % order.length;
+          show(order[index]);
+        }, 30000);
+      });
+  })();
 </script>
 </body>
 </html>

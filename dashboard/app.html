@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260714">
+<link rel="stylesheet" href="app.css?v=20260715">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 </head>
@@ -141,6 +141,7 @@
   <main class="content" id="content">
 
     <section class="panel active" id="panel-shift-management">
+      <div class="dashboard-banner" id="banner-shift-management"></div>
       <h1>Shift Management</h1>
 
       <div class="skeleton" id="shiftMgmtSkeleton"></div>
@@ -200,6 +201,7 @@
     </section>
 
     <section class="panel" id="panel-loa">
+      <div class="dashboard-banner" id="banner-loa"></div>
       <h1>Leave of Absence</h1>
 
       <form class="loa-form" id="loaForm">
@@ -228,6 +230,7 @@
     </section>
 
     <section class="panel" id="panel-ra">
+      <div class="dashboard-banner" id="banner-ra"></div>
       <h1>RA Program</h1>
 
       <div class="ra-request-card">
@@ -245,12 +248,14 @@
     </section>
 
     <section class="panel" id="panel-history">
+      <div class="dashboard-banner" id="banner-history"></div>
       <h1>History</h1>
       <div class="skeleton" id="historySkeleton"></div>
       <div id="historyList" hidden></div>
     </section>
 
     <section class="panel" id="panel-profile">
+      <div class="dashboard-banner" id="banner-profile"></div>
       <div class="welcome-skeleton" id="welcomeSkeleton">
         <div class="skeleton skeleton-avatar"></div>
         <div class="skeleton skeleton-line"></div>
@@ -345,6 +350,7 @@
     </section>
 
     <section class="panel" id="panel-contact">
+      <div class="dashboard-banner" id="banner-contact"></div>
       <h1>Contact</h1>
       <form class="contact-form" id="contactForm">
         <select id="contactCategorySelect">
@@ -373,6 +379,7 @@
     </section>
 
     <section class="panel" id="panel-leaderboard">
+      <div class="dashboard-banner" id="banner-leaderboard"></div>
       <h1>Leaderboard</h1>
       <div class="leaderboard-toolbar">
         <div class="period-selector" id="periodSelector">
@@ -409,8 +416,9 @@
     </section>
 
     <section class="panel" id="panel-recognized-officers">
+      <div class="dashboard-banner" id="banner-recognized-officers"></div>
       <h1>Recognized Officers</h1>
-      <p class="panel-subtitle">Officers with 100+ total duty hours and 6+ months of tenure.</p>
+      <p class="panel-subtitle">Officers with 100+ total duty hours or 6+ months of tenure.</p>
 
       <div class="officer-of-week-card" id="officerOfWeekCard" hidden>
         <div class="officer-of-week-label">Officer of the Week</div>
@@ -422,6 +430,7 @@
     </section>
 
     <section class="panel" id="panel-department-feed">
+      <div class="dashboard-banner" id="banner-department-feed"></div>
       <h1>Department Feed</h1>
       <p class="panel-subtitle">Recent promotions and accepted applications, newest first.</p>
 
@@ -920,6 +929,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260714"></script>
+<script src="app.js?v=20260715"></script>
 </body>
 </html>
