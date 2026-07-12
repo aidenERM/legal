@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260716">
+<link rel="stylesheet" href="app.css?v=20260717">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 </head>
@@ -303,6 +303,13 @@
                 <span class="settings-row-desc">Turns off the liquid-glass refraction/pointer-highlight effect on the sidebar, AI panel, and loading screen.</span>
               </div>
               <button class="settings-toggle" id="reduceEffectsToggle" data-value="false" aria-label="Toggle reduce visual effects"></button>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-text">
+                <span class="settings-row-label">Community banners</span>
+                <span class="settings-row-desc">Show the rotating community-submitted photos on the login page and dashboard panels.</span>
+              </div>
+              <button class="settings-toggle" id="bannersToggle" data-value="true" aria-label="Toggle community banners"></button>
             </div>
             <div class="settings-row">
               <div class="settings-row-text">
@@ -929,6 +936,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260716"></script>
+<script src="app.js?v=20260717"></script>
 </body>
 </html>

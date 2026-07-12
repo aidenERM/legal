@@ -9,6 +9,11 @@
 // screen at once don't all flip in lockstep. Static content (developer adds
 // entries to manifest.json as new photos are chosen), so no backend/API
 // call is needed here beyond fetching that one JSON file.
+const BANNERS_ENABLED_KEY = "chp_banners_enabled";
+function bannersEnabled() {
+  return localStorage.getItem(BANNERS_ENABLED_KEY) !== "false"; // default on
+}
+
 let _dashboardBannerManifestPromise = null;
 function _loadBannerManifest() {
   if (!_dashboardBannerManifestPromise) {
@@ -31,6 +36,10 @@ function _shuffle(arr) {
 async function initDashboardBanner(containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
+  if (!bannersEnabled()) {
+    container.hidden = true;
+    return;
+  }
   const entries = await _loadBannerManifest();
   if (!entries || entries.length === 0) return;
 
@@ -2393,6 +2402,20 @@ function initPersonalPrefs() {
       document.querySelectorAll(".liquid-glass-distort").forEach((el) => {
         el.classList.toggle("liquid-glass-distort-off", next);
       });
+    });
+  }
+
+  const bannersToggle = document.getElementById("bannersToggle");
+  if (bannersToggle) {
+    const enabled = bannersEnabled();
+    bannersToggle.classList.toggle("on", enabled);
+    bannersToggle.dataset.value = String(enabled);
+    bannersToggle.addEventListener("click", () => {
+      const next = !bannersEnabled();
+      localStorage.setItem(BANNERS_ENABLED_KEY, String(next));
+      bannersToggle.classList.toggle("on", next);
+      bannersToggle.dataset.value = String(next);
+      document.querySelectorAll(".dashboard-banner").forEach((el) => { el.hidden = !next; });
     });
   }
 

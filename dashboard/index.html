@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260716">
+<link rel="stylesheet" href="app.css?v=20260717">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 <style>
@@ -600,6 +600,13 @@
   (function () {
     const container = document.getElementById("banner-login");
     if (!container) return;
+    // Same "chp_banners_enabled" localStorage key the dashboard's Personal
+    // Settings toggle writes to (app.js) - respected here too so opting out
+    // hides the banner on the login page as well, not just post-login.
+    if (localStorage.getItem("chp_banners_enabled") === "false") {
+      container.hidden = true;
+      return;
+    }
     fetch("assets/banners/manifest.json")
       .then((r) => (r.ok ? r.json() : []))
       .catch(() => [])
