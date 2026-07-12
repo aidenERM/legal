@@ -515,18 +515,19 @@ body.reduce-motion, body.reduce-motion * {
    One image at a time, cross-faded every 30s (see initDashboardBanner in
    app.js), with a credit pill in the bottom-right corner. Same box
    everywhere it's used (login page + the 9 dashboard panels it's wired
-   into). object-fit: contain (not cover) - these are community
-   screenshots of very mixed aspect ratios, and cropping them into a wide
-   strip was cutting people out of their own submitted photos, which
-   defeats the point of a credit-them feature. The glass background shows
-   as a frame around whatever letterboxing that requires, which reads as
-   intentional rather than as empty space. Bigger on desktop via the
-   min-width media query below - small screens keep the compact size so
-   it doesn't dominate the page on mobile. */
+   into). object-fit: cover - fills the frame completely with no empty
+   letterbox bars, cropping evenly from the edges toward center
+   (object-position: center) rather than leaving visible glass background
+   around an undersized image. Aspect ratio is 16/6 (less extreme than an
+   ultra-wide banner) specifically to keep that center-crop modest for
+   typical community screenshots instead of aggressively slicing people
+   out of their own photos. Bigger on desktop via the min-width media
+   query below - small screens keep the compact size so it doesn't
+   dominate the page on mobile. */
 .dashboard-banner {
   position: relative;
   width: 100%;
-  aspect-ratio: 21 / 9;
+  aspect-ratio: 16 / 6;
   min-height: 110px;
   max-height: 260px;
   border-radius: 16px;
@@ -538,7 +539,7 @@ body.reduce-motion, body.reduce-motion * {
 }
 @media (min-width: 1024px) {
   .dashboard-banner {
-    aspect-ratio: 21 / 7;
+    aspect-ratio: 16 / 5;
     max-height: 340px;
     margin-bottom: 24px;
   }
@@ -548,7 +549,8 @@ body.reduce-motion, body.reduce-motion * {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center;
   opacity: 0;
   transition: opacity 900ms var(--ease-smooth, ease);
 }

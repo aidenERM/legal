@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260717">
+<link rel="stylesheet" href="app.css?v=20260718">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 <style>
@@ -157,30 +157,61 @@
     margin: 0 0 24px;
   }
 
-  /* ── "What you can do here" strip (between hero and login card) ── */
+  /* ── "What you can do here" card (between hero and login card) ──
+       A real floating glass panel (not bare inline pills) holding a small
+       icon grid of the dashboard's headline features - 3 per row on
+       desktop, wraps to 2 on narrower widths. */
   .capability-strip {
     position: relative;
     z-index: 10;
-    display: flex;
-    justify-content: center;
-    gap: clamp(10px, 2vw, 22px);
-    margin-bottom: clamp(14px, 2.4vh, 22px);
+    width: min(560px, 100%);
+    margin: 0 auto clamp(16px, 2.6vh, 26px);
+    padding: clamp(14px, 2.2vh, 20px) clamp(14px, 2.4vw, 22px);
+    border-radius: 22px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
     animation: fade-up 0.7s var(--ease-smooth) 0.08s both;
+  }
+  @media (max-width: 480px) {
+    .capability-strip { grid-template-columns: repeat(2, 1fr); }
   }
   .capability-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 7px;
-    padding: 7px 13px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.045);
-    border: 1px solid rgba(255,255,255,0.10);
-    color: rgba(255,255,255,0.6);
+    gap: 6px;
+    padding: 10px 6px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.65);
     font-family: "Manrope", sans-serif;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 600;
+    text-align: center;
+    transition: background 0.2s var(--ease-smooth), transform 0.2s var(--ease-smooth);
   }
-  .capability-item svg { width: 14px; height: 14px; color: var(--chp-gold-bright); flex-shrink: 0; }
+  .capability-item:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); }
+  .capability-item svg { width: 18px; height: 18px; color: var(--chp-gold-bright); flex-shrink: 0; }
+
+  /* Login page's banner slot - sized/centered here rather than as an
+     inline style so the desktop media query below can widen it. */
+  #banner-login {
+    max-width: 440px;
+    margin: 0 auto 18px;
+  }
+
+  /* ── Centered logo above the title (distinct from the giant faint
+       .badge-backdrop watermark, which stays as ambient background) ── */
+  .hero-logo {
+    display: block;
+    width: clamp(56px, 8vh, 84px);
+    height: clamp(56px, 8vh, 84px);
+    margin: 0 auto clamp(10px, 1.6vh, 16px);
+    filter: drop-shadow(0 4px 18px rgba(201,166,107,0.35));
+    animation: fade-up 0.7s var(--ease-smooth) both;
+  }
 
   /* ── Remember + help row ── */
   .field-row-meta {
@@ -260,10 +291,10 @@
     padding: 16px 26px;
     border-radius: 15px;
     animation: fade-up 0.6s var(--ease-smooth) 0.24s both;
-    background: linear-gradient(160deg, var(--chp-gold-bright, #e0bf80) 0%, var(--chp-gold, #c9a66b) 45%, #100d06 100%);
-    border: 1px solid rgba(255,255,255,0.18);
+    background: linear-gradient(160deg, #100d06 0%, #1c1708 55%, var(--chp-gold-dim, #8a6f42) 130%);
+    border: 1.5px solid var(--chp-gold, #c9a66b);
     text-decoration: none;
-    color: #100d06;
+    color: var(--chp-gold-bright, #e0bf80);
     font-family: "Manrope", sans-serif;
     font-size: 15.5px;
     font-weight: 700;
@@ -272,9 +303,9 @@
     overflow: hidden;
     cursor: pointer;
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.35),
-      inset 0 -2px 6px rgba(0,0,0,0.25),
-      0 10px 28px rgba(201,166,107,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.10),
+      inset 0 -2px 6px rgba(0,0,0,0.4),
+      0 10px 28px rgba(0,0,0,0.45),
       0 4px 12px rgba(0,0,0,0.35);
     transition:
       transform 0.35s var(--ease-spring),
@@ -286,19 +317,19 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.20) 0%, transparent 55%);
+    background: linear-gradient(135deg, rgba(201,166,107,0.18) 0%, transparent 55%);
     opacity: 0;
     transition: opacity 0.3s var(--ease-smooth);
   }
 
   .login-btn:hover {
     transform: translateY(-2px) scale(1.015);
-    filter: brightness(1.08);
+    filter: brightness(1.15);
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.4),
-      inset 0 -2px 6px rgba(0,0,0,0.25),
-      0 16px 38px rgba(201,166,107,0.50),
-      0 6px 16px rgba(0,0,0,0.4);
+      inset 0 1px 0 rgba(255,255,255,0.14),
+      inset 0 -2px 6px rgba(0,0,0,0.4),
+      0 16px 38px rgba(201,166,107,0.25),
+      0 6px 16px rgba(0,0,0,0.5);
   }
   .login-btn:hover::before { opacity: 1; }
   .login-btn:active { transform: translateY(0) scale(0.98); transition-duration: 0.15s; }
@@ -397,7 +428,15 @@
 
   /* Desktop */
   @media (min-width: 1025px) {
-    .login-card { width: 460px; }
+    .login-card { width: 520px; padding: 42px 46px; }
+    .hero-title { font-size: 66px; }
+    .hero-sub { font-size: 16.5px; }
+    .hero-logo { width: 96px; height: 96px; }
+    .capability-strip { width: 640px; padding: 24px 26px; }
+    .capability-item { font-size: 12.5px; padding: 12px 8px; }
+    .capability-item svg { width: 20px; height: 20px; }
+    .dashboard-banner#banner-login { max-width: 520px; }
+    .login-btn { padding: 18px 28px; font-size: 16.5px; }
   }
 </style>
 </head>
@@ -417,11 +456,12 @@
   <img class="badge-backdrop" src="../assets/images/chp-badge.png" alt="" aria-hidden="true" draggable="false">
 
   <div class="hero">
+    <img class="hero-logo" src="../assets/images/chp-badge.png" alt="" draggable="false">
     <h1 class="hero-title">CHP Dashboard</h1>
     <p class="hero-sub">Welcome to the <span>CHP Dashboard</span> — sign in to find out everything about you.</p>
   </div>
 
-  <div class="capability-strip" aria-hidden="true">
+  <div class="capability-strip liquid-glass" aria-hidden="true">
     <span class="capability-item">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3.5 2"></path></svg>
       Shifts
@@ -434,9 +474,21 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a2 2 0 0 1 2 2v1a5 5 0 0 1 3.5 4.7c.9.3 1.5 1.1 1.5 2.1v0a2 2 0 0 1-2 2h-.4A5 5 0 0 1 12 18a5 5 0 0 1-4.6-3.2H7a2 2 0 0 1-2-2v0c0-1 .6-1.8 1.5-2.1A5 5 0 0 1 10 5V4a2 2 0 0 1 2-2Z"></path><circle cx="9.5" cy="11" r="0.8" fill="currentColor" stroke="none"></circle><circle cx="14.5" cy="11" r="0.8" fill="currentColor" stroke="none"></circle></svg>
       AI Assistant
     </span>
+    <span class="capability-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V10M12 19V5M20 19v-7"></path></svg>
+      Leaderboard
+    </span>
+    <span class="capability-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v14a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8l-5-5H4a1 1 0 0 0-1 1Z"></path><path d="M7 10h10M7 14h10M7 18h6"></path></svg>
+      History
+    </span>
+    <span class="capability-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+      Notifications
+    </span>
   </div>
 
-  <div class="dashboard-banner" id="banner-login" style="max-width: 420px; margin: 0 auto 18px;"></div>
+  <div class="dashboard-banner" id="banner-login"></div>
 
   <div class="login-card liquid-glass liquid-glass-distort" id="loginCard">
     <p class="login-status" id="loginStatus" hidden></p>
@@ -516,6 +568,32 @@
       `?code=${encodeURIComponent(params.get("code"))}` +
       `&remember=${remember ? "true" : "false"}`;
     window.location.href = redirectUrl;
+  }
+
+  // Auto-login: if the browser already carries a valid session cookie
+  // (returning user, "Stay signed in" from a previous visit, or just
+  // navigated back to this page while already logged in), skip the login
+  // form entirely and go straight into the dashboard. Only checked on a
+  // plain fresh visit - never while mid-OAuth-exchange (?code=) or right
+  // after a failed attempt (?denied=/?error=), so a denied user isn't
+  // stuck bouncing back into the dashboard on a stale cookie, and so this
+  // check can't race the code-exchange redirect above.
+  if (!params.has("code") && !params.has("denied") && !params.has("error")) {
+    loginBtn.classList.add("hidden");
+    loginProcessing.classList.add("active");
+    fetch(`${WORKER_URL}/api/me`, { credentials: "include" })
+      .then((r) => {
+        if (r.ok) {
+          window.location.href = "app.html";
+        } else {
+          loginBtn.classList.remove("hidden");
+          loginProcessing.classList.remove("active");
+        }
+      })
+      .catch(() => {
+        loginBtn.classList.remove("hidden");
+        loginProcessing.classList.remove("active");
+      });
   }
 
   const loginStatus = document.getElementById("loginStatus");
