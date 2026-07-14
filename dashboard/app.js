@@ -391,6 +391,27 @@ function renderHistoryTabsHtml(idPrefix, buckets, includeShifts, shiftsHtml) {
   return `<div class="dev-tabs liquid-glass" id="${idPrefix}Tabs">${tabsHtml}</div>${panelsHtml}`;
 }
 
+// Generic tab switcher for the merged "hub" panels (Leaderboard/Recognized
+// Officers/Department Feed, Leave of Absence/RA, Contact/Anonymous Feedback)
+// - static markup (unlike renderHistoryTabsHtml's dynamically-built tabs), so
+// this just wires the delegated click once at boot. `tabsId`'s element must
+// carry data-panel-prefix matching its sibling `.dev-panel` ids
+// (`${prefix}-${tab.dataset.hubTab}`).
+function wireHubTabs(tabsId) {
+  const tabsEl = document.getElementById(tabsId);
+  if (!tabsEl) return;
+  const prefix = tabsEl.dataset.panelPrefix;
+  tabsEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-hub-tab]");
+    if (!btn) return;
+    tabsEl.querySelectorAll("[data-hub-tab]").forEach((b) => b.classList.toggle("active", b === btn));
+    document.querySelectorAll(`[id^="${prefix}-"]`).forEach((panel) => {
+      panel.classList.toggle("active", panel.id === `${prefix}-${btn.dataset.hubTab}`);
+    });
+  });
+}
+["loaRaHubTabs", "contactHubTabs", "leaderboardHubTabs"].forEach(wireHubTabs);
+
 // Wires click delegation for a renderHistoryTabsHtml()-produced tab group.
 // Must be (re-)called after every innerHTML replacement since the buttons
 // are freshly created DOM nodes each time.
@@ -2352,19 +2373,16 @@ document.querySelectorAll(".nav-item[data-section]").forEach((item) => {
     const section = item.dataset.section;
     showPanel(section);
     if (section === "shift-management") withLoadingOverlay(loadShiftManagement);
-    if (section === "loa") withLoadingOverlay(loadLoa);
-    if (section === "ra") withLoadingOverlay(loadRa);
+    if (section === "loa-ra") withLoadingOverlay(loadLoa, loadRa);
     if (section === "history") withLoadingOverlay(loadHistory);
     if (section === "profile") withLoadingOverlay(loadProfile);
     if (section === "settings") withLoadingOverlay(loadSettings, loadSessionInfo);
     if (section === "leaderboard") {
-      withLoadingOverlay(loadLeaderboard);
+      withLoadingOverlay(loadLeaderboard, loadRecognizedOfficers, loadDepartmentFeed);
       startLeaderboardAutoRefresh();
     } else {
       stopLeaderboardAutoRefresh();
     }
-    if (section === "recognized-officers") withLoadingOverlay(loadRecognizedOfficers);
-    if (section === "department-feed") withLoadingOverlay(loadDepartmentFeed);
   });
 });
 
@@ -5045,6 +5063,6 @@ initNotificationsCenter();
 // Rotating community banners - each panel's slot rotates independently.
 // Harmless to start all of them at once even though only one panel is
 // visible at a time (hidden panels just rotate quietly in the background).
-["shift-management", "loa", "ra", "history", "profile", "contact", "leaderboard", "recognized-officers", "department-feed"].forEach(
+["shift-management", "loa-ra", "history", "profile", "contact", "leaderboard"].forEach(
   (section) => initDashboardBanner(`banner-${section}`)
 );
