@@ -1,5 +1,35 @@
 ﻿const WORKER_URL = "https://chp-dashboard-api.aidenspearb.workers.dev";
 
+// ── Session token (mobile third-party-cookie workaround) ────────────────
+// iOS/Android block the chp_session cookie on cross-site fetch() calls from
+// github.io to workers.dev, even though the cookie is set fine by the
+// top-level OAuth redirect - so index.html's auth/callback redirect also
+// hands the token over in the URL fragment (never sent to any server) and
+// it's stashed here in localStorage, then attached as an Authorization
+// header to every WORKER_URL fetch below. This works identically on every
+// browser since header auth isn't subject to third-party cookie rules.
+const SESSION_TOKEN_KEY = "chp_session_token";
+(function bootstrapSessionToken() {
+  const hash = window.location.hash;
+  if (hash && hash.startsWith("#session=")) {
+    localStorage.setItem(SESSION_TOKEN_KEY, decodeURIComponent(hash.slice("#session=".length)));
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+  }
+})();
+
+const _nativeFetch = window.fetch.bind(window);
+window.fetch = (input, init) => {
+  const url = typeof input === "string" ? input : input && input.url;
+  if (url && url.startsWith(WORKER_URL)) {
+    const token = localStorage.getItem(SESSION_TOKEN_KEY);
+    if (token) {
+      init = init ? { ...init } : {};
+      init.headers = { ...(init.headers || {}), Authorization: `Bearer ${token}` };
+    }
+  }
+  return _nativeFetch(input, init);
+};
+
 // ── Rotating community banners ──────────────────────────────────────────
 // Community-submitted photos, hand-picked by the developer from the
 // official-media Discord channel (credited photographer(s) shown in the
@@ -2364,10 +2394,12 @@ function buildSidebarFooter(me) {
   });
   document.getElementById("sidebarSwitchAccountsBtn")?.addEventListener("click", async () => {
     await apiPost("/api/logout", {});
+    localStorage.removeItem(SESSION_TOKEN_KEY);
     window.location.href = "index.html?switch=1";
   });
   document.getElementById("sidebarLogoutBtn")?.addEventListener("click", async () => {
     await apiPost("/api/logout", {});
+    localStorage.removeItem(SESSION_TOKEN_KEY);
     window.location.href = "index.html";
   });
 

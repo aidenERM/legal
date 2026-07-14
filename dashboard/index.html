@@ -581,7 +581,15 @@
   if (!params.has("code") && !params.has("denied") && !params.has("error")) {
     loginBtn.classList.add("hidden");
     loginProcessing.classList.add("active");
-    fetch(`${WORKER_URL}/api/me`, { credentials: "include" })
+    // Mobile Safari/Chrome block the chp_session cookie on this cross-site
+    // fetch (github.io -> workers.dev), so also send along any token left
+    // over from a previous login (app.js stores it after the OAuth redirect)
+    // via an Authorization header, which isn't subject to that blocking.
+    const storedToken = localStorage.getItem("chp_session_token");
+    fetch(`${WORKER_URL}/api/me`, {
+      credentials: "include",
+      headers: storedToken ? { Authorization: `Bearer ${storedToken}` } : {},
+    })
       .then((r) => {
         if (r.ok) {
           window.location.href = "app.html";
