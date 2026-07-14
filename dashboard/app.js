@@ -152,6 +152,29 @@ function attachGlassPointerTracking(el) {
   });
 }
 
+// Apple-style overlay scrollbars: the CSS (.is-scrolling rules) hides the
+// thumb at rest and only shows it during/just-after an actual scroll, same
+// behavior as macOS/iOS "only appear while scrolling" scrollbars. This just
+// toggles that class on scroll with a short hide-again timeout.
+function attachAutoHideScrollbar(el) {
+  if (!el || el._autoHideScrollbarAttached) return;
+  el._autoHideScrollbarAttached = true;
+  let hideTimeout = null;
+  el.addEventListener(
+    "scroll",
+    () => {
+      el.classList.add("is-scrolling");
+      clearTimeout(hideTimeout);
+      hideTimeout = setTimeout(() => el.classList.remove("is-scrolling"), 900);
+    },
+    { passive: true }
+  );
+}
+["content", "sidebarNavScroll"].forEach((id) => attachAutoHideScrollbar(document.getElementById(id)));
+document
+  .querySelectorAll(".content, .sidebar-nav-scroll, .ai-messages, .sidebar-float-panel, .notif-dropdown-panel, .on-duty-list")
+  .forEach(attachAutoHideScrollbar);
+
 attachGlassPointerTracking(document.getElementById("sidebar"));
 
 function formatDuration(totalSeconds) {
@@ -393,7 +416,7 @@ function renderShiftsSummaryHtml(shifts) {
       return `
         <div class="shifts-type-row">
           <span class="shifts-type-name">${row.type}</span>
-          <span class="shifts-type-bar-track"><span class="shifts-type-bar-fill" style="width: ${pct}%"></span></span>
+          <span class="shifts-type-bar-track"><span class="shifts-type-bar-fill" style="--bar-pct: ${pct}%"></span></span>
           <span class="shifts-type-time">${formatDuration(row.seconds)}</span>
         </div>
       `;
@@ -420,12 +443,36 @@ function renderShiftsSummaryHtml(shifts) {
   `;
 }
 
+// Crossfades between panels instead of the old instant class-swap (which cut
+// the outgoing panel away with no transition at all, only ever animating the
+// incoming one). Guarded by a token so a rapid second nav click cancels the
+// in-flight leave animation cleanly rather than fighting over which panel
+// ends up "active".
+let _panelTransitionToken = 0;
 function showPanel(section) {
-  document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active"));
-  document.getElementById(`panel-${section}`).classList.add("active");
+  const next = document.getElementById(`panel-${section}`);
+  if (!next) return;
   document.querySelectorAll(".nav-item").forEach((item) => {
     item.classList.toggle("active", item.dataset.section === section);
   });
+
+  const current = document.querySelector(".panel.active");
+  const token = ++_panelTransitionToken;
+  const reduceMotion = document.body.classList.contains("reduce-motion");
+
+  if (!current || current === next || reduceMotion) {
+    document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active", "leaving"));
+    next.classList.add("active");
+    return;
+  }
+
+  current.classList.add("leaving");
+  current.classList.remove("active");
+  window.setTimeout(() => {
+    if (token !== _panelTransitionToken) return; // superseded by a newer nav click
+    document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active", "leaving"));
+    next.classList.add("active");
+  }, 160);
 }
 
 let currentMe = null;
@@ -730,7 +777,7 @@ function renderWeeklyTrendChart(points) {
     return `<div class="empty-state">No shift history yet to chart.</div>`;
   }
   const width = 560;
-  const height = 160;
+  const height = 200;
   const padding = 28;
   const hours = points.map((p) => p.totalSeconds / 3600);
   const maxHours = Math.max(...hours, 1);
@@ -747,14 +794,25 @@ function renderWeeklyTrendChart(points) {
   const dots = coords
     .map(([x, y], i) => {
       const weekLabel = points[i].weekStart ? new Date(points[i].weekStart * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "";
-      return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" class="weekly-trend-dot"><title>${weekLabel}: ${hours[i].toFixed(1)}h</title></circle>`;
+      const delay = (0.5 + i * 0.06).toFixed(2);
+      return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" class="weekly-trend-dot" style="animation-delay:${delay}s"><title>${weekLabel}: ${hours[i].toFixed(1)}h</title></circle>`;
     })
     .join("");
 
+  // pathLength="1" normalizes the line's length to exactly 1 regardless of
+  // its actual on-screen pixel length, so the draw-in animation (CSS below)
+  // can use a fixed stroke-dasharray/dashoffset of 1 -> 0 instead of having
+  // to compute real SVG path length in JS.
   return `
     <svg viewBox="0 0 ${width} ${height}" class="weekly-trend-svg" preserveAspectRatio="xMidYMid meet">
-      <path d="${areaPath}" class="weekly-trend-area"></path>
-      <path d="${linePath}" class="weekly-trend-line"></path>
+      <defs>
+        <linearGradient id="weeklyTrendFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--chp-gold-bright, #e0bf80)" stop-opacity="0.45"></stop>
+          <stop offset="100%" stop-color="var(--chp-gold-bright, #e0bf80)" stop-opacity="0"></stop>
+        </linearGradient>
+      </defs>
+      <path d="${areaPath}" class="weekly-trend-area" fill="url(#weeklyTrendFill)"></path>
+      <path d="${linePath}" class="weekly-trend-line" pathLength="1"></path>
       ${dots}
     </svg>
   `;
@@ -1148,7 +1206,7 @@ function animateCountUp(el, endValue, formatFn, duration) {
   requestAnimationFrame(frame);
 }
 
-function renderLeaderboardRows(entries, period) {
+function renderLeaderboardRows(entries, period, startRank = 0) {
   if (entries.length === 0) {
     return `<li class="empty-state">No leaderboard data yet.</li>`;
   }
@@ -1161,7 +1219,7 @@ function renderLeaderboardRows(entries, period) {
       const liveBadge = period === "live" ? `<span class="live-badge">LIVE</span>` : "";
       return `
         <li class="leaderboard-row" style="animation-delay: ${Math.min(index, 20) * 0.02}s">
-          <span class="leaderboard-rank">${index + 1}</span>
+          <span class="leaderboard-rank">${startRank + index + 1}</span>
           <img class="leaderboard-avatar" src="${avatarUrl}" alt="" width="32" height="32">
           <span class="leaderboard-identity">
             <span class="leaderboard-name">${entry.username}</span>
@@ -1172,6 +1230,38 @@ function renderLeaderboardRows(entries, period) {
       `;
     })
     .join("");
+}
+
+// Podium for the top 3 - visually promoted above the flat ranked list
+// (center-raised #1, gold/silver/bronze rings) instead of everyone reading
+// as equally-weighted rows. Only used by the main Leaderboard panel; the
+// sidebar "This Week - Top 15" mini widget stays a plain list, it's too
+// small a card for a podium to read well.
+const PODIUM_ORDER = [2, 1, 3]; // display order: #2, #1 (center, raised), #3
+function renderLeaderboardPodium(top3, period) {
+  if (!top3 || top3.length === 0) return "";
+  const liveBadge = period === "live" ? `<span class="live-badge">LIVE</span>` : "";
+  const slots = PODIUM_ORDER
+    .map((place) => {
+      const entry = top3[place - 1];
+      if (!entry) return "";
+      const avatarUrl = avatarUrlFor(entry.userId, entry.avatar, 96);
+      const rankTitle = entry.rank
+        ? `<span class="leaderboard-rank-title">${entry.rank}</span>`
+        : "";
+      return `
+        <div class="podium-slot podium-place-${place}" style="animation-delay: ${(place === 1 ? 0.05 : place === 2 ? 0.15 : 0.25).toFixed(2)}s">
+          <span class="podium-medal">${place === 1 ? "&#129351;" : place === 2 ? "&#129352;" : "&#129353;"}</span>
+          <img class="podium-avatar" src="${avatarUrl}" alt="" width="72" height="72">
+          <span class="podium-name">${entry.username}</span>
+          ${rankTitle}
+          <span class="podium-time">${liveBadge}<span class="count-target" data-seconds="${entry.totalSeconds}">0h 0m</span></span>
+          <div class="podium-stand podium-stand-${place}"><span class="podium-stand-rank">${place}</span></div>
+        </div>
+      `;
+    })
+    .join("");
+  return slots;
 }
 
 // Kicks off the count-up animation for every `.count-target` span inside
@@ -1198,26 +1288,35 @@ async function loadLeaderboard(period) {
 
   const skeleton = document.getElementById("leaderboardSkeleton");
   const list = document.getElementById("leaderboardList");
+  const podium = document.getElementById("leaderboardPodium");
 
   // Smooth transition: fade the existing list out, fetch, then fade+slide the
   // fresh rows in (extends the .panel-in / .leaderboard-row animation pattern
   // already used elsewhere rather than introducing a new one).
   if (!list.hidden) {
     list.classList.add("is-loading");
+    podium.classList.add("is-loading");
     skeleton.hidden = false;
   }
 
   const leaderboard = await apiGet(path);
   skeleton.hidden = true;
   list.classList.remove("is-loading");
+  podium.classList.remove("is-loading");
   list.hidden = false;
+  podium.hidden = false;
 
   if (!leaderboard) {
+    podium.innerHTML = "";
     list.innerHTML = `<li class="empty-state">Failed to load leaderboard. Try again.</li>`;
     return;
   }
 
-  list.innerHTML = renderLeaderboardRows(leaderboard.entries, currentLeaderboardPeriod);
+  const top3 = leaderboard.entries.slice(0, 3);
+  const rest = leaderboard.entries.slice(3);
+  podium.innerHTML = renderLeaderboardPodium(top3, currentLeaderboardPeriod);
+  list.innerHTML = renderLeaderboardRows(rest, currentLeaderboardPeriod, 3);
+  animateLeaderboardCounts(podium);
   animateLeaderboardCounts(list);
 
   refreshOnDutyBadge();
@@ -1330,6 +1429,10 @@ const DEPARTMENT_FEED_ICON = {
   promotion: "★",
   application_accepted: "✓",
 };
+const DEPARTMENT_FEED_LABEL = {
+  promotion: "Promotion",
+  application_accepted: "Accepted",
+};
 
 function renderDepartmentFeedRows(entries) {
   if (entries.length === 0) {
@@ -1337,11 +1440,13 @@ function renderDepartmentFeedRows(entries) {
   }
   return entries
     .map((entry) => {
-      const avatarUrl = avatarUrlFor(entry.userId, entry.avatar, 32);
+      const avatarUrl = avatarUrlFor(entry.userId, entry.avatar, 34);
       return `
         <li class="department-feed-row">
-          <img class="department-feed-avatar" src="${avatarUrl}" alt="" width="28" height="28">
-          <span class="department-feed-icon department-feed-icon-${entry.kind}">${DEPARTMENT_FEED_ICON[entry.kind] || "•"}</span>
+          <img class="department-feed-avatar" src="${avatarUrl}" alt="" width="34" height="34">
+          <span class="department-feed-icon department-feed-icon-${entry.kind}">
+            <span>${DEPARTMENT_FEED_ICON[entry.kind] || "•"}</span>${DEPARTMENT_FEED_LABEL[entry.kind] || ""}
+          </span>
           <span class="department-feed-desc">
             ${entry.username ? `<span class="department-feed-name">${entry.username}</span> — ` : ""}${entry.description}
           </span>
@@ -1434,12 +1539,22 @@ async function loadQuickStats() {
 
   grid.innerHTML = `
     <div class="quick-stat">
-      <span class="quick-stat-value">${formatDuration(weekSeconds)}</span>
-      <span class="quick-stat-label">This week</span>
+      <span class="quick-stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
+      </span>
+      <span class="quick-stat-text">
+        <span class="quick-stat-value">${formatDuration(weekSeconds)}</span>
+        <span class="quick-stat-label">This week</span>
+      </span>
     </div>
     <div class="quick-stat">
-      <span class="quick-stat-value">${totalShiftCount}</span>
-      <span class="quick-stat-label">Total shifts</span>
+      <span class="quick-stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M3 10h18M8 2v4M16 2v4"></path></svg>
+      </span>
+      <span class="quick-stat-text">
+        <span class="quick-stat-value">${totalShiftCount}</span>
+        <span class="quick-stat-label">Total shifts</span>
+      </span>
     </div>
   `;
 }

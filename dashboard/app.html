@@ -255,15 +255,18 @@
     </section>
 
     <section class="panel" id="panel-profile">
-      <div class="dashboard-banner" id="banner-profile"></div>
-      <div class="welcome-skeleton" id="welcomeSkeleton">
-        <div class="skeleton skeleton-avatar"></div>
-        <div class="skeleton skeleton-line"></div>
-      </div>
-      <div class="welcome-hero" id="welcomeHero" hidden>
-        <img class="welcome-avatar" id="welcomeAvatar" src="" alt="">
-        <h1 class="welcome-title">Welcome, <span id="welcomeName"></span></h1>
-        <p class="access-badge" id="accessBadge"></p>
+      <div class="dashboard-banner hero-banner" id="banner-profile">
+        <div class="welcome-skeleton" id="welcomeSkeleton">
+          <div class="skeleton skeleton-avatar"></div>
+          <div class="skeleton skeleton-line"></div>
+        </div>
+        <div class="welcome-hero" id="welcomeHero" hidden>
+          <img class="welcome-avatar" id="welcomeAvatar" src="" alt="">
+          <div class="welcome-hero-text">
+            <h1 class="welcome-title">Welcome back, <span id="welcomeName"></span></h1>
+            <p class="access-badge" id="accessBadge"></p>
+          </div>
+        </div>
       </div>
 
       <div class="skeleton" id="overviewSkeleton"></div>
@@ -419,6 +422,7 @@
         <button class="lookup-search-btn" id="customRangeApply">Apply</button>
       </div>
       <div class="skeleton" id="leaderboardSkeleton"></div>
+      <div class="leaderboard-podium" id="leaderboardPodium" hidden></div>
       <ol class="leaderboard-list" id="leaderboardList" hidden></ol>
     </section>
 

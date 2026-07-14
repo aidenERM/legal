@@ -23,6 +23,73 @@
   --transition-base: 250ms var(--ease-smooth, ease);
 }
 
+/* ── Apple-style overlay scrollbars ───────────────────────────────────
+   Every scrollable region on the dashboard (.content, sidebar nav, AI
+   panel, dropdowns, etc.) shares this: the thumb is fully transparent at
+   rest so scrollbars don't visually clutter the page, and only fades in
+   (a) on hover/focus, or (b) while attachAutoHideScrollbar (app.js) has
+   toggled the .is-scrolling class on during/just-after an actual scroll
+   event - the same "appears only while you're using it" behavior as
+   macOS/iOS. Both engines: Firefox via scrollbar-color, everything else
+   via the ::-webkit-scrollbar pseudo-elements. */
+.content,
+.sidebar-nav-scroll,
+.ai-messages,
+.sidebar-float-panel,
+.notif-dropdown-panel,
+.on-duty-list,
+.auto-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.content:hover, .content.is-scrolling,
+.sidebar-nav-scroll:hover, .sidebar-nav-scroll.is-scrolling,
+.ai-messages:hover, .ai-messages.is-scrolling,
+.sidebar-float-panel:hover, .sidebar-float-panel.is-scrolling,
+.notif-dropdown-panel:hover, .notif-dropdown-panel.is-scrolling,
+.on-duty-list:hover, .on-duty-list.is-scrolling,
+.auto-scrollbar:hover, .auto-scrollbar.is-scrolling {
+  scrollbar-color: rgba(201,166,107,0.45) transparent;
+}
+.content::-webkit-scrollbar,
+.sidebar-nav-scroll::-webkit-scrollbar,
+.ai-messages::-webkit-scrollbar,
+.sidebar-float-panel::-webkit-scrollbar,
+.notif-dropdown-panel::-webkit-scrollbar,
+.on-duty-list::-webkit-scrollbar,
+.auto-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.content::-webkit-scrollbar-track,
+.sidebar-nav-scroll::-webkit-scrollbar-track,
+.ai-messages::-webkit-scrollbar-track,
+.sidebar-float-panel::-webkit-scrollbar-track,
+.notif-dropdown-panel::-webkit-scrollbar-track,
+.on-duty-list::-webkit-scrollbar-track,
+.auto-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.content::-webkit-scrollbar-thumb,
+.sidebar-nav-scroll::-webkit-scrollbar-thumb,
+.ai-messages::-webkit-scrollbar-thumb,
+.sidebar-float-panel::-webkit-scrollbar-thumb,
+.notif-dropdown-panel::-webkit-scrollbar-thumb,
+.on-duty-list::-webkit-scrollbar-thumb,
+.auto-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 6px;
+  transition: background 0.25s ease;
+}
+.content:hover::-webkit-scrollbar-thumb, .content.is-scrolling::-webkit-scrollbar-thumb,
+.sidebar-nav-scroll:hover::-webkit-scrollbar-thumb, .sidebar-nav-scroll.is-scrolling::-webkit-scrollbar-thumb,
+.ai-messages:hover::-webkit-scrollbar-thumb, .ai-messages.is-scrolling::-webkit-scrollbar-thumb,
+.sidebar-float-panel:hover::-webkit-scrollbar-thumb, .sidebar-float-panel.is-scrolling::-webkit-scrollbar-thumb,
+.notif-dropdown-panel:hover::-webkit-scrollbar-thumb, .notif-dropdown-panel.is-scrolling::-webkit-scrollbar-thumb,
+.on-duty-list:hover::-webkit-scrollbar-thumb, .on-duty-list.is-scrolling::-webkit-scrollbar-thumb,
+.auto-scrollbar:hover::-webkit-scrollbar-thumb, .auto-scrollbar.is-scrolling::-webkit-scrollbar-thumb {
+  background: rgba(201,166,107,0.5);
+}
+
 /* Base surface: translucent tint + layered shadow for depth. No SVG filter
    here on purpose - `.liquid-glass-distort` (below) is the opt-in for the
    handful of "hero" surfaces that get the real refraction look; this class
@@ -185,16 +252,7 @@ html, body {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(201,166,107,0.35) transparent;
 }
-.sidebar-nav-scroll::-webkit-scrollbar { width: 6px; }
-.sidebar-nav-scroll::-webkit-scrollbar-track { background: transparent; }
-.sidebar-nav-scroll::-webkit-scrollbar-thumb {
-  background: rgba(201,166,107,0.35);
-  border-radius: 6px;
-}
-.sidebar-nav-scroll::-webkit-scrollbar-thumb:hover { background: rgba(201,166,107,0.55); }
 
 .nav-group { display: flex; flex-direction: column; gap: 4px; margin-top: 14px; }
 .nav-group:first-of-type { margin-top: 2px; }
@@ -382,11 +440,44 @@ html, body {
   padding: 60px 40px 40px;
 }
 
-.panel { display: none; animation: panel-in var(--transition-base) both; }
+.panel { display: none; animation: panel-in 0.42s var(--ease-smooth, ease) both; }
 .panel.active { display: block; }
+.panel.leaving {
+  display: block;
+  animation: none;
+  opacity: 0;
+  transform: translateY(-6px) scale(0.992);
+  transition: opacity 0.16s var(--ease-smooth, ease), transform 0.16s var(--ease-smooth, ease);
+  pointer-events: none;
+}
 
 @keyframes panel-in {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  60%  { opacity: 1; }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Every panel's direct children (heading, banner, cards, forms, whatever
+   that page is made of) stagger in on top of the panel's own fade, instead
+   of only the hand-tuned sections (dept feed rows, shift bars, etc.) having
+   entrance motion. Generic and content-agnostic - applies uniformly to
+   every panel, current and future, with no per-page markup needed. Restarts
+   every time a panel is (re)navigated to, since its children stop being
+   rendered at all while the panel is display:none. */
+.panel.active > * {
+  animation: panel-child-in 0.5s var(--ease-smooth, ease) both;
+}
+.panel.active > *:nth-child(1) { animation-delay: 0.03s; }
+.panel.active > *:nth-child(2) { animation-delay: 0.08s; }
+.panel.active > *:nth-child(3) { animation-delay: 0.13s; }
+.panel.active > *:nth-child(4) { animation-delay: 0.18s; }
+.panel.active > *:nth-child(5) { animation-delay: 0.23s; }
+.panel.active > *:nth-child(6) { animation-delay: 0.28s; }
+.panel.active > *:nth-child(7) { animation-delay: 0.33s; }
+.panel.active > *:nth-child(8) { animation-delay: 0.38s; }
+.panel.active > *:nth-child(n+9) { animation-delay: 0.42s; }
+@keyframes panel-child-in {
+  from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -432,37 +523,63 @@ body.reduce-motion, body.reduce-motion * {
 .welcome-skeleton .skeleton-avatar { width: 72px; height: 72px; border-radius: 50%; }
 .welcome-skeleton .skeleton-line { width: 220px; height: 22px; border-radius: 8px; }
 
+/* Hero card: the profile banner also hosts the welcome greeting, overlaid
+   bottom-left on a gradient scrim rather than stacked as a separate block
+   below it - avatar/name/access-badge sit on top of the rotating community
+   banner instead of the plain text block this used to be. */
+.hero-banner { display: flex; align-items: flex-end; }
+.hero-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(0deg, rgba(8,7,4,0.72) 0%, rgba(8,7,4,0.28) 45%, rgba(8,7,4,0) 75%);
+}
+
+.welcome-skeleton { position: relative; z-index: 2; }
+
 .welcome-hero {
+  position: relative;
+  z-index: 2;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
-  margin-bottom: 32px;
-  animation: panel-in 0.4s ease both;
+  gap: 16px;
+  text-align: left;
+  padding: 18px 22px;
+  width: 100%;
+  animation: panel-in 0.4s var(--ease-smooth, ease) both;
 }
 
 .welcome-avatar {
-  width: 72px;
-  height: 72px;
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(201,166,107,0.45);
-  box-shadow: 0 0 24px rgba(201,166,107,0.35);
+  border: 2px solid rgba(201,166,107,0.55);
+  box-shadow: 0 0 24px rgba(201,166,107,0.4);
+  transition: transform 0.35s var(--ease-spring, ease);
 }
+.welcome-hero:hover .welcome-avatar { transform: scale(1.05); }
+
+.welcome-hero-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 
 .welcome-title {
-  margin: 14px 0 0;
+  margin: 0;
   font-family: "Manrope", sans-serif;
   font-weight: 800;
-  font-size: 24px;
+  font-size: 22px;
   color: #fff;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
 }
 .welcome-title span { color: var(--chp-gold-bright); }
 
 .access-badge {
   display: inline-flex;
   align-items: center;
-  margin: 12px 0 0;
+  align-self: flex-start;
+  margin: 0;
   padding: 6px 14px;
   border-radius: 999px;
   background: rgba(201,166,107,0.12);
@@ -502,14 +619,36 @@ body.reduce-motion, body.reduce-motion * {
 
 /* ── Weekly hours trend chart (Tier 3 #13) ── */
 .weekly-trend-chart-wrap {
-  padding: 16px 18px;
-  border-radius: 16px;
-  min-height: 120px;
+  padding: 18px 20px;
+  border-radius: 18px;
+  min-height: 160px;
 }
 .weekly-trend-svg { width: 100%; height: auto; display: block; }
-.weekly-trend-area { fill: color-mix(in srgb, var(--chp-gold, #c9a66b) 22%, transparent); stroke: none; }
-.weekly-trend-line { fill: none; stroke: var(--chp-gold-bright, #e0bf80); stroke-width: 2; }
-.weekly-trend-dot { fill: var(--chp-gold-bright, #e0bf80); }
+.weekly-trend-area {
+  stroke: none;
+  opacity: 0;
+  animation: weekly-trend-fade-in 0.6s var(--ease-smooth, ease) 0.3s both;
+}
+.weekly-trend-line {
+  fill: none;
+  stroke: var(--chp-gold-bright, #e0bf80);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  filter: drop-shadow(0 0 6px rgba(224,191,128,0.45));
+  animation: weekly-trend-draw 1.1s var(--ease-smooth, ease) 0.1s forwards;
+}
+.weekly-trend-dot {
+  fill: var(--chp-gold-bright, #e0bf80);
+  opacity: 0;
+  transform-origin: center;
+  transform: scale(0);
+  animation: weekly-trend-dot-in 0.4s var(--ease-spring, ease) forwards;
+}
+@keyframes weekly-trend-draw { to { stroke-dashoffset: 0; } }
+@keyframes weekly-trend-fade-in { to { opacity: 1; } }
+@keyframes weekly-trend-dot-in { to { opacity: 1; transform: scale(1); } }
 
 /* ── Rotating community banners ──────────────────────────────────────
    One image at a time, cross-faded every 30s (see initDashboardBanner in
@@ -691,6 +830,69 @@ select option {
   color: #fff;
 }
 
+/* ── Leaderboard podium (top 3) ──────────────────────────────────────
+   #1 sits center and raised on a taller stand, #2/#3 flank it lower -
+   promotes the top of the leaderboard instead of everyone reading as an
+   equally-weighted row. Ranks 4+ stay the plain list below. */
+.leaderboard-podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 22px;
+  padding: 28px 16px 0;
+  transition: opacity var(--transition-fast);
+}
+.leaderboard-podium.is-loading { opacity: 0; }
+@media (max-width: 560px) {
+  .leaderboard-podium { gap: 8px; padding: 20px 4px 0; }
+}
+
+.podium-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 140px;
+  animation: podium-rise 0.55s var(--ease-spring, ease) both;
+}
+@keyframes podium-rise {
+  from { opacity: 0; transform: translateY(24px) scale(0.92); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.podium-medal { font-size: 22px; line-height: 1; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)); }
+
+.podium-avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255,255,255,0.1);
+  transition: transform 0.3s var(--ease-spring, ease);
+}
+.podium-slot:hover .podium-avatar { transform: scale(1.06); }
+
+.podium-place-1 .podium-avatar { width: 84px; height: 84px; border: 3px solid #f2cd6b; box-shadow: 0 0 26px rgba(242,205,107,0.5); }
+.podium-place-2 .podium-avatar { width: 68px; height: 68px; border: 3px solid #cfd6de; box-shadow: 0 0 18px rgba(207,214,222,0.35); }
+.podium-place-3 .podium-avatar { width: 68px; height: 68px; border: 3px solid #d79b6a; box-shadow: 0 0 18px rgba(215,155,106,0.35); }
+
+.podium-name { font-family: "Manrope", sans-serif; font-weight: 800; font-size: 13.5px; color: #fff; text-align: center; }
+.podium-place-1 .podium-name { font-size: 15px; }
+.podium-time { font-size: 12.5px; color: rgba(255,255,255,0.55); font-weight: 600; }
+
+.podium-stand {
+  width: 100%;
+  margin-top: 6px;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 8px;
+}
+.podium-stand-rank { font-family: "Manrope", sans-serif; font-weight: 800; font-size: 16px; color: rgba(255,255,255,0.85); }
+.podium-stand-1 { height: 78px; background: linear-gradient(180deg, rgba(242,205,107,0.28), rgba(242,205,107,0.06)); border: 1px solid rgba(242,205,107,0.35); border-bottom: none; }
+.podium-stand-2 { height: 54px; background: linear-gradient(180deg, rgba(207,214,222,0.22), rgba(207,214,222,0.05)); border: 1px solid rgba(207,214,222,0.28); border-bottom: none; }
+.podium-stand-3 { height: 38px; background: linear-gradient(180deg, rgba(215,155,106,0.22), rgba(215,155,106,0.05)); border: 1px solid rgba(215,155,106,0.28); border-bottom: none; }
+
 .leaderboard-list {
   list-style: none;
   margin: 0;
@@ -862,23 +1064,44 @@ select option {
   border: 1px solid rgba(255,255,255,0.09);
   animation: leaderboard-row-in 0.35s var(--ease-smooth, ease) both;
 }
+/* Staggered entrance - each row appears slightly after the last instead of
+   every row fading in at once, up to 12 rows (the API page size is 20, but
+   diminishing returns on delay past that many rows). */
+.department-feed-row:nth-child(1)  { animation-delay: 0.02s; }
+.department-feed-row:nth-child(2)  { animation-delay: 0.05s; }
+.department-feed-row:nth-child(3)  { animation-delay: 0.08s; }
+.department-feed-row:nth-child(4)  { animation-delay: 0.11s; }
+.department-feed-row:nth-child(5)  { animation-delay: 0.14s; }
+.department-feed-row:nth-child(6)  { animation-delay: 0.17s; }
+.department-feed-row:nth-child(7)  { animation-delay: 0.20s; }
+.department-feed-row:nth-child(8)  { animation-delay: 0.23s; }
+.department-feed-row:nth-child(9)  { animation-delay: 0.26s; }
+.department-feed-row:nth-child(10) { animation-delay: 0.29s; }
+.department-feed-row:nth-child(11) { animation-delay: 0.32s; }
+.department-feed-row:nth-child(12) { animation-delay: 0.35s; }
 .department-feed-avatar {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid rgba(255,255,255,0.14);
+  transition: border-color var(--transition-fast), transform 0.3s var(--ease-spring, ease);
 }
+.department-feed-row:hover .department-feed-avatar { transform: scale(1.06); }
+.department-feed-row:has(.department-feed-icon-promotion) .department-feed-avatar { border-color: rgba(201,166,107,0.5); }
+.department-feed-row:has(.department-feed-icon-application_accepted) .department-feed-avatar { border-color: rgba(90,180,224,0.5); }
 .department-feed-icon {
-  width: 26px;
-  height: 26px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 12px;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10.5px;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .department-feed-icon-promotion {
   background: rgba(201,166,107,0.16);
@@ -952,7 +1175,15 @@ select option {
   border-radius: 14px;
   background: rgba(255,255,255,0.035);
   border: 1px solid rgba(255,255,255,0.08);
+  animation: leaderboard-row-in 0.35s var(--ease-smooth, ease) both;
+  transition: transform 0.3s var(--ease-spring, ease), border-color var(--transition-fast);
 }
+.shifts-type-row:hover { transform: translateY(-2px); border-color: rgba(201,166,107,0.22); }
+.shifts-type-row:nth-child(1) { animation-delay: 0.03s; }
+.shifts-type-row:nth-child(2) { animation-delay: 0.09s; }
+.shifts-type-row:nth-child(3) { animation-delay: 0.15s; }
+.shifts-type-row:nth-child(4) { animation-delay: 0.21s; }
+.shifts-type-row:nth-child(5) { animation-delay: 0.27s; }
 
 .shifts-type-bar-track {
   flex: 1;
@@ -962,11 +1193,15 @@ select option {
   overflow: hidden;
 }
 .shifts-type-bar-fill {
+  --bar-pct: 0%;
+  display: block;
   height: 100%;
+  width: 0;
   border-radius: 4px;
   background: linear-gradient(90deg, var(--chp-gold-dim), var(--chp-gold-bright));
-  transition: width 0.5s ease;
+  animation: shifts-bar-grow 0.9s var(--ease-smooth, ease) 0.25s both;
 }
+@keyframes shifts-bar-grow { to { width: var(--bar-pct); } }
 
 .shifts-type-name { width: 90px; flex-shrink: 0; font-size: 13.5px; font-weight: 600; color: #fff; }
 .shifts-type-time { width: 80px; flex-shrink: 0; text-align: right; font-size: 13px; color: rgba(255,255,255,0.5); font-weight: 600; }
@@ -1265,9 +1500,9 @@ select option {
   border-radius: 18px;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.09);
-  transition: transform var(--transition-base), border-color var(--transition-fast);
+  transition: transform 0.35s var(--ease-spring, ease), border-color var(--transition-fast);
 }
-.quota-ring-card:hover, .quick-stats-card:hover { transform: translateY(-2px); border-color: rgba(201,166,107,0.22); }
+.quota-ring-card:hover, .quick-stats-card:hover { transform: translateY(-3px); border-color: rgba(201,166,107,0.22); }
 
 .quota-ring-body { display: flex; flex-direction: column; align-items: center; gap: 14px; padding-top: 6px; }
 .quota-ring {
@@ -1304,22 +1539,48 @@ select option {
 
 .quick-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .quick-stat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 14px 16px;
-  border-radius: 12px;
+  border-radius: 14px;
   background: rgba(255,255,255,0.035);
   border: 1px solid rgba(255,255,255,0.08);
-  text-align: center;
+  text-align: left;
+  transition: transform 0.3s var(--ease-spring, ease), border-color var(--transition-fast), background var(--transition-fast);
 }
+.quick-stat:hover {
+  transform: translateY(-3px);
+  border-color: rgba(201,166,107,0.28);
+  background: rgba(255,255,255,0.05);
+}
+.quick-stat-icon {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(201,166,107,0.35), rgba(201,166,107,0.12));
+  border: 1px solid rgba(201,166,107,0.3);
+  color: var(--chp-gold-bright);
+  transition: transform 0.3s var(--ease-spring, ease);
+}
+.quick-stat-icon svg { width: 18px; height: 18px; }
+.quick-stat:hover .quick-stat-icon { transform: scale(1.08) rotate(-4deg); }
+.quick-stat-text { display: flex; flex-direction: column; min-width: 0; }
 .quick-stat .quick-stat-value {
   display: block;
   font-family: "Manrope", sans-serif;
   font-weight: 800;
-  font-size: 18px;
+  font-size: 17px;
   color: var(--chp-gold-bright);
+  line-height: 1.2;
 }
 .quick-stat .quick-stat-label {
   display: block;
-  margin-top: 4px;
+  margin-top: 2px;
   font-size: 11px;
   color: rgba(255,255,255,0.45);
   text-transform: uppercase;
