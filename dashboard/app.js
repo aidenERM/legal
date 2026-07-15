@@ -1620,8 +1620,27 @@ function renderShiftState(shift) {
   breakBtn.classList.toggle("on-break", !!shift.onBreak);
 
   const timerEl = document.getElementById("currentShiftTimer");
+  const breakTimerEl = document.getElementById("currentShiftBreakTimer");
+  const breakElapsedEl = document.getElementById("currentShiftBreakElapsed");
   const tick = () => {
     timerEl.textContent = formatHms(computeElapsedSeconds(currentShiftState));
+
+    // Live-ticking break duration ("On break 0:03" -> "0:04" -> ...) instead
+    // of just the Start/End Break button with no indication of how long the
+    // current break has actually run. The open break is whichever entry in
+    // `breaks` has no EndEpoch yet.
+    const openBreak = currentShiftState.onBreak
+      ? (currentShiftState.breaks || []).find((b) => !b.EndEpoch || b.EndEpoch <= 0)
+      : null;
+    if (openBreak) {
+      breakTimerEl.hidden = false;
+      const breakSeconds = Math.max(0, Date.now() / 1000 - openBreak.StartEpoch);
+      const m = Math.floor(breakSeconds / 60);
+      const s = Math.floor(breakSeconds % 60);
+      breakElapsedEl.textContent = `${m}:${String(s).padStart(2, "0")}`;
+    } else {
+      breakTimerEl.hidden = true;
+    }
   };
   tick();
   if (shiftTimerInterval) clearInterval(shiftTimerInterval);

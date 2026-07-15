@@ -1466,6 +1466,25 @@ select option {
   color: var(--chp-gold-bright);
   font-variant-numeric: tabular-nums;
 }
+.current-shift-break-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(224,160,90,0.14);
+  border: 1px solid rgba(224,160,90,0.32);
+  color: rgba(255,214,163,0.9);
+  font-family: "Manrope", sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  animation: break-timer-pulse 2s ease-in-out infinite;
+}
+@keyframes break-timer-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
 .current-shift-actions { display: flex; gap: 10px; }
 .shift-break-btn {
   padding: 11px 20px;
