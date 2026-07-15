@@ -2779,6 +2779,12 @@ body.reduce-motion .loading-overlay-spinner { animation-duration: 0.01s; }
    beneath it, not a dense multi-column launcher. Backdrop blurs/dims the
    page, panel scales+fades in with a spring overshoot so opening feels
    snappy rather than a flat crossfade. */
+/* [hidden] must win over the base rule below when the backdrop is closed -
+   an unconditional `display: flex` on .cmdk-backdrop overrides the browser's
+   built-in `[hidden] { display: none }` (author styles always beat that
+   default, regardless of the hidden attribute), which was why the palette
+   rendered open on every page load instead of staying hidden until Ctrl/Cmd+K. */
+.cmdk-backdrop[hidden] { display: none; }
 .cmdk-backdrop {
   position: fixed;
   inset: 0;
