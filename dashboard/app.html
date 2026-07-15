@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260730">
+<link rel="stylesheet" href="app.css?v=20260731">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 </head>
@@ -784,6 +784,7 @@
           <button class="dev-tab" data-boc-tab="dm-officers">DM Officers</button>
           <button class="dev-tab" data-boc-tab="announcement">Announcement</button>
           <button class="dev-tab" data-boc-tab="audit-log">Audit Log</button>
+          <button class="dev-tab" data-boc-tab="activity-log">Activity Log</button>
           <button class="dev-tab" data-boc-tab="anonymous-feedback">Anonymous Feedback</button>
           <button class="dev-tab" data-boc-tab="settings">Settings</button>
         </div>
@@ -872,6 +873,12 @@
         <div id="bocAuditList" hidden></div>
       </div>
 
+      <div class="dev-panel" id="bocPanel-activity-log">
+        <p class="panel-subtitle">Everyday member activity - shift starts/ends, Member Lookup searches, AI Assistant queries.</p>
+        <div class="skeleton" id="bocActivitySkeleton"></div>
+        <div id="bocActivityList" hidden></div>
+      </div>
+
       <div class="dev-panel" id="bocPanel-anonymous-feedback">
         <p class="panel-subtitle">Anonymous feedback submitted by staff, newest first. Submitter identity is never recorded.</p>
         <div class="skeleton" id="bocAnonFeedbackSkeleton"></div>
@@ -938,6 +945,7 @@
         <button class="dev-tab" data-dev-tab="testers">Testers</button>
         <button class="dev-tab" data-dev-tab="access-control">Access Control</button>
         <button class="dev-tab" data-dev-tab="anomalous-logins">Anomalous Logins</button>
+        <button class="dev-tab" data-dev-tab="dashboard-logins">Dashboard Logins</button>
       </div>
 
       <div class="dev-panel active" id="devPanel-kill-switches">
@@ -1026,6 +1034,12 @@
         <div class="skeleton" id="anomalousLoginsSkeleton"></div>
         <ul class="loa-history-list" id="anomalousLoginsList" hidden></ul>
       </div>
+
+      <div class="dev-panel" id="devPanel-dashboard-logins">
+        <p class="panel-subtitle">Everyone who has ever logged into the dashboard, most recent login first.</p>
+        <div class="skeleton" id="dashboardLoginsSkeleton"></div>
+        <ul class="loa-history-list" id="dashboardLoginsList" hidden></ul>
+      </div>
     </section>
   </main>
 </div>
@@ -1064,6 +1078,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260730"></script>
+<script src="app.js?v=20260731"></script>
 </body>
 </html>

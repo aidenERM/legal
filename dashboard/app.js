@@ -1041,6 +1041,7 @@ async function bootMe() {
           { tab: "dm-officers", label: "DM Officers", icon: "mail" },
           { tab: "announcement", label: "Announcement", icon: "megaphone" },
           { tab: "audit-log", label: "Audit Log", icon: "scroll" },
+          { tab: "activity-log", label: "Activity Log", icon: "eye" },
           { tab: "settings", label: "Settings", icon: "gear" },
         ],
       },
@@ -3900,6 +3901,7 @@ function loadBocActiveTab() {
   if (bocActiveTab === "watch-list") return loadBocWatchList();
   if (bocActiveTab === "inactive-officers") return loadBocInactiveOfficers();
   if (bocActiveTab === "audit-log") return loadBocAuditLog();
+  if (bocActiveTab === "activity-log") return loadBocActivityLog();
   if (bocActiveTab === "anonymous-feedback") return loadBocAnonymousFeedback();
   if (bocActiveTab === "ra-stats") return loadBocRaStats();
   if (bocActiveTab === "settings") return loadBocSettings();
@@ -4340,6 +4342,35 @@ async function loadBocAuditLog(actionFilter) {
   list.innerHTML = `<ul class="history-list">${rows || `<li class="empty-state">No audit entries found.</li>`}</ul>`;
 }
 
+// Everyday self-service activity (user request) - shift starts/ends, Member
+// Lookup searches, AI Assistant queries. Separate tab/collection from Audit
+// Log above (that's admin/officer-panel actions taken on someone else).
+async function loadBocActivityLog() {
+  const skeleton = document.getElementById("bocActivitySkeleton");
+  const list = document.getElementById("bocActivityList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await bocGet("/api/boc/activity-log");
+  skeleton.hidden = true;
+  if (!res) return bocShowDenied();
+  if (res.reason === "confidential" || res.reason === "forbidden") return bocShowDenied(res.reason);
+
+  list.hidden = false;
+  const entries = res.entries || [];
+  const rows = entries
+    .map(
+      (e) => `
+        <li class="history-row">
+          <span class="history-desc"><strong>User ${e.actorId}</strong> — ${e.detail || e.action}</span>
+          <span class="history-date">${formatDate(e.timestamp)}</span>
+        </li>
+      `
+    )
+    .join("");
+  list.innerHTML = `<ul class="history-list">${rows || `<li class="empty-state">No activity logged yet.</li>`}</ul>`;
+}
+
 document.getElementById("bocAuditFilterBtn").addEventListener("click", () => {
   const value = document.getElementById("bocAuditActionFilter").value.trim();
   loadBocAuditLog(value || undefined);
@@ -4504,8 +4535,39 @@ document.querySelectorAll(".dev-tab").forEach((tab) => {
     if (tab.dataset.devTab === "testers") loadDevTesters();
     if (tab.dataset.devTab === "access-control") loadDevAccessControl();
     if (tab.dataset.devTab === "anomalous-logins") loadDevAnomalousLogins();
+    if (tab.dataset.devTab === "dashboard-logins") loadDevDashboardLogins();
   });
 });
+
+async function loadDevDashboardLogins() {
+  const skeleton = document.getElementById("dashboardLoginsSkeleton");
+  const list = document.getElementById("dashboardLoginsList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await apiGet("/api/dev/dashboard-logins");
+  skeleton.hidden = true;
+  list.hidden = false;
+
+  if (!res || !res.ok) {
+    list.innerHTML = `<li class="empty-state">Failed to load dashboard logins.</li>`;
+    return;
+  }
+
+  const entries = res.entries || [];
+  list.innerHTML = entries.length
+    ? entries
+        .map(
+          (e) => `
+    <li class="loa-history-row">
+      <span class="history-desc">User <code>${escapeHtml(e.userId || "unknown")}</code> - ${e.loginCount || 1} login${e.loginCount === 1 ? "" : "s"}, last from ${escapeHtml(e.lastCountry || "??")}</span>
+      <span class="history-date">${e.lastLoginAt ? formatDate(e.lastLoginAt) : "?"}</span>
+    </li>
+  `
+        )
+        .join("")
+    : `<li class="empty-state">No dashboard logins recorded yet.</li>`;
+}
 
 async function loadDevAnomalousLogins() {
   const skeleton = document.getElementById("anomalousLoginsSkeleton");
