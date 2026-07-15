@@ -3110,3 +3110,175 @@ body.reduce-motion .loading-overlay-spinner { animation-duration: 0.01s; }
   color: rgba(255,255,255,0.24);
 }
 .nav-subgroup-label:first-child { margin-top: 2px; }
+
+/* ── Welcome tour (first-login onboarding) ────────────────────────────
+   Medium floating panel over a dimmed/blurred dashboard - deliberately
+   NOT a full-screen takeover, so the real dashboard stays visible (if
+   faint) behind it. Same backdrop/panel visual language as the command
+   palette (liquid-glass + spring entrance) for consistency. */
+.onboarding-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(6,5,3,0.6);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  opacity: 0;
+  animation: cmdk-backdrop-in 0.25s var(--ease-smooth, ease) forwards;
+}
+.onboarding-backdrop[hidden] { display: none; }
+.onboarding-backdrop.closing { animation: cmdk-backdrop-out 0.18s var(--ease-smooth, ease) forwards; }
+
+.onboarding-panel {
+  width: min(560px, 100%);
+  max-height: min(680px, 92vh);
+  display: flex;
+  flex-direction: column;
+  border-radius: 24px;
+  overflow: hidden;
+  transform: translateY(-10px) scale(0.96);
+  opacity: 0;
+  animation: cmdk-panel-in 0.35s var(--ease-spring, ease) 0.03s forwards;
+}
+.onboarding-backdrop.closing .onboarding-panel { animation: cmdk-panel-out 0.18s var(--ease-smooth, ease) forwards; }
+
+.onboarding-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  flex-shrink: 0;
+}
+.onboarding-track-label {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(201,166,107,0.14);
+  border: 1px solid rgba(201,166,107,0.3);
+  color: var(--chp-gold-bright);
+  font-family: "Manrope", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.onboarding-skip-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-family: "Manrope", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.onboarding-skip-btn:hover { background: rgba(255,255,255,0.07); color: #fff; }
+
+.onboarding-image-wrap {
+  flex-shrink: 0;
+  margin: 0 18px;
+  border-radius: 14px;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.onboarding-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+  opacity: 0;
+  animation: fade-up 0.35s var(--ease-smooth, ease) both;
+}
+
+.onboarding-body {
+  padding: 16px 22px 4px;
+  text-align: center;
+  overflow-y: auto;
+}
+.onboarding-title {
+  margin: 0 0 8px;
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 19px;
+  color: #fff;
+}
+.onboarding-caption {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: rgba(255,255,255,0.55);
+}
+
+.onboarding-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px 20px;
+  flex-shrink: 0;
+}
+.onboarding-dots { display: flex; gap: 6px; }
+.onboarding-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+.onboarding-dot.active { background: var(--chp-gold-bright); transform: scale(1.3); }
+.onboarding-dot.done { background: rgba(201,166,107,0.45); }
+
+.onboarding-nav-buttons { display: flex; gap: 8px; }
+.onboarding-nav-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04);
+  color: #fff;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), opacity var(--transition-fast);
+}
+.onboarding-nav-btn svg:not(.onboarding-nav-btn-ring) { width: 16px; height: 16px; position: relative; z-index: 1; }
+.onboarding-nav-btn:hover:not(:disabled) { background: rgba(255,255,255,0.09); }
+.onboarding-nav-btn:disabled:not(.onboarding-nav-btn-next) { opacity: 0.3; cursor: default; }
+.onboarding-nav-btn-next {
+  border-color: rgba(201,166,107,0.35);
+  background: rgba(201,166,107,0.12);
+}
+.onboarding-nav-btn-next:not(:disabled) {
+  background: var(--chp-gold-bright);
+  border-color: var(--chp-gold-bright);
+  color: #1c1708;
+}
+.onboarding-nav-btn-next:disabled { cursor: default; }
+/* Countdown ring: JS animates onboardingNextRing's stroke-dashoffset from
+   full circumference to 0 over the 5s gate, purely a visual affordance -
+   the actual gating is the button's disabled attribute, not this ring. */
+.onboarding-nav-btn-ring { position: absolute; inset: 0; width: 38px; height: 38px; transform: rotate(-90deg); }
+.onboarding-nav-btn-ring-track { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 2; }
+.onboarding-nav-btn-ring-fill {
+  fill: none;
+  stroke: var(--chp-gold-bright);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 100.5;
+  stroke-dashoffset: 100.5;
+}
+.onboarding-nav-btn-next:not(:disabled) .onboarding-nav-btn-ring { display: none; }
+
+@media (max-width: 600px) {
+  .onboarding-panel { max-height: 96vh; }
+  .onboarding-image-wrap { aspect-ratio: 4 / 3; }
+}

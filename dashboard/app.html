@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260729">
+<link rel="stylesheet" href="app.css?v=20260730">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 </head>
@@ -39,6 +39,42 @@
       <kbd class="cmdk-esc-hint">Esc</kbd>
     </div>
     <div class="cmdk-results" id="cmdkResults"></div>
+  </div>
+</div>
+
+<!-- Welcome tour (user request): a medium floating panel over a dimmed/
+     blurred dashboard - NOT a full-screen takeover - shown automatically
+     once (first login ever, tracked server-side via the
+     dashboard_onboarding_seen user setting) and reopenable from Personal
+     Settings. Built/wired in app.js (initOnboardingTour). -->
+<div class="onboarding-backdrop" id="onboardingBackdrop" hidden>
+  <div class="onboarding-panel liquid-glass liquid-glass-distort" id="onboardingPanel" role="dialog" aria-modal="true" aria-label="Welcome tour">
+    <div class="onboarding-header">
+      <span class="onboarding-track-label" id="onboardingTrackLabel">For You</span>
+      <button class="onboarding-skip-btn" id="onboardingSkipBtn" type="button">Skip tour</button>
+    </div>
+    <div class="onboarding-image-wrap">
+      <img class="onboarding-image" id="onboardingImage" src="" alt="">
+    </div>
+    <div class="onboarding-body">
+      <h2 class="onboarding-title" id="onboardingTitle"></h2>
+      <p class="onboarding-caption" id="onboardingCaption"></p>
+    </div>
+    <div class="onboarding-footer">
+      <div class="onboarding-dots" id="onboardingDots"></div>
+      <div class="onboarding-nav-buttons">
+        <button class="onboarding-nav-btn" id="onboardingBackBtn" type="button" aria-label="Previous">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
+        <button class="onboarding-nav-btn onboarding-nav-btn-next" id="onboardingNextBtn" type="button" aria-label="Next" disabled>
+          <svg class="onboarding-nav-btn-ring" viewBox="0 0 36 36">
+            <circle class="onboarding-nav-btn-ring-track" cx="18" cy="18" r="16"></circle>
+            <circle class="onboarding-nav-btn-ring-fill" id="onboardingNextRing" cx="18" cy="18" r="16"></circle>
+          </svg>
+          <svg class="onboarding-nav-btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -341,6 +377,13 @@
         <div class="settings-card">
           <h2 class="settings-section-heading">Appearance</h2>
           <div class="settings-list">
+            <div class="settings-row">
+              <div class="settings-row-text">
+                <span class="settings-row-label">Welcome tour</span>
+                <span class="settings-row-desc">Replay the first-login walkthrough of what the dashboard can do.</span>
+              </div>
+              <button class="accent-reset-btn" id="settingsReplayTourBtn" type="button">Replay</button>
+            </div>
             <div class="settings-row">
               <div class="settings-row-text">
                 <span class="settings-row-label">Reduce motion</span>
@@ -1021,6 +1064,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260729"></script>
+<script src="app.js?v=20260730"></script>
 </body>
 </html>

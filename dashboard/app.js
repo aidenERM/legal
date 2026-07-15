@@ -2517,7 +2517,9 @@ async function loadSettings() {
   // used to render a single broken "[object Object]" row instead of one row
   // per real setting, which is why this panel looked empty/useless.
   const settings = res.settings || {};
-  const entries = Object.entries(settings);
+  // dashboard_onboarding_seen is an internal welcome-tour flag, not a
+  // user-facing toggle - the "Replay Welcome Tour" button below handles it.
+  const entries = Object.entries(settings).filter(([key]) => key !== "dashboard_onboarding_seen");
   if (entries.length === 0) {
     grid.innerHTML = `<div class="empty-state">No settings to show.</div>`;
     return;
@@ -5618,7 +5620,226 @@ function initNotificationsCenter() {
   refreshNotifications();
 }
 
-bootMe().then(() => loadShiftManagement());
+// ── Welcome tour (first-login onboarding) ────────────────────────────────
+// Medium floating panel (not full-screen) shown automatically once - the
+// very first time a user ever logs into the dashboard, tracked server-side
+// via the dashboard_onboarding_seen user setting (see utils/user_settings.py)
+// so it follows the account across browsers/devices instead of resetting
+// whenever localStorage gets cleared. Reopenable anytime from Personal
+// Settings ("Replay Welcome Tour").
+const ONBOARDING_SLIDES = [
+  {
+    img: "assets/onboarding/01-shift-idle.png",
+    title: "Shift Management",
+    caption: "Clock in with one tap - pick CHP or SEU and you're on duty. No Discord command needed.",
+    track: "you",
+  },
+  {
+    img: "assets/onboarding/02-shift-active.png",
+    title: "Live duty tracking",
+    caption: "Your timer, break button, and weekly quota all update in real time while you're on shift.",
+    track: "you",
+  },
+  {
+    img: "assets/onboarding/03-leave-ra.png",
+    title: "Leave & RA",
+    caption: "Request an LOA or RA session right here, and track every past request's status in one place.",
+    track: "you",
+  },
+  {
+    img: "assets/onboarding/04-history.png",
+    title: "History",
+    caption: "Your full shift history, broken down by CHP vs SEU duty time.",
+    track: "you",
+  },
+  {
+    img: "assets/onboarding/05-profile-1.png",
+    title: "Your Profile",
+    caption: "Your personal hub - a welcome greeting and your weekly hours trend, right when you log in.",
+    track: "you",
+  },
+  {
+    img: "assets/onboarding/06-profile-2.png",
+    title: "Badges & Streaks",
+    caption: "Earn badges for streaks, tenure, and rank, plus a full breakdown of your duty time by shift type.",
+    track: "you",
+  },
+  {
+    img: "assets/onboarding/07-ai-assistant.png",
+    title: "AI Assistant",
+    caption: "Ask it anything - start your shift, check the leaderboard, or look up CHP info, all in chat.",
+    track: "you",
+  },
+  {
+    img: "assets/onboarding/08-leaderboard-rankings.png",
+    title: "Leaderboard",
+    caption: "See who's leading CHP this week. Filter by period, shift type, or a custom date range.",
+    track: "officers",
+  },
+  {
+    img: "assets/onboarding/09-leaderboard-recognized.png",
+    title: "Recognized Officers",
+    caption: "Officers with 100+ duty hours or 6+ months of tenure get recognized here automatically.",
+    track: "officers",
+  },
+  {
+    img: "assets/onboarding/10-leaderboard-feed.png",
+    title: "Department Feed",
+    caption: "Every promotion and accepted application, newest first, in one feed.",
+    track: "officers",
+  },
+  {
+    img: "assets/onboarding/11-command-palette.png",
+    title: "Command Palette",
+    caption: "Press Ctrl/Cmd+K anywhere to jump straight to any page - faster than clicking through the sidebar.",
+    track: "you",
+  },
+  {
+    img: "assets/onboarding/12-settings.png",
+    title: "Personal Settings",
+    caption: "Customize your experience - theme, accent color, notifications, and more - all synced to your account.",
+    track: "you",
+  },
+];
+const ONBOARDING_NEXT_GATE_MS = 5000;
+
+function initOnboardingTour() {
+  const backdrop = document.getElementById("onboardingBackdrop");
+  const panel = document.getElementById("onboardingPanel");
+  const trackLabel = document.getElementById("onboardingTrackLabel");
+  const skipBtn = document.getElementById("onboardingSkipBtn");
+  const imageEl = document.getElementById("onboardingImage");
+  const titleEl = document.getElementById("onboardingTitle");
+  const captionEl = document.getElementById("onboardingCaption");
+  const dotsEl = document.getElementById("onboardingDots");
+  const backBtn = document.getElementById("onboardingBackBtn");
+  const nextBtn = document.getElementById("onboardingNextBtn");
+  const ring = document.getElementById("onboardingNextRing");
+  if (!backdrop || !panel) return;
+
+  let slides = ONBOARDING_SLIDES;
+  let index = 0;
+  let gateTimer = null;
+  let isOpen = false;
+
+  function renderSlide() {
+    const slide = slides[index];
+    trackLabel.textContent = slide.track === "officers" ? "For Officers" : "For You";
+    imageEl.src = slide.img;
+    imageEl.alt = slide.title;
+    // Re-trigger the fade-in animation on every slide change.
+    imageEl.style.animation = "none";
+    void imageEl.offsetWidth;
+    imageEl.style.animation = "";
+    titleEl.textContent = slide.title;
+    captionEl.textContent = slide.caption;
+
+    dotsEl.innerHTML = slides
+      .map((_, i) => `<span class="onboarding-dot${i === index ? " active" : i < index ? " done" : ""}"></span>`)
+      .join("");
+
+    backBtn.disabled = index === 0;
+
+    const isLast = index === slides.length - 1;
+    nextBtn.setAttribute("aria-label", isLast ? "Finish" : "Next");
+    nextBtn.innerHTML = isLast
+      ? `<svg class="onboarding-nav-btn-ring" viewBox="0 0 36 36"><circle class="onboarding-nav-btn-ring-track" cx="18" cy="18" r="16"></circle><circle class="onboarding-nav-btn-ring-fill" id="onboardingNextRing" cx="18" cy="18" r="16"></circle></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`
+      : `<svg class="onboarding-nav-btn-ring" viewBox="0 0 36 36"><circle class="onboarding-nav-btn-ring-track" cx="18" cy="18" r="16"></circle><circle class="onboarding-nav-btn-ring-fill" id="onboardingNextRing" cx="18" cy="18" r="16"></circle></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>`;
+
+    startGate();
+  }
+
+  // 5-second read-gate before "Next" unlocks (per slide) - the ring around
+  // the button animates its stroke-dashoffset over the same duration as a
+  // visual countdown, purely cosmetic; the actual gate is the disabled
+  // attribute + this timer.
+  function startGate() {
+    clearTimeout(gateTimer);
+    nextBtn.disabled = true;
+    const freshRing = document.getElementById("onboardingNextRing");
+    if (freshRing) {
+      freshRing.style.transition = "none";
+      freshRing.style.strokeDashoffset = "100.5";
+      void freshRing.getBoundingClientRect();
+      freshRing.style.transition = `stroke-dashoffset ${ONBOARDING_NEXT_GATE_MS}ms linear`;
+      freshRing.style.strokeDashoffset = "0";
+    }
+    gateTimer = window.setTimeout(() => {
+      nextBtn.disabled = false;
+    }, ONBOARDING_NEXT_GATE_MS);
+  }
+
+  function goNext() {
+    if (nextBtn.disabled) return;
+    if (index >= slides.length - 1) {
+      closeTour();
+      return;
+    }
+    index++;
+    renderSlide();
+  }
+
+  function goBack() {
+    if (index === 0) return;
+    index--;
+    renderSlide();
+  }
+
+  function openTour(me) {
+    if (isOpen) return;
+    isOpen = true;
+    slides = ONBOARDING_SLIDES.filter((s) => s.track === "you" || tierAtLeast(me?.tier, "staff"));
+    index = 0;
+    backdrop.hidden = false;
+    backdrop.classList.remove("closing");
+    void panel.offsetWidth;
+    renderSlide();
+  }
+
+  function closeTour() {
+    if (!isOpen) return;
+    isOpen = false;
+    clearTimeout(gateTimer);
+    backdrop.classList.add("closing");
+    window.setTimeout(() => {
+      backdrop.hidden = true;
+      backdrop.classList.remove("closing");
+    }, 180);
+    apiPost("/api/settings", { key: "dashboard_onboarding_seen", value: true });
+  }
+
+  nextBtn.addEventListener("click", goNext);
+  backBtn.addEventListener("click", goBack);
+  skipBtn.addEventListener("click", closeTour);
+  backdrop.addEventListener("mousedown", (e) => {
+    if (e.target === backdrop) closeTour();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (!isOpen) return;
+    if (e.key === "Escape") closeTour();
+    else if (e.key === "ArrowRight") goNext();
+    else if (e.key === "ArrowLeft") goBack();
+  });
+
+  document.getElementById("settingsReplayTourBtn")?.addEventListener("click", () => {
+    openTour(currentMe);
+  });
+
+  return { openTour };
+}
+const onboardingTour = initOnboardingTour();
+
+async function maybeShowOnboardingTour(me) {
+  if (!onboardingTour) return;
+  const res = await apiGet("/api/settings");
+  const seen = res && res.ok !== false && res.settings && res.settings.dashboard_onboarding_seen;
+  if (!seen) onboardingTour.openTour(me);
+}
+
+bootMe().then((me) => {
+  loadShiftManagement();
+  maybeShowOnboardingTour(me);
+});
 initNotificationsCenter();
 
 // Rotating community banners - each panel's slot rotates independently.
