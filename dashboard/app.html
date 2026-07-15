@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260725">
+<link rel="stylesheet" href="app.css?v=20260726">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 </head>
@@ -704,6 +704,8 @@
           <button class="dev-tab" data-boc-tab="hr-oversight">HR Oversight</button>
           <button class="dev-tab active" data-boc-tab="quota-enforcement">Quota Enforcement</button>
           <button class="dev-tab" data-boc-tab="applications">Applications</button>
+          <button class="dev-tab" data-boc-tab="watch-list">Watch List</button>
+          <button class="dev-tab" data-boc-tab="inactive-officers">Inactive Officers</button>
         </div>
         <div class="officer-action-group-heading">Leaderboard &amp; Scheduling</div>
         <div class="dev-tabs liquid-glass">
@@ -781,6 +783,18 @@
         <p class="panel-subtitle">Officers flagged as promotion candidates. This is a recommendation surface only — act on it manually via HR Promotion Review.</p>
         <div class="skeleton" id="bocPromotionRecsSkeleton"></div>
         <div id="bocPromotionRecsList" hidden></div>
+      </div>
+
+      <div class="dev-panel" id="bocPanel-watch-list">
+        <p class="panel-subtitle">Every officer currently being watched, who started it, and time remaining.</p>
+        <div class="skeleton" id="bocWatchListSkeleton"></div>
+        <ol class="leaderboard-list" id="bocWatchList" hidden></ol>
+      </div>
+
+      <div class="dev-panel" id="bocPanel-inactive-officers">
+        <p class="panel-subtitle">Officers who haven't logged a shift in <span id="bocInactiveThresholdLabel">10</span>+ days.</p>
+        <div class="skeleton" id="bocInactiveOfficersSkeleton"></div>
+        <ol class="leaderboard-list" id="bocInactiveOfficersList" hidden></ol>
       </div>
 
       <div class="dev-panel" id="bocPanel-audit-log">
@@ -984,6 +998,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260725"></script>
+<script src="app.js?v=20260726"></script>
 </body>
 </html>

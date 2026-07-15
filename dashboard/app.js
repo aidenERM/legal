@@ -890,6 +890,8 @@ async function bootMe() {
       { tab: "leaderboard-control", label: "Leaderboard Control" },
       { tab: "schedules", label: "Scheduled Actions" },
       { tab: "applications", label: "Applications" },
+      { tab: "watch-list", label: "Watch List" },
+      { tab: "inactive-officers", label: "Inactive Officers" },
       { tab: "audit-log", label: "Audit Log" },
       { tab: "dm-officers", label: "DM Officers" },
       { tab: "announcement", label: "Announcement" },
@@ -3639,6 +3641,8 @@ function loadBocActiveTab() {
   if (bocActiveTab === "leaderboard-control") return; // static panel, no data to load
   if (bocActiveTab === "schedules") return loadBocSchedules();
   if (bocActiveTab === "applications") return loadBocApplications();
+  if (bocActiveTab === "watch-list") return loadBocWatchList();
+  if (bocActiveTab === "inactive-officers") return loadBocInactiveOfficers();
   if (bocActiveTab === "audit-log") return loadBocAuditLog();
   if (bocActiveTab === "anonymous-feedback") return loadBocAnonymousFeedback();
   if (bocActiveTab === "ra-stats") return loadBocRaStats();
@@ -3989,6 +3993,75 @@ async function loadBocApplications() {
     <h2 class="lookup-detail-heading">Pending Queue</h2>
     <ul class="history-list">${rows || `<li class="empty-state">No pending applications.</li>`}</ul>
   `;
+}
+
+async function loadBocWatchList() {
+  const skeleton = document.getElementById("bocWatchListSkeleton");
+  const list = document.getElementById("bocWatchList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await bocGet("/api/hr/officers/watch/list");
+  skeleton.hidden = true;
+  if (!res) return bocShowDenied();
+  if (res.reason === "forbidden" || res.reason === "unauthenticated") return bocShowDenied(res.reason);
+
+  list.hidden = false;
+  const watches = res.watches || [];
+  if (watches.length === 0) {
+    list.innerHTML = `<li class="empty-state">Nobody is currently being watched.</li>`;
+    return;
+  }
+  list.innerHTML = watches
+    .map(
+      (w, i) => `
+      <li class="leaderboard-row" style="animation-delay: ${Math.min(i, 20) * 0.03}s">
+        <span class="leaderboard-identity">
+          <span class="leaderboard-name">${w.targetName}</span>
+          <span class="leaderboard-rank-title">Started by ${w.startedByName}</span>
+        </span>
+        <span class="leaderboard-time">${formatDuration(w.secondsRemaining)} left</span>
+      </li>
+    `
+    )
+    .join("");
+}
+
+async function loadBocInactiveOfficers() {
+  const skeleton = document.getElementById("bocInactiveOfficersSkeleton");
+  const list = document.getElementById("bocInactiveOfficersList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await bocGet("/api/hr/officers/inactive");
+  skeleton.hidden = true;
+  if (!res) return bocShowDenied();
+  if (res.reason === "forbidden" || res.reason === "unauthenticated") return bocShowDenied(res.reason);
+
+  list.hidden = false;
+  const officers = res.officers || [];
+  const thresholdLabel = document.getElementById("bocInactiveThresholdLabel");
+  if (thresholdLabel && res.thresholdDays) thresholdLabel.textContent = res.thresholdDays;
+
+  if (officers.length === 0) {
+    list.innerHTML = `<li class="empty-state">Everyone has logged a shift recently.</li>`;
+    return;
+  }
+  list.innerHTML = officers
+    .map((o, i) => {
+      const avatarUrl = avatarUrlFor(o.userId, o.avatar, 32);
+      return `
+        <li class="leaderboard-row" style="animation-delay: ${Math.min(i, 20) * 0.02}s">
+          <img class="leaderboard-avatar" src="${avatarUrl}" alt="" width="32" height="32">
+          <span class="leaderboard-identity">
+            <span class="leaderboard-name">${o.username}</span>
+            <span class="leaderboard-rank-title">${o.rank || "Unranked"}</span>
+          </span>
+          <span class="leaderboard-time">${o.daysSinceLastShift}d inactive</span>
+        </li>
+      `;
+    })
+    .join("");
 }
 
 async function loadBocAuditLog(actionFilter) {
