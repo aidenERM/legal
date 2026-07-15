@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260727">
+<link rel="stylesheet" href="app.css?v=20260728">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 </head>
@@ -95,6 +95,7 @@
           <button class="nav-item active" data-section="shift-management">
             <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
             Shift Management
+            <span class="nav-item-status-dot" id="navShiftStatusDot" hidden></span>
           </button>
           <button class="nav-item" data-section="leaderboard">
             <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0V4z"/><path d="M7 5H4a3 3 0 003 3M17 5h3a3 3 0 01-3 3"/></svg>
@@ -121,6 +122,21 @@
             Contact &amp; Feedback
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Live mini-stats (user request): current shift elapsed + weekly
+         quota %, visible on every page instead of only Shift Management.
+         Updated by the same tick()/loadQuotaRing() pipeline that already
+         drives the real quota ring - see updateSidebarMiniStats in app.js. -->
+    <div class="sidebar-mini-stats" id="sidebarMiniStats" hidden>
+      <div class="sidebar-mini-stat">
+        <span class="sidebar-mini-stat-value" id="sidebarMiniStatsShift">Off duty</span>
+        <span class="sidebar-mini-stat-label">Current shift</span>
+      </div>
+      <div class="sidebar-mini-stat">
+        <span class="sidebar-mini-stat-value" id="sidebarMiniStatsQuota">--</span>
+        <span class="sidebar-mini-stat-label">Weekly quota</span>
       </div>
     </div>
 
@@ -998,6 +1014,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260727"></script>
+<script src="app.js?v=20260728"></script>
 </body>
 </html>

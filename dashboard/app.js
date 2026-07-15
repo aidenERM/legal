@@ -392,6 +392,84 @@ function initCommandPalette() {
 }
 initCommandPalette();
 
+// ── Collapsed-sidebar flyout submenu ─────────────────────────────────────
+// Hovering a rail icon (desktop collapsed mode) shows that category's real
+// nav-items as a floating flyout instead of forcing a full sidebar
+// re-expand just to pick a page. Reparents the actual .nav-category-items
+// node to <body> (reusing its real buttons/click handlers - no separate
+// flyout markup to keep in sync) and puts it back where it came from on
+// mouseleave. Delegated on #sidebarIconRail itself (not individual
+// buttons) since refreshSidebarCategories rebuilds the rail's innerHTML
+// on every tier/category change - a listener on the container survives
+// that; one on the buttons wouldn't.
+function initSidebarFlyout() {
+  const rail = document.getElementById("sidebarIconRail");
+  const shell = document.getElementById("shell");
+  if (!rail || !shell) return;
+
+  let closeTimeout = null;
+  let activeItems = null;
+  let activeParent = null;
+  let activeNextSibling = null;
+
+  function closeFlyout() {
+    clearTimeout(closeTimeout);
+    if (activeItems && activeParent) {
+      activeItems.classList.remove("nav-flyout");
+      activeItems.style.top = "";
+      activeItems.style.left = "";
+      activeParent.insertBefore(activeItems, activeNextSibling);
+    }
+    activeItems = null;
+    activeParent = null;
+    activeNextSibling = null;
+  }
+
+  function scheduleClose() {
+    clearTimeout(closeTimeout);
+    closeTimeout = window.setTimeout(closeFlyout, 200);
+  }
+
+  rail.addEventListener("mouseover", (e) => {
+    if (!shell.classList.contains("collapsed")) return;
+    const btn = e.target.closest(".rail-icon-btn");
+    if (!btn) return;
+    const group = document.querySelector(`.nav-group[data-category="${btn.dataset.category}"]`);
+    const items = group?.querySelector(".nav-category-items");
+    if (!items || items === activeItems) {
+      clearTimeout(closeTimeout);
+      return;
+    }
+    closeFlyout();
+    activeParent = items.parentElement;
+    activeNextSibling = items.nextSibling;
+    const rect = btn.getBoundingClientRect();
+    items.classList.add("nav-flyout");
+    items.style.top = `${Math.round(rect.top)}px`;
+    items.style.left = `${Math.round(rect.right + 8)}px`;
+    document.body.appendChild(items);
+    activeItems = items;
+  });
+
+  rail.addEventListener("mouseleave", scheduleClose);
+
+  document.addEventListener("mouseover", (e) => {
+    if (!activeItems) return;
+    if (activeItems.contains(e.target) || rail.contains(e.target)) {
+      clearTimeout(closeTimeout);
+    } else {
+      scheduleClose();
+    }
+  });
+
+  // Clicking a nav-item inside the flyout navigates away - close it
+  // immediately rather than leaving it floating over the new page.
+  document.addEventListener("click", (e) => {
+    if (activeItems && activeItems.contains(e.target)) closeFlyout();
+  });
+}
+initSidebarFlyout();
+
 function formatDuration(totalSeconds) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -724,6 +802,38 @@ function showAccessRestrictedScreen() {
   `;
 }
 
+// Shared icon set for every dynamically-generated nav-item (admin/command-
+// team/BOC/developer/FTO/IA groups) - the static Dashboard group's items
+// have their icons hand-written in app.html, but everything built here in
+// JS previously rendered as plain text with no icon at all. One shared map
+// keyed by concept instead of hand-writing SVG markup at each of the ~20
+// call sites below.
+const NAV_ICON_PATHS = {
+  users: `<circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"/><circle cx="17" cy="8" r="2.6"/><path d="M16 14.5c2.7.4 5 2.3 5 5.5"/>`,
+  calendarCheck: `<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M9 15l2 2 4-4"/>`,
+  cap: `<path d="M22 10L12 4 2 10l10 6 10-6z"/><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/>`,
+  exchange: `<path d="M7 3l4 4-4 4"/><path d="M3 7h8"/><path d="M17 21l-4-4 4-4"/><path d="M21 17h-8"/>`,
+  target: `<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.5"/>`,
+  clipboardCheck: `<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2"/><path d="M9 12l2 2 4-4"/>`,
+  eye: `<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>`,
+  trophy: `<path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0V4z"/><path d="M7 5H4a3 3 0 003 3M17 5h3a3 3 0 01-3 3"/>`,
+  calendarClock: `<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/><circle cx="15.5" cy="15.5" r="3.5"/><path d="M15.5 14v1.5l1 1"/>`,
+  inbox: `<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.4 5h13.2L22 12v7a2 2 0 01-2 2H4a2 2 0 01-2-2v-7L5.4 5z"/>`,
+  userX: `<circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.3 3.1-5.5 7-5.5.9 0 1.7.13 2.5.37"/><path d="M17 9l4 4M21 9l-4 4"/>`,
+  scroll: `<path d="M8 3h11a2 2 0 012 2v3H10"/><path d="M8 3a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2v-3"/><path d="M4 8a2 2 0 012-2v14a2 2 0 01-2-2z"/>`,
+  mail: `<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 6 10-6"/>`,
+  megaphone: `<path d="M3 11v2a2 2 0 002 2h1l3 5h2l-1-5h4l6 4V6l-6 4H6a2 2 0 00-2 2z"/>`,
+  barChart: `<path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/>`,
+  gear: `<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>`,
+  code: `<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l2.1-2.1a4 4 0 01-5.3 5.3l-6.4 6.4a2 2 0 01-2.8-2.8l6.4-6.4a4 4 0 015.3-5.3l-2.1 2.1z"/>`,
+  shield: `<path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4z"/>`,
+};
+function navIconSvg(key) {
+  const path = NAV_ICON_PATHS[key];
+  if (!path) return "";
+  return `<svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+}
+
 // Fetched once at boot so both the sidebar (admin/management/developer group)
 // and the Profile panel can use it without re-fetching /api/me repeatedly.
 async function bootMe() {
@@ -793,20 +903,20 @@ async function bootMe() {
     // group remains the single copy for command-team and above. Officers and
     // Transfer Requests stay visible for every admin+ tier as before.
     const phase4Items = [
-      { section: "officers-mgmt", label: "Officers", onOpen: loadOfficersRoster },
+      { section: "officers-mgmt", label: "Officers", icon: "users", onOpen: loadOfficersRoster },
       ...(me.tier === "admin"
         ? [
-            { section: "loa-mgmt", label: "LOA Management", onOpen: loadLoaManagement },
-            { section: "ra-oversight", label: "RA Oversight", onOpen: loadRaOversight },
+            { section: "loa-mgmt", label: "LOA Management", icon: "calendarCheck", onOpen: loadLoaManagement },
+            { section: "ra-oversight", label: "RA Oversight", icon: "cap", onOpen: loadRaOversight },
           ]
         : []),
-      { section: "transfers", label: "Transfer Requests", onOpen: loadTransfersQueue },
+      { section: "transfers", label: "Transfer Requests", icon: "exchange", onOpen: loadTransfersQueue },
     ];
-    phase4Items.forEach(({ section, label, onOpen }) => {
+    phase4Items.forEach(({ section, label, icon, onOpen }) => {
       const btn = document.createElement("button");
       btn.className = "nav-item";
       btn.dataset.section = section;
-      btn.textContent = label;
+      btn.innerHTML = `${navIconSvg(icon)}${label}`;
       btn.addEventListener("click", () => {
         showPanel(section);
         onOpen();
@@ -838,14 +948,14 @@ async function bootMe() {
     sidebar.appendChild(group);
     const ctItemsWrap = group.querySelector(".nav-category-items");
     const commandTeamItems = [
-      { section: "loa-mgmt", label: "LOA Management", onOpen: loadLoaManagement },
-      { section: "ra-oversight", label: "RA Oversight", onOpen: loadRaOversight },
+      { section: "loa-mgmt", label: "LOA Management", icon: "calendarCheck", onOpen: loadLoaManagement },
+      { section: "ra-oversight", label: "RA Oversight", icon: "cap", onOpen: loadRaOversight },
     ];
-    commandTeamItems.forEach(({ section, label, onOpen }) => {
+    commandTeamItems.forEach(({ section, label, icon, onOpen }) => {
       const btn = document.createElement("button");
       btn.className = "nav-item";
       btn.dataset.section = section;
-      btn.textContent = label;
+      btn.innerHTML = `${navIconSvg(icon)}${label}`;
       btn.addEventListener("click", () => {
         showPanel(section);
         onOpen();
@@ -868,6 +978,7 @@ async function bootMe() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l5 5M4 14l5-5 5 5-5 5-5-5z"/><path d="M14 10l6-6M18 6l2 2"/><path d="M4 19h6"/></svg>
         </span>
         <span class="nav-category-label">Board of Commissioners</span>
+        <span class="nav-badge" id="bocPendingBadge" hidden></span>
         <svg class="nav-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <div class="nav-category-items"></div>
@@ -884,26 +995,26 @@ async function bootMe() {
     // sidebar entry (same pattern already used for Promotion Quota below),
     // wired via bocSwitchToTab so nav-click and tab-click stay in sync.
     const bocSubItems = [
-      { tab: "quota-enforcement", label: "Quota Enforcement" },
-      { tab: "hr-review", label: "HR Promotion Review" },
-      { tab: "hr-oversight", label: "HR Oversight" },
-      { tab: "leaderboard-control", label: "Leaderboard Control" },
-      { tab: "schedules", label: "Scheduled Actions" },
-      { tab: "applications", label: "Applications" },
-      { tab: "watch-list", label: "Watch List" },
-      { tab: "inactive-officers", label: "Inactive Officers" },
-      { tab: "audit-log", label: "Audit Log" },
-      { tab: "dm-officers", label: "DM Officers" },
-      { tab: "announcement", label: "Announcement" },
-      { tab: "ra-stats", label: "RA Program Stats" },
-      { tab: "settings", label: "Settings" },
+      { tab: "quota-enforcement", label: "Quota Enforcement", icon: "target" },
+      { tab: "hr-review", label: "HR Promotion Review", icon: "clipboardCheck" },
+      { tab: "hr-oversight", label: "HR Oversight", icon: "eye" },
+      { tab: "leaderboard-control", label: "Leaderboard Control", icon: "trophy" },
+      { tab: "schedules", label: "Scheduled Actions", icon: "calendarClock" },
+      { tab: "applications", label: "Applications", icon: "inbox" },
+      { tab: "watch-list", label: "Watch List", icon: "eye" },
+      { tab: "inactive-officers", label: "Inactive Officers", icon: "userX" },
+      { tab: "audit-log", label: "Audit Log", icon: "scroll" },
+      { tab: "dm-officers", label: "DM Officers", icon: "mail" },
+      { tab: "announcement", label: "Announcement", icon: "megaphone" },
+      { tab: "ra-stats", label: "RA Program Stats", icon: "barChart" },
+      { tab: "settings", label: "Settings", icon: "gear" },
     ];
-    bocSubItems.forEach(({ tab, label }) => {
+    bocSubItems.forEach(({ tab, label, icon }) => {
       const btn = document.createElement("button");
       btn.className = "nav-item";
       btn.dataset.section = "boc";
       btn.dataset.bocNavTab = tab;
-      btn.textContent = label;
+      btn.innerHTML = `${navIconSvg(icon)}${label}`;
       btn.addEventListener("click", () => {
         showPanel("boc");
         bocSwitchToTab(tab);
@@ -916,12 +1027,25 @@ async function bootMe() {
     const quotaBtn = document.createElement("button");
     quotaBtn.className = "nav-item";
     quotaBtn.dataset.section = "promotion-quota";
-    quotaBtn.textContent = "Promotion Quota";
+    quotaBtn.innerHTML = `${navIconSvg("target")}Promotion Quota`;
     quotaBtn.addEventListener("click", () => {
       showPanel("promotion-quota");
       loadPromotionQuota();
     });
     bocItemsWrap.appendChild(quotaBtn);
+
+    // Pending-count badge (user request): turns the sidebar into an actual
+    // to-do glance for HR instead of something you click into just to find
+    // out whether anything needs attention. Applications pending count is
+    // already tracked by the existing stats endpoint - reused here rather
+    // than adding a new one.
+    bocGet("/api/boc/applications/stats").then((res) => {
+      const pending = res?.stats?.pending;
+      const badge = document.getElementById("bocPendingBadge");
+      if (!badge || !pending) return;
+      badge.textContent = pending > 99 ? "99+" : String(pending);
+      badge.hidden = false;
+    });
   }
 
   // Developer Tools nav item - Developer tier only, per the Phase 6 plan
@@ -940,7 +1064,7 @@ async function bootMe() {
         <svg class="nav-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <div class="nav-category-items">
-        <button class="nav-item" data-section="developer">Developer Tools</button>
+        <button class="nav-item" data-section="developer">${navIconSvg("code")}Developer Tools</button>
       </div>
     `;
     sidebar.appendChild(group);
@@ -968,7 +1092,7 @@ async function bootMe() {
         <svg class="nav-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <div class="nav-category-items">
-        <button class="nav-item" data-section="fto-tools">FTO Tools</button>
+        <button class="nav-item" data-section="fto-tools">${navIconSvg("users")}FTO Tools</button>
       </div>
     `;
     sidebar.appendChild(group);
@@ -992,7 +1116,7 @@ async function bootMe() {
         <svg class="nav-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <div class="nav-category-items">
-        <button class="nav-item" data-section="ia-tools">IA Tools</button>
+        <button class="nav-item" data-section="ia-tools">${navIconSvg("shield")}IA Tools</button>
       </div>
     `;
     sidebar.appendChild(group);
@@ -1757,6 +1881,10 @@ async function loadQuotaRing() {
   ring.style.setProperty("--quota-pct", pct);
   pctEl.textContent = `${pct}%`;
   detailEl.textContent = `${formatDuration(currentSeconds)} of ${formatDuration(quotaSeconds)} this week`;
+
+  const miniQuota = document.getElementById("sidebarMiniStatsQuota");
+  if (miniQuota) miniQuota.textContent = `${pct}%`;
+  document.getElementById("sidebarMiniStats")?.removeAttribute("hidden");
 }
 
 async function loadQuickStats() {
@@ -1814,8 +1942,25 @@ function computeElapsedSeconds(shift) {
   return Math.max(0, elapsed);
 }
 
+// Live duty-status dot on the Shift Management nav item itself (user
+// request): glanceable from any page without opening Shift Management -
+// green + pulsing while on duty, amber while on break, hidden entirely
+// when off duty.
+function updateNavShiftStatusDot(shift) {
+  const dot = document.getElementById("navShiftStatusDot");
+  if (!dot) return;
+  if (!shift || !shift.active) {
+    dot.hidden = true;
+    dot.classList.remove("on-break");
+    return;
+  }
+  dot.hidden = false;
+  dot.classList.toggle("on-break", !!shift.onBreak);
+}
+
 function renderShiftState(shift) {
   currentShiftState = shift;
+  updateNavShiftStatusDot(shift);
   const off = document.getElementById("currentShiftOff");
   const on = document.getElementById("currentShiftOn");
 
@@ -1826,6 +1971,9 @@ function renderShiftState(shift) {
       clearInterval(shiftTimerInterval);
       shiftTimerInterval = null;
     }
+    const miniShiftOffEl = document.getElementById("sidebarMiniStatsShift");
+    if (miniShiftOffEl) miniShiftOffEl.textContent = "Off duty";
+    document.getElementById("sidebarMiniStats")?.removeAttribute("hidden");
     return;
   }
 
@@ -1839,8 +1987,11 @@ function renderShiftState(shift) {
   const timerEl = document.getElementById("currentShiftTimer");
   const breakTimerEl = document.getElementById("currentShiftBreakTimer");
   const breakElapsedEl = document.getElementById("currentShiftBreakElapsed");
+  const miniShiftEl = document.getElementById("sidebarMiniStatsShift");
   const tick = () => {
-    timerEl.textContent = formatHms(computeElapsedSeconds(currentShiftState));
+    const elapsed = computeElapsedSeconds(currentShiftState);
+    timerEl.textContent = formatHms(elapsed);
+    if (miniShiftEl) miniShiftEl.textContent = formatHms(elapsed);
 
     // Live-ticking break duration ("On break 0:03" -> "0:04" -> ...) instead
     // of just the Start/End Break button with no indication of how long the
