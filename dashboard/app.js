@@ -177,6 +177,221 @@ document
 
 attachGlassPointerTracking(document.getElementById("sidebar"));
 
+// ── Command palette (Cmd/Ctrl+K) ─────────────────────────────────────────
+// Claude-style centered overlay: one input, fuzzy-filtered results below it,
+// arrow keys + Enter to navigate, Esc/backdrop-click to close. Static index
+// of pages + hub sub-tabs + a few common actions, filtered client-side -
+// no API round trip, so results update on every keystroke with no debounce
+// needed.
+function initCommandPalette() {
+  const backdrop = document.getElementById("cmdkBackdrop");
+  const panel = document.getElementById("cmdkPanel");
+  const input = document.getElementById("cmdkInput");
+  const resultsEl = document.getElementById("cmdkResults");
+  if (!backdrop || !input || !resultsEl) return;
+
+  const ICONS = {
+    page: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>`,
+    tab: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>`,
+    action: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>`,
+  };
+
+  // Recent selections, most-recent first, capped - surfaced before you type
+  // anything so the palette isn't a blank slate on open.
+  const RECENT_KEY = "chp_cmdk_recent";
+  function getRecent() {
+    try {
+      return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+    } catch {
+      return [];
+    }
+  }
+  function pushRecent(id) {
+    const recent = getRecent().filter((r) => r !== id);
+    recent.unshift(id);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(recent.slice(0, 5)));
+  }
+
+  function goToSection(section, hubTab) {
+    const navItem = document.querySelector(`.nav-item[data-section="${section}"]`);
+    if (navItem) navItem.click();
+    if (hubTab) {
+      // Hub sub-tab buttons (data-hub-tab) live inside the panel regardless
+      // of the panel's own crossfade transition, so this can fire in the
+      // same tick as the nav click above - no need to wait for showPanel's
+      // transition to finish.
+      const tabBtn = document.querySelector(`[data-hub-tab="${hubTab}"]`);
+      if (tabBtn) tabBtn.click();
+    }
+  }
+
+  const items = [
+    { id: "shift-management", group: "Pages", icon: "page", label: "Shift Management", run: () => goToSection("shift-management") },
+    { id: "leaderboard", group: "Pages", icon: "page", label: "Leaderboard", run: () => goToSection("leaderboard", "rankings") },
+    { id: "recognized-officers", group: "Pages", icon: "tab", label: "Recognized Officers", sub: "Leaderboard", run: () => goToSection("leaderboard", "recognized") },
+    { id: "department-feed", group: "Pages", icon: "tab", label: "Department Feed", sub: "Leaderboard", run: () => goToSection("leaderboard", "feed") },
+    { id: "loa", group: "Pages", icon: "page", label: "Leave of Absence", sub: "Leave & RA", run: () => goToSection("loa-ra", "loa") },
+    { id: "ra", group: "Pages", icon: "tab", label: "RA Program", sub: "Leave & RA", run: () => goToSection("loa-ra", "ra") },
+    { id: "history", group: "Pages", icon: "page", label: "History", run: () => goToSection("history") },
+    { id: "profile", group: "Pages", icon: "page", label: "Profile", run: () => goToSection("profile") },
+    { id: "settings", group: "Pages", icon: "page", label: "Personal Settings", run: () => goToSection("settings") },
+    { id: "contact", group: "Pages", icon: "page", label: "Contact", sub: "Contact & Feedback", run: () => goToSection("contact", "contact") },
+    { id: "anonymous-feedback", group: "Pages", icon: "tab", label: "Anonymous Feedback", sub: "Contact & Feedback", run: () => goToSection("contact", "anonymous") },
+    {
+      id: "toggle-theme", group: "Actions", icon: "action", label: "Toggle Light / Dark Mode",
+      run: () => document.getElementById("sidebarThemeToggleBtn")?.click(),
+    },
+    {
+      id: "open-ai", group: "Actions", icon: "action", label: "Open AI Assistant",
+      run: () => document.getElementById("aiFab")?.click(),
+    },
+    {
+      id: "switch-accounts", group: "Actions", icon: "action", label: "Switch Accounts",
+      run: () => document.getElementById("sidebarSwitchAccountsBtn")?.click(),
+    },
+    {
+      id: "log-out", group: "Actions", icon: "action", label: "Log Out",
+      run: () => document.getElementById("sidebarLogoutBtn")?.click(),
+    },
+  ];
+
+  let activeIndex = 0;
+  let visible = [];
+
+  function render(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      const recentIds = getRecent();
+      const recentItems = recentIds.map((id) => items.find((i) => i.id === id)).filter(Boolean);
+      visible = recentItems.length ? recentItems : items.slice(0, 8);
+      renderGroups(recentItems.length ? [["Recent", recentItems]] : groupBy(visible));
+      return;
+    }
+    // Simple substring match across label + sub + group - not true fuzzy
+    // matching, but fast and predictable for a ~15-item static index.
+    visible = items.filter(
+      (i) => i.label.toLowerCase().includes(q) || (i.sub && i.sub.toLowerCase().includes(q)) || i.group.toLowerCase().includes(q)
+    );
+    renderGroups(groupBy(visible));
+  }
+
+  function groupBy(list) {
+    const groups = [];
+    for (const item of list) {
+      let g = groups.find(([name]) => name === item.group);
+      if (!g) {
+        g = [item.group, []];
+        groups.push(g);
+      }
+      g[1].push(item);
+    }
+    return groups;
+  }
+
+  function renderGroups(groups) {
+    activeIndex = 0;
+    if (visible.length === 0) {
+      resultsEl.innerHTML = `<div class="cmdk-empty">No matches</div>`;
+      return;
+    }
+    let html = "";
+    let flatIndex = 0;
+    for (const [groupName, groupItems] of groups) {
+      html += `<div class="cmdk-group-label">${groupName}</div>`;
+      for (const item of groupItems) {
+        html += `
+          <button class="cmdk-item${flatIndex === 0 ? " active" : ""}" type="button" data-cmdk-index="${flatIndex}">
+            <span class="cmdk-item-icon">${ICONS[item.icon] || ICONS.page}</span>
+            <span>${item.label}</span>
+            ${item.sub ? `<span class="cmdk-item-sub">${item.sub}</span>` : ""}
+          </button>
+        `;
+        flatIndex++;
+      }
+    }
+    resultsEl.innerHTML = html;
+  }
+
+  function setActive(index) {
+    if (visible.length === 0) return;
+    activeIndex = (index + visible.length) % visible.length;
+    resultsEl.querySelectorAll(".cmdk-item").forEach((el, i) => {
+      el.classList.toggle("active", i === activeIndex);
+    });
+    resultsEl.querySelector(".cmdk-item.active")?.scrollIntoView({ block: "nearest" });
+  }
+
+  function selectActive() {
+    const item = visible[activeIndex];
+    if (!item) return;
+    pushRecent(item.id);
+    close();
+    item.run();
+  }
+
+  let isOpen = false;
+  function open() {
+    if (isOpen) return;
+    isOpen = true;
+    backdrop.hidden = false;
+    backdrop.classList.remove("closing");
+    input.value = "";
+    render("");
+    // Re-trigger the CSS entrance animations (they run via `animation`, not
+    // `transition`, so simply un-hiding isn't enough after the first open -
+    // forcing a reflow lets the animation replay every time).
+    void panel.offsetWidth;
+    input.focus();
+  }
+  function close() {
+    if (!isOpen) return;
+    isOpen = false;
+    backdrop.classList.add("closing");
+    window.setTimeout(() => {
+      backdrop.hidden = true;
+      backdrop.classList.remove("closing");
+    }, 160);
+  }
+
+  document.addEventListener("keydown", (e) => {
+    const isK = e.key === "k" || e.key === "K";
+    if ((e.ctrlKey || e.metaKey) && isK) {
+      e.preventDefault();
+      isOpen ? close() : open();
+      return;
+    }
+    if (!isOpen) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActive(activeIndex + 1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActive(activeIndex - 1);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      selectActive();
+    }
+  });
+
+  input.addEventListener("input", () => render(input.value));
+  resultsEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-cmdk-index]");
+    if (!btn) return;
+    activeIndex = Number(btn.dataset.cmdkIndex);
+    selectActive();
+  });
+  backdrop.addEventListener("mousedown", (e) => {
+    if (e.target === backdrop) close();
+  });
+  document.getElementById("sidebarCmdkTrigger")?.addEventListener("click", open);
+
+  attachAutoHideScrollbar(resultsEl);
+}
+initCommandPalette();
+
 function formatDuration(totalSeconds) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
