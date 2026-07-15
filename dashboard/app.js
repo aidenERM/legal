@@ -2507,6 +2507,55 @@ const LOADING_TIPS = [
   "Did you know? Session info in Personal Settings shows exactly when your login expires.",
   "Tip: shift streaks count consecutive days with at least one completed shift - today doesn't break yesterday's streak.",
 ];
+// Contextual tips (user request): whatever's actually pending (see
+// loadingOverlayPending, keyed by load-function name, same keys as
+// LOAD_LABELS below) gets tips relevant to that page instead of a fully
+// random pool that might show a Leaderboard tip while History is loading.
+// Falls back to the full LOADING_TIPS pool when nothing pending has a
+// specific list (e.g. loadHistory, loadSessionInfo).
+const LOADING_TIPS_BY_FN = {
+  loadShiftManagement: [
+    "Tip: you can start, break, and end a shift right from the Shift Management page - no need to touch a Discord command.",
+    "Did you know? Your quota progress ring on Shift Management updates automatically as you rack up hours.",
+    "Did you know? The AI Assistant (bottom-right) can start or end your shift for you if you just ask.",
+  ],
+  loadMiniLeaderboard: [
+    "Tip: the Leaderboard's \"Live\" filter tracks duty time since the last period reset, not just the last 7 days.",
+  ],
+  loadQuotaRing: [
+    "Did you know? Your quota progress ring on Shift Management updates automatically as you rack up hours.",
+  ],
+  loadOnDutyCard: [
+    "Tip: the on-duty badge next to the Leaderboard filters shows exactly how many officers are active right now.",
+  ],
+  loadLeaderboard: [
+    "Tip: the Leaderboard's \"Live\" filter tracks duty time since the last period reset, not just the last 7 days.",
+    "Tip: use the Custom range on the Leaderboard to pull duty totals for any specific date window.",
+    "Did you know? You can filter the Leaderboard to just CHP or just SEU duty time.",
+    "Tip: the on-duty badge next to the Leaderboard filters shows exactly how many officers are active right now.",
+  ],
+  loadRecognizedOfficers: [
+    "Tip: check Recognized Officers for staff who've logged 100+ hours and 6+ months of tenure.",
+  ],
+  loadDepartmentFeed: [
+    "Did you know? The Department Feed shows recent promotions and accepted applications in one place.",
+  ],
+  loadLoa: [
+    "Did you know? LOA and RA requests submitted here post the same embed the bot posts for in-Discord requests.",
+  ],
+  loadRa: [
+    "Tip: online FTOs show up live on the RA page so you know who's available before requesting.",
+    "Tip: shift streaks count consecutive days with at least one completed shift - today doesn't break yesterday's streak.",
+  ],
+  loadProfile: [
+    "Did you know? Your duty time is broken down by CHP and SEU shift type right on your Profile page.",
+    "Did you know? Badges on your Profile page track streaks, tenure, and RA passes - keep showing up to earn more.",
+  ],
+  loadSettings: [
+    "Tip: Personal Settings lets you turn on Reduce Motion if the animations aren't your thing.",
+    "Did you know? Session info in Personal Settings shows exactly when your login expires.",
+  ],
+};
 let loadingOverlayTimer = null;
 let loadingOverlayTipInterval = null;
 let loadingOverlayElapsedInterval = null;
@@ -2554,7 +2603,9 @@ function showLoadingOverlay() {
   const tipEl = document.getElementById("loadingOverlayTip");
   if (!overlay || !tipEl) return;
   const pickTip = () => {
-    tipEl.textContent = LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)];
+    const relevant = [...loadingOverlayPending].flatMap((fn) => LOADING_TIPS_BY_FN[fn] || []);
+    const pool = relevant.length ? relevant : LOADING_TIPS;
+    tipEl.textContent = pool[Math.floor(Math.random() * pool.length)];
   };
   pickTip();
   _updateLoadingOverlayStatus();
@@ -3003,7 +3054,24 @@ function aiLoadConversations() {
   aiConversations = [aiCreateConversationObject()];
 }
 
+// Unbounded before this: every "New Chat" and every message in every
+// conversation persisted forever in both localStorage and this array in
+// memory for the life of the tab, no cap at all. Trims to the most recent
+// MAX_AI_CONVERSATIONS chats (oldest dropped first, matching push()'s
+// append-to-end ordering) and the most recent MAX_AI_MESSAGES_PER_CONVERSATION
+// messages within each one, every time conversations are persisted.
+const MAX_AI_CONVERSATIONS = 30;
+const MAX_AI_MESSAGES_PER_CONVERSATION = 300;
+
 function aiSaveConversations() {
+  if (aiConversations.length > MAX_AI_CONVERSATIONS) {
+    aiConversations = aiConversations.slice(-MAX_AI_CONVERSATIONS);
+  }
+  for (const convo of aiConversations) {
+    if (convo.messages.length > MAX_AI_MESSAGES_PER_CONVERSATION) {
+      convo.messages = convo.messages.slice(-MAX_AI_MESSAGES_PER_CONVERSATION);
+    }
+  }
   try {
     localStorage.setItem(AI_CONVERSATIONS_KEY, JSON.stringify(aiConversations));
   } catch (e) {

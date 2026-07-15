@@ -2948,3 +2948,22 @@ body.reduce-motion .loading-overlay-spinner { animation-duration: 0.01s; }
   font-weight: 700;
 }
 .shell.collapsed .sidebar-cmdk-trigger span, .shell.collapsed .sidebar-cmdk-trigger kbd { display: none; }
+
+/* ── Keyboard focus visibility ────────────────────────────────────────
+   Several components above set `outline: none` on plain :focus without
+   ever giving keyboard users a visible replacement (that pattern hides
+   focus for mouse clicks - fine - but also for Tab navigation, which
+   isn't fine). :focus-visible only matches when the browser thinks focus
+   came from the keyboard (not a mouse click), so this adds one visible
+   ring back for that case without re-introducing the "outline flashes on
+   every mouse click" look those rules were written to avoid. Placed last
+   in the cascade so it wins over the equal-specificity `:focus{outline:none}`
+   rules above for the keyboard case specifically, while every other
+   interactive element (buttons, nav items, palette results, tabs, links)
+   that never had a focus style at all now gets one too - one rule instead
+   of hand-tuning each component class. */
+:focus-visible {
+  outline: 2px solid var(--chp-gold-bright, #e0bf80);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
