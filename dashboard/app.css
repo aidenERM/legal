@@ -3094,3 +3094,19 @@ body.reduce-motion .loading-overlay-spinner { animation-duration: 0.01s; }
   color: rgba(255,255,255,0.35);
 }
 .shell.collapsed .sidebar-mini-stats { display: none; }
+
+/* ── Sidebar nav sub-group dividers (e.g. BOC's Personnel & Oversight /
+   Leaderboard & Scheduling / Communications & Admin clusters) - smaller
+   and more muted than .nav-category-label so it reads as a divider within
+   an already-open category, not another top-level heading. ── */
+.nav-subgroup-label {
+  margin: 10px 0 2px;
+  padding: 0 12px;
+  font-family: "Manrope", sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.24);
+}
+.nav-subgroup-label:first-child { margin-top: 2px; }

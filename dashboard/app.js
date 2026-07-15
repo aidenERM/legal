@@ -703,7 +703,7 @@ function wireHubTabs(tabsId) {
     });
   });
 }
-["loaRaHubTabs", "contactHubTabs", "leaderboardHubTabs"].forEach(wireHubTabs);
+["loaRaHubTabs", "contactHubTabs", "leaderboardHubTabs", "loaRaMgmtHubTabs"].forEach(wireHubTabs);
 
 // Wires click delegation for a renderHistoryTabsHtml()-produced tab group.
 // Must be (re-)called after every innerHTML replacement since the buttons
@@ -906,8 +906,15 @@ async function bootMe() {
       { section: "officers-mgmt", label: "Officers", icon: "users", onOpen: loadOfficersRoster },
       ...(me.tier === "admin"
         ? [
-            { section: "loa-mgmt", label: "LOA Management", icon: "calendarCheck", onOpen: loadLoaManagement },
-            { section: "ra-oversight", label: "RA Oversight", icon: "cap", onOpen: loadRaOversight },
+            {
+              section: "loa-ra-mgmt",
+              label: "Leave & RA Oversight",
+              icon: "calendarCheck",
+              onOpen: () => {
+                loadLoaManagement();
+                loadRaOversight();
+              },
+            },
           ]
         : []),
       { section: "transfers", label: "Transfer Requests", icon: "exchange", onOpen: loadTransfersQueue },
@@ -948,8 +955,15 @@ async function bootMe() {
     sidebar.appendChild(group);
     const ctItemsWrap = group.querySelector(".nav-category-items");
     const commandTeamItems = [
-      { section: "loa-mgmt", label: "LOA Management", icon: "calendarCheck", onOpen: loadLoaManagement },
-      { section: "ra-oversight", label: "RA Oversight", icon: "cap", onOpen: loadRaOversight },
+      {
+        section: "loa-ra-mgmt",
+        label: "Leave & RA Oversight",
+        icon: "calendarCheck",
+        onOpen: () => {
+          loadLoaManagement();
+          loadRaOversight();
+        },
+      },
     ];
     commandTeamItems.forEach(({ section, label, icon, onOpen }) => {
       const btn = document.createElement("button");
@@ -994,45 +1008,66 @@ async function bootMe() {
     // sections were effectively invisible. Give each sub-view its own
     // sidebar entry (same pattern already used for Promotion Quota below),
     // wired via bocSwitchToTab so nav-click and tab-click stay in sync.
-    const bocSubItems = [
-      { tab: "quota-enforcement", label: "Quota Enforcement", icon: "target" },
-      { tab: "hr-review", label: "HR Promotion Review", icon: "clipboardCheck" },
-      { tab: "hr-oversight", label: "HR Oversight", icon: "eye" },
-      { tab: "leaderboard-control", label: "Leaderboard Control", icon: "trophy" },
-      { tab: "schedules", label: "Scheduled Actions", icon: "calendarClock" },
-      { tab: "applications", label: "Applications", icon: "inbox" },
-      { tab: "watch-list", label: "Watch List", icon: "eye" },
-      { tab: "inactive-officers", label: "Inactive Officers", icon: "userX" },
-      { tab: "audit-log", label: "Audit Log", icon: "scroll" },
-      { tab: "dm-officers", label: "DM Officers", icon: "mail" },
-      { tab: "announcement", label: "Announcement", icon: "megaphone" },
-      { tab: "ra-stats", label: "RA Program Stats", icon: "barChart" },
-      { tab: "settings", label: "Settings", icon: "gear" },
+    // Grouped into the same 3 clusters the in-panel #bocTabs strip already
+    // uses (user request: 13 flat sidebar items read as clutter even though
+    // the underlying panels are each distinct bot-integrated data/actions
+    // that aren't safe to merge together - grouping the navigation instead
+    // of the content gets the minimalism win without touching working
+    // load/action logic).
+    const bocSubGroups = [
+      {
+        label: "Personnel & Oversight",
+        items: [
+          { tab: "quota-enforcement", label: "Quota Enforcement", icon: "target" },
+          { section: "promotion-quota", label: "Promotion Quota", icon: "target", onOpen: loadPromotionQuota },
+          { tab: "hr-review", label: "HR Promotion Review", icon: "clipboardCheck" },
+          { tab: "hr-oversight", label: "HR Oversight", icon: "eye" },
+          { tab: "applications", label: "Applications", icon: "inbox" },
+          { tab: "watch-list", label: "Watch List", icon: "eye" },
+          { tab: "inactive-officers", label: "Inactive Officers", icon: "userX" },
+        ],
+      },
+      {
+        label: "Leaderboard & Scheduling",
+        items: [
+          { tab: "leaderboard-control", label: "Leaderboard Control", icon: "trophy" },
+          { tab: "schedules", label: "Scheduled Actions", icon: "calendarClock" },
+          { tab: "ra-stats", label: "RA Program Stats", icon: "barChart" },
+        ],
+      },
+      {
+        label: "Communications & Admin",
+        items: [
+          { tab: "dm-officers", label: "DM Officers", icon: "mail" },
+          { tab: "announcement", label: "Announcement", icon: "megaphone" },
+          { tab: "audit-log", label: "Audit Log", icon: "scroll" },
+          { tab: "settings", label: "Settings", icon: "gear" },
+        ],
+      },
     ];
-    bocSubItems.forEach(({ tab, label, icon }) => {
-      const btn = document.createElement("button");
-      btn.className = "nav-item";
-      btn.dataset.section = "boc";
-      btn.dataset.bocNavTab = tab;
-      btn.innerHTML = `${navIconSvg(icon)}${label}`;
-      btn.addEventListener("click", () => {
-        showPanel("boc");
-        bocSwitchToTab(tab);
+    bocSubGroups.forEach(({ label: groupLabel, items }) => {
+      const divider = document.createElement("div");
+      divider.className = "nav-subgroup-label";
+      divider.textContent = groupLabel;
+      bocItemsWrap.appendChild(divider);
+      items.forEach(({ tab, section, label, icon, onOpen }) => {
+        const btn = document.createElement("button");
+        btn.className = "nav-item";
+        btn.dataset.section = section || "boc";
+        if (tab) btn.dataset.bocNavTab = tab;
+        btn.innerHTML = `${navIconSvg(icon)}${label}`;
+        btn.addEventListener("click", () => {
+          if (tab) {
+            showPanel("boc");
+            bocSwitchToTab(tab);
+          } else {
+            showPanel(section);
+            onOpen();
+          }
+        });
+        bocItemsWrap.appendChild(btn);
       });
-      bocItemsWrap.appendChild(btn);
     });
-
-    // Bug 1 fix: Promotion Quota moved here from the High Ranks (admin)
-    // group - promotion/quota data is BOC-only.
-    const quotaBtn = document.createElement("button");
-    quotaBtn.className = "nav-item";
-    quotaBtn.dataset.section = "promotion-quota";
-    quotaBtn.innerHTML = `${navIconSvg("target")}Promotion Quota`;
-    quotaBtn.addEventListener("click", () => {
-      showPanel("promotion-quota");
-      loadPromotionQuota();
-    });
-    bocItemsWrap.appendChild(quotaBtn);
 
     // Pending-count badge (user request): turns the sidebar into an actual
     // to-do glance for HR instead of something you click into just to find
