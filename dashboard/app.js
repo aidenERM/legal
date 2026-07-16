@@ -3609,13 +3609,27 @@ function aiSwitchConversation(id) {
   aiPopulateConvoMenu();
 }
 
-function aiAppendBubble(role, text) {
+function aiAppendBubble(role, text, imageDataUrl) {
   const messages = document.getElementById("aiMessages");
   const empty = messages ? messages.querySelector(".ai-empty-state") : null;
   if (empty) empty.remove();
   const bubble = document.createElement("div");
   bubble.className = `ai-bubble ${role}`;
-  bubble.textContent = text;
+  if (imageDataUrl) {
+    const img = document.createElement("img");
+    img.className = "ai-bubble-image";
+    img.src = imageDataUrl;
+    img.alt = "Attached image";
+    bubble.appendChild(img);
+    if (text) {
+      const textEl = document.createElement("div");
+      textEl.className = "ai-bubble-text";
+      textEl.textContent = text;
+      bubble.appendChild(textEl);
+    }
+  } else {
+    bubble.textContent = text;
+  }
   messages.appendChild(bubble);
   messages.scrollTop = messages.scrollHeight;
   return bubble;
@@ -3729,11 +3743,18 @@ async function aiConfirmProposal(proposalId, actionsEl) {
   );
 }
 
-async function aiSendMessage(message) {
+async function aiSendMessage(message, attachedImage) {
   const convo = aiGetActiveConversation();
-  aiAppendBubble("user", message);
+  aiAppendBubble("user", message, attachedImage && attachedImage.dataUrl);
   if (convo) {
-    convo.messages.push({ role: "user", content: message, timestamp: Date.now() });
+    // Deliberately NOT storing the image data URL here - a single attached
+    // image can be several MB of base64, which would blow through
+    // localStorage's ~5-10MB quota in one message. The image only applies
+    // to this one request (see historyPayload below); on reload, past
+    // turns show the text with a "(image attached)" note instead of the
+    // image itself.
+    const storedContent = attachedImage ? `${message} (image attached)`.trim() : message;
+    convo.messages.push({ role: "user", content: storedContent, timestamp: Date.now() });
     if ((!convo.title || convo.title === "New Chat") && convo.messages.filter((m) => m.role === "user").length === 1) {
       const trimmed = message.trim();
       convo.title = trimmed.length > 40 ? `${trimmed.slice(0, 37).trim()}…` : trimmed;
@@ -3758,7 +3779,7 @@ async function aiSendMessage(message) {
       retryBtn.textContent = "Retry";
       retryBtn.addEventListener("click", () => {
         retryBtn.remove();
-        aiSendMessage(message);
+        aiSendMessage(message, attachedImage);
       });
       bubble.appendChild(document.createElement("br"));
       bubble.appendChild(retryBtn);
@@ -3789,7 +3810,13 @@ async function aiSendMessage(message) {
       method: "POST",
       credentials: "include",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message, conversationId: aiActiveConversationId, history: historyPayload }),
+      body: JSON.stringify({
+        message,
+        conversationId: aiActiveConversationId,
+        history: historyPayload,
+        image: attachedImage ? attachedImage.dataUrl : undefined,
+        imageFormat: attachedImage ? attachedImage.format : undefined,
+      }),
     });
   } catch {
     onError("Sorry, the assistant is unavailable right now. Please try again later.");
@@ -4107,13 +4134,59 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") aiCloseConvoMenu();
 });
 
+// ── AI Assistant: attach-an-image ──
+// Same 8 MB cap the bridge/bot enforce server-side (AI_CHAT_MAX_IMAGE_BYTES)
+// - checked here too so a too-large file never even gets base64-encoded and
+// sent over the wire.
+const AI_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+let aiPendingImage = null; // { dataUrl, format, name } | null
+
+function aiSetPendingImage(file) {
+  if (!file.type.startsWith("image/")) {
+    return alert("Please attach an image file.");
+  }
+  if (file.size > AI_IMAGE_MAX_BYTES) {
+    return alert("That image is too large (over 8 MB) - please compress or re-screenshot it.");
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const format = (file.type.split("/")[1] || "png").toLowerCase();
+    aiPendingImage = { dataUrl: reader.result, format, name: file.name };
+    const preview = document.getElementById("aiImagePreview");
+    document.getElementById("aiImagePreviewThumb").src = aiPendingImage.dataUrl;
+    document.getElementById("aiImagePreviewName").textContent = file.name;
+    preview.hidden = false;
+    document.getElementById("aiAttachBtn").classList.add("active");
+  };
+  reader.readAsDataURL(file);
+}
+
+function aiClearPendingImage() {
+  aiPendingImage = null;
+  document.getElementById("aiImagePreview").hidden = true;
+  document.getElementById("aiImagePreviewThumb").src = "";
+  document.getElementById("aiAttachBtn").classList.remove("active");
+  document.getElementById("aiImageInput").value = "";
+}
+
+document.getElementById("aiAttachBtn").addEventListener("click", () => {
+  document.getElementById("aiImageInput").click();
+});
+document.getElementById("aiImageInput").addEventListener("change", (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (file) aiSetPendingImage(file);
+});
+document.getElementById("aiImagePreviewRemove").addEventListener("click", aiClearPendingImage);
+
 document.getElementById("aiInputForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const input = document.getElementById("aiInput");
   const message = input.value.trim();
-  if (!message) return;
+  if (!message && !aiPendingImage) return;
   input.value = "";
-  aiSendMessage(message);
+  const image = aiPendingImage;
+  aiClearPendingImage();
+  aiSendMessage(message || "(no message - see attached image)", image);
 });
 
 // ── Board of Commissioners tier (Phase 5) ──

@@ -1100,7 +1100,16 @@
     <button class="ai-panel-close" id="aiPanelClose" aria-label="Close">&times;</button>
   </div>
   <div class="ai-messages" id="aiMessages"></div>
+  <div class="ai-image-preview" id="aiImagePreview" hidden>
+    <img id="aiImagePreviewThumb" alt="Attached image">
+    <span class="ai-image-preview-name" id="aiImagePreviewName"></span>
+    <button type="button" class="ai-image-preview-remove" id="aiImagePreviewRemove" aria-label="Remove attached image">&times;</button>
+  </div>
   <form class="ai-input-row" id="aiInputForm">
+    <input type="file" id="aiImageInput" accept="image/*" hidden>
+    <button type="button" class="ai-attach-btn" id="aiAttachBtn" aria-label="Attach image" title="Attach image">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+    </button>
     <input type="text" class="ai-input" id="aiInput" placeholder="Ask the CHP assistant..." autocomplete="off">
     <button type="submit" class="ai-send-btn" id="aiSendBtn" aria-label="Send">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
