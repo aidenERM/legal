@@ -3858,6 +3858,11 @@ async function aiSendMessage(message, attachedImage) {
     window.location.href = "index.html";
     return;
   }
+  if (response.status === 429) {
+    const data = await response.json().catch(() => null);
+    onError((data && data.text) || "Slow down a bit — try again in a moment.");
+    return;
+  }
   if (!response.ok || !response.body) {
     onError("Sorry, the assistant is unavailable right now. Please try again later.");
     return;
