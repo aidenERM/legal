@@ -98,6 +98,17 @@
       <kbd>Ctrl K</kbd>
     </button>
 
+    <!-- Unified search (members / transfers / audit log) - distinct from the
+         Ctrl+K command palette above, which only jumps between pages. Debounced
+         as-you-type against /api/search, wired in app.js (initUnifiedSearch). -->
+    <div class="unified-search-wrap" id="unifiedSearchWrap">
+      <div class="unified-search-input-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="unifiedSearchInput" placeholder="Find a member, transfer, or audit entry..." autocomplete="off">
+      </div>
+      <div class="unified-search-results liquid-glass" id="unifiedSearchResults" hidden></div>
+    </div>
+
     <!-- Notifications Center bell - isolated addition, does not touch the
          rest of the sidebar layout. Dropdown panel + badge built/wired in
          app.js (initNotificationsCenter). -->

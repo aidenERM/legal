@@ -3256,6 +3256,83 @@ body.reduce-motion .loading-overlay-spinner { animation-duration: 0.01s; }
 }
 .shell.collapsed .sidebar-cmdk-trigger span, .shell.collapsed .sidebar-cmdk-trigger kbd { display: none; }
 
+/* ── Unified search (members / transfers / audit) - header quick-jump,
+   separate from the Ctrl+K nav palette above. Reuses the cmdk trigger's
+   pill shape for the input row and the notif dropdown's glass panel for
+   results. ── */
+.unified-search-wrap { position: relative; margin: 0 0 4px; }
+.shell.collapsed .unified-search-wrap { display: none; }
+.unified-search-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.09);
+  background: rgba(255,255,255,0.03);
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+.unified-search-input-row:focus-within { background: rgba(255,255,255,0.06); border-color: rgba(201,166,107,0.35); }
+.unified-search-input-row svg { width: 15px; height: 15px; flex-shrink: 0; color: rgba(255,255,255,0.45); }
+.unified-search-input-row input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: rgba(255,255,255,0.85);
+  font-family: "Manrope", sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.unified-search-input-row input::placeholder { color: rgba(255,255,255,0.35); }
+.unified-search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 320px;
+  max-height: 420px;
+  overflow-y: auto;
+  z-index: 60;
+  background: var(--glass-bg, rgba(20,17,10,0.97));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.14));
+  border-radius: 14px;
+  box-shadow: var(--glass-shadow-outer), var(--glass-shadow-inset);
+  padding: 6px;
+  animation: panel-child-in 0.2s var(--ease-smooth, ease) both;
+}
+.unified-search-group-label {
+  padding: 8px 10px 4px;
+  font-family: "Manrope", sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--chp-gold-bright, #e0bf80);
+  opacity: 0.85;
+}
+.unified-search-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.unified-search-item:hover { background: rgba(255,255,255,0.06); }
+.unified-search-item-title { font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,0.9); }
+.unified-search-item-sub { font-size: 11px; color: rgba(255,255,255,0.45); }
+.unified-search-empty, .unified-search-loading {
+  padding: 16px 10px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+}
+
 /* ── Keyboard focus visibility ────────────────────────────────────────
    Several components above set `outline: none` on plain :focus without
    ever giving keyboard users a visible replacement (that pattern hides

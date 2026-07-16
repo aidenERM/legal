@@ -6272,3 +6272,114 @@ initNotificationsCenter();
 ["shift-management", "loa-ra", "history", "profile", "contact", "leaderboard"].forEach(
   (section) => initDashboardBanner(`banner-${section}`)
 );
+
+// ── Unified search (header quick-jump: members / transfers / audit log) ──
+// Deliberately separate from the Ctrl+K command palette (nav-only, defined
+// above around goToSection) and from Member Lookup's own runLookupSearch
+// (member-only, lives on the Lookup page). This one lives in the sidebar so
+// it's reachable from every page, hits the new /api/search route, and only
+// ever renders for tiers that route already gates server-side (non-admin
+// tiers just get a 403 and an empty dropdown).
+function initUnifiedSearch() {
+  const input = document.getElementById("unifiedSearchInput");
+  const results = document.getElementById("unifiedSearchResults");
+  if (!input || !results) return;
+
+  let seq = 0;
+  let debounceTimer = null;
+
+  function closeResults() {
+    results.hidden = true;
+    results.innerHTML = "";
+  }
+
+  function renderGroup(label, items, renderItem) {
+    if (!items.length) return "";
+    return `
+      <div class="unified-search-group-label">${label}</div>
+      ${items.map(renderItem).join("")}
+    `;
+  }
+
+  async function runSearch(query) {
+    const mySeq = ++seq;
+    if (!query) {
+      closeResults();
+      return;
+    }
+
+    results.hidden = false;
+    results.innerHTML = `<div class="unified-search-loading">Searching...</div>`;
+
+    const res = await apiPost("/api/search", { query });
+    if (mySeq !== seq) return; // superseded by a newer keystroke
+
+    if (!res || !res.ok) {
+      results.innerHTML = `<div class="unified-search-empty">Search unavailable right now.</div>`;
+      return;
+    }
+
+    const members = res.data.members || [];
+    const transfers = res.data.transfers || [];
+    const auditEntries = res.data.auditEntries || [];
+
+    if (!members.length && !transfers.length && !auditEntries.length) {
+      results.innerHTML = `<div class="unified-search-empty">No matches found.</div>`;
+      return;
+    }
+
+    results.innerHTML =
+      renderGroup("Members", members, (m) => `
+        <div class="unified-search-item" data-type="member" data-user-id="${escapeHtml(m.userId)}">
+          <span class="unified-search-item-title">${escapeHtml(m.nickname || m.username || "Unknown")}</span>
+          <span class="unified-search-item-sub">${escapeHtml(m.username || "")}</span>
+        </div>
+      `) +
+      renderGroup("Transfer Requests", transfers, (t) => `
+        <div class="unified-search-item" data-type="transfer" data-transfer-id="${escapeHtml(t.transferId)}">
+          <span class="unified-search-item-title">Transfer ${escapeHtml((t.transferId || "").slice(-8))}</span>
+          <span class="unified-search-item-sub">${escapeHtml(t.status || "unknown status")}</span>
+        </div>
+      `) +
+      renderGroup("Audit Log", auditEntries, (a) => `
+        <div class="unified-search-item" data-type="audit">
+          <span class="unified-search-item-title">${escapeHtml(a.action || "Unknown action")}</span>
+          <span class="unified-search-item-sub">${escapeHtml(a.detail || "")}</span>
+        </div>
+      `);
+
+    results.querySelectorAll(".unified-search-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        const type = item.dataset.type;
+        if (type === "member") {
+          showPanel("lookup");
+          loadLookupDetail(item.dataset.userId);
+        } else if (type === "transfer") {
+          showPanel("transfers");
+          loadTransfersQueue();
+        } else if (type === "audit") {
+          showPanel("boc");
+          bocSwitchToTab("audit-log");
+        }
+        closeResults();
+        input.value = "";
+      });
+    });
+  }
+
+  input.addEventListener("input", (e) => {
+    const query = e.target.value.trim();
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => runSearch(query), 200);
+  });
+  input.addEventListener("focus", () => {
+    if (input.value.trim() && !results.hidden) results.hidden = false;
+  });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("#unifiedSearchWrap")) closeResults();
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeResults();
+  });
+}
+initUnifiedSearch();
