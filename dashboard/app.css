@@ -662,21 +662,32 @@ body.reduce-motion, body.reduce-motion * {
 
 /* ── Rotating community banners ──────────────────────────────────────
    One image at a time, cross-faded every 30s (see initDashboardBanner in
-   app.js), with a credit pill in the bottom-right corner. Same box
-   everywhere it's used (login page + the 9 dashboard panels it's wired
-   into). object-fit: cover - fills the frame completely with no empty
-   letterbox bars, cropping evenly from the edges toward center
-   (object-position: center) rather than leaving visible glass background
-   around an undersized image. Aspect ratio is 16/6 (less extreme than an
-   ultra-wide banner) specifically to keep that center-crop modest for
-   typical community screenshots instead of aggressively slicing people
-   out of their own photos. Bigger on desktop via the min-width media
-   query below - small screens keep the compact size so it doesn't
-   dominate the page on mobile. */
+   app.js and its login-page twin in index.html), with a credit pill in the
+   bottom-right corner. Same box everywhere it's used (login page + every
+   dashboard panel it's wired into).
+
+   The 27 source photos span a real range of aspect ratios (1.64:1 up to
+   2.76:1 measured) - one fixed frame for all of them meant the squarer ones
+   got a much heavier object-fit: cover crop than the wide ones needed. The
+   frame now has three shape buckets (--compact/--standard/--wide, applied
+   as a modifier class by JS based on each entry's manifest width/height)
+   instead of one fixed ratio, so each photo gets a frame close to its own
+   shape and cover only has to crop a little. --wide matches the original
+   fixed frame exactly (2.67:1 mobile / 3.2:1 desktop) - wide photos are
+   unchanged from before this.
+
+   The bucket change is an instant snap, not an animated resize -
+   `transition: aspect-ratio` was tried first (to match the image
+   crossfade's ~900ms) but doesn't reliably animate in every browser: the
+   class and rule both apply correctly, yet the rendered box visually
+   freezes at its previous shape instead of interpolating - confirmed via
+   direct testing, not a spec detail worth working around for a polish
+   effect on a 30-second interval nobody is staring at the exact moment
+   it happens. */
 .dashboard-banner {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 6;
+  aspect-ratio: 16 / 6; /* fallback until JS assigns a bucket class */
   min-height: 110px;
   max-height: 260px;
   border-radius: 16px;
@@ -686,12 +697,18 @@ body.reduce-motion, body.reduce-motion * {
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow-outer), var(--glass-shadow-inset);
 }
+.dashboard-banner.dashboard-banner--compact  { aspect-ratio: 16 / 9;   }  /* ratio < 1.9  - "semi-square" */
+.dashboard-banner.dashboard-banner--standard { aspect-ratio: 16 / 7;   }  /* 1.9 <= ratio < 2.3 */
+.dashboard-banner.dashboard-banner--wide     { aspect-ratio: 16 / 6;   }  /* ratio >= 2.3 - same as the old fixed frame */
 @media (min-width: 1024px) {
   .dashboard-banner {
     aspect-ratio: 16 / 5;
     max-height: 340px;
     margin-bottom: 24px;
   }
+  .dashboard-banner.dashboard-banner--compact  { aspect-ratio: 16 / 8; }
+  .dashboard-banner.dashboard-banner--standard { aspect-ratio: 16 / 6; }
+  .dashboard-banner.dashboard-banner--wide     { aspect-ratio: 16 / 5; }
 }
 .dashboard-banner img {
   position: absolute;
@@ -704,6 +721,20 @@ body.reduce-motion, body.reduce-motion * {
   transition: opacity 900ms var(--ease-smooth, ease);
 }
 .dashboard-banner img.dashboard-banner-visible { opacity: 1; }
+/* Small bottom-right scrim behind the credit pill only (not the full-frame
+   .hero-banner::after scrim used for overlaid welcome text) - the pill's
+   own glass background already gives it some contrast, but the --compact
+   bucket's tighter crop means busier photos can still fight it. A soft
+   corner gradient (not a hard box) keeps this invisible on simple photos
+   while quietly helping legibility on busy ones. */
+.dashboard-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(120px 70px at 100% 100%, rgba(8,7,4,0.45), rgba(8,7,4,0) 75%);
+}
 .dashboard-banner-credit {
   position: absolute;
   right: 12px;

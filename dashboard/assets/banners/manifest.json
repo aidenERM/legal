@@ -1,29 +1,164 @@
 [
-  { "file": "banner-01.png", "credits": "ITSONE52776, Jayg0tnxt & PILOTpro123451" },
-  { "file": "banner-02.png", "credits": "chinryrybloxmen, alvinboban29 & zexbel" },
-  { "file": "banner-03.png", "credits": "California Highway Patrol & Speed Enforcement Division" },
-  { "file": "banner-04.png", "credits": "alvinboban29" },
-  { "file": "banner-05.png", "credits": "alfreddybald" },
-  { "file": "banner-06.jpg", "credits": "Fishermanrus1970" },
-  { "file": "banner-07.png", "credits": "PointlessTalderson" },
-  { "file": "banner-08.png", "credits": "aiden" },
-  { "file": "banner-09.jpg", "credits": "California Highway Patrol Officers, High Command & Department Oversight" },
-  { "file": "banner-10.png", "credits": "Speed Enforcement Division" },
-  { "file": "banner-11.jpg", "credits": "Fishermanrus1970 & Others" },
-  { "file": "banner-12.jpg", "credits": "alfreddybald" },
-  { "file": "banner-13.png", "credits": "Houteklaas2375" },
-  { "file": "banner-14.jpg", "credits": "Fishermanrus1970" },
-  { "file": "banner-15.png", "credits": "Sacidtop27" },
-  { "file": "banner-16.png", "credits": "Sacidtop27" },
-  { "file": "banner-17.jpg", "credits": "Fishermanrus1970 & CHP Academy" },
-  { "file": "banner-18.jpg", "credits": "Fishermanrus1970" },
-  { "file": "banner-19.jpg", "credits": "Fishermanrus1970, Officers & Department Oversight" },
-  { "file": "banner-20.jpg", "credits": "Fishermanrus1970" },
-  { "file": "banner-21.png", "credits": "Fishermanrus1970" },
-  { "file": "banner-22.jpg", "credits": "Fishermanrus1970" },
-  { "file": "banner-23.jpg", "credits": "Fishermanrus1970" },
-  { "file": "banner-24.jpg", "credits": "florentijnolivier" },
-  { "file": "banner-25.jpg", "credits": "PointlessTalderson & florentijnolivier" },
-  { "file": "banner-26.jpg", "credits": "Fishermanrus1970" },
-  { "file": "banner-27.png", "credits": "Houteklass2375" }
+  {
+    "file": "banner-01.png",
+    "credits": "ITSONE52776, Jayg0tnxt & PILOTpro123451",
+    "width": 1550,
+    "height": 898
+  },
+  {
+    "file": "banner-02.png",
+    "credits": "chinryrybloxmen, alvinboban29 & zexbel",
+    "width": 919,
+    "height": 536
+  },
+  {
+    "file": "banner-03.png",
+    "credits": "California Highway Patrol & Speed Enforcement Division",
+    "width": 1230,
+    "height": 494
+  },
+  {
+    "file": "banner-04.png",
+    "credits": "alvinboban29",
+    "width": 621,
+    "height": 379
+  },
+  {
+    "file": "banner-05.png",
+    "credits": "alfreddybald",
+    "width": 1919,
+    "height": 1002
+  },
+  {
+    "file": "banner-06.jpg",
+    "credits": "Fishermanrus1970",
+    "width": 1335,
+    "height": 751
+  },
+  {
+    "file": "banner-07.png",
+    "credits": "PointlessTalderson",
+    "width": 1920,
+    "height": 944
+  },
+  {
+    "file": "banner-08.png",
+    "credits": "aiden",
+    "width": 1899,
+    "height": 688
+  },
+  {
+    "file": "banner-09.jpg",
+    "credits": "California Highway Patrol Officers, High Command & Department Oversight",
+    "width": 1671,
+    "height": 940
+  },
+  {
+    "file": "banner-10.png",
+    "credits": "Speed Enforcement Division",
+    "width": 2048,
+    "height": 807
+  },
+  {
+    "file": "banner-11.jpg",
+    "credits": "Fishermanrus1970 & Others",
+    "width": 1634,
+    "height": 919
+  },
+  {
+    "file": "banner-12.jpg",
+    "credits": "alfreddybald",
+    "width": 1919,
+    "height": 976
+  },
+  {
+    "file": "banner-13.png",
+    "credits": "Houteklaas2375",
+    "width": 1907,
+    "height": 1018
+  },
+  {
+    "file": "banner-14.jpg",
+    "credits": "Fishermanrus1970",
+    "width": 1673,
+    "height": 941
+  },
+  {
+    "file": "banner-15.png",
+    "credits": "Sacidtop27",
+    "width": 1920,
+    "height": 1080
+  },
+  {
+    "file": "banner-16.png",
+    "credits": "Sacidtop27",
+    "width": 1920,
+    "height": 1080
+  },
+  {
+    "file": "banner-17.jpg",
+    "credits": "Fishermanrus1970 & CHP Academy",
+    "width": 1410,
+    "height": 793
+  },
+  {
+    "file": "banner-18.jpg",
+    "credits": "Fishermanrus1970",
+    "width": 1226,
+    "height": 690
+  },
+  {
+    "file": "banner-19.jpg",
+    "credits": "Fishermanrus1970, Officers & Department Oversight",
+    "width": 1414,
+    "height": 795
+  },
+  {
+    "file": "banner-20.jpg",
+    "credits": "Fishermanrus1970",
+    "width": 1351,
+    "height": 760
+  },
+  {
+    "file": "banner-21.png",
+    "credits": "Fishermanrus1970",
+    "width": 1916,
+    "height": 913
+  },
+  {
+    "file": "banner-22.jpg",
+    "credits": "Fishermanrus1970",
+    "width": 1685,
+    "height": 948
+  },
+  {
+    "file": "banner-23.jpg",
+    "credits": "Fishermanrus1970",
+    "width": 898,
+    "height": 505
+  },
+  {
+    "file": "banner-24.jpg",
+    "credits": "florentijnolivier",
+    "width": 1639,
+    "height": 690
+  },
+  {
+    "file": "banner-25.jpg",
+    "credits": "PointlessTalderson & florentijnolivier",
+    "width": 1645,
+    "height": 827
+  },
+  {
+    "file": "banner-26.jpg",
+    "credits": "Fishermanrus1970",
+    "width": 1170,
+    "height": 658
+  },
+  {
+    "file": "banner-27.png",
+    "credits": "Houteklass2375",
+    "width": 1908,
+    "height": 1008
+  }
 ]

@@ -63,6 +63,21 @@ function _shuffle(arr) {
   return a;
 }
 
+// Which .dashboard-banner--* shape bucket an entry's real aspect ratio
+// falls into (see the CSS comment above .dashboard-banner in app.css for
+// the reasoning/thresholds - kept in sync with index.html's login-page
+// twin of this function). Falls back to "standard" if width/height are
+// missing from an older manifest entry rather than guessing further.
+const BANNER_SHAPE_CLASSES = ["dashboard-banner--compact", "dashboard-banner--standard", "dashboard-banner--wide"];
+function _bannerShapeClass(entry) {
+  const w = entry && entry.width, h = entry && entry.height;
+  if (!w || !h) return "dashboard-banner--standard";
+  const ratio = w / h;
+  if (ratio < 1.9) return "dashboard-banner--compact";
+  if (ratio < 2.3) return "dashboard-banner--standard";
+  return "dashboard-banner--wide";
+}
+
 async function initDashboardBanner(containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -100,6 +115,12 @@ async function initDashboardBanner(containerId) {
     incoming.alt = "";
     incoming.src = `assets/banners/${entry.file}`;
     credit.innerHTML = `Credits: <strong>${entry.credits}</strong>`;
+    // Shape bucket snaps immediately (no animated transition - see the
+    // .dashboard-banner comment in app.css for why), so it doesn't matter
+    // whether this runs now or in onload; done here to keep it next to the
+    // rest of this entry's per-swap bookkeeping.
+    container.classList.remove(...BANNER_SHAPE_CLASSES);
+    container.classList.add(_bannerShapeClass(entry));
     showingA = !showingA;
   };
 

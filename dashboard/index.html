@@ -682,7 +682,8 @@
 <script>
   // Same rotating-banner behavior as the dashboard's initDashboardBanner
   // (app.js) - duplicated in miniature here since this page doesn't load
-  // app.js. Keep in sync if the rotation/fade logic there ever changes.
+  // app.js. Keep in sync if the rotation/fade logic there ever changes,
+  // including _bannerShapeClass/BANNER_SHAPE_CLASSES below.
   (function () {
     const container = document.getElementById("banner-login");
     if (!container) return;
@@ -692,6 +693,15 @@
     if (localStorage.getItem("chp_banners_enabled") === "false") {
       container.hidden = true;
       return;
+    }
+    const BANNER_SHAPE_CLASSES = ["dashboard-banner--compact", "dashboard-banner--standard", "dashboard-banner--wide"];
+    function bannerShapeClass(entry) {
+      const w = entry && entry.width, h = entry && entry.height;
+      if (!w || !h) return "dashboard-banner--standard";
+      const ratio = w / h;
+      if (ratio < 1.9) return "dashboard-banner--compact";
+      if (ratio < 2.3) return "dashboard-banner--standard";
+      return "dashboard-banner--wide";
     }
     fetch("assets/banners/manifest.json")
       .then((r) => (r.ok ? r.json() : []))
@@ -723,6 +733,8 @@
           incoming.alt = "";
           incoming.src = `assets/banners/${entry.file}`;
           credit.innerHTML = `Credits: <strong>${entry.credits}</strong>`;
+          container.classList.remove(...BANNER_SHAPE_CLASSES);
+          container.classList.add(bannerShapeClass(entry));
           showingA = !showingA;
         };
         show(order[index]);
