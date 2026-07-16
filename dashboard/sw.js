@@ -1,6 +1,6 @@
 // Minimal service worker for CHP Dashboard PWA support.
 // Bump CACHE_NAME manually whenever the app shell changes.
-const CACHE_NAME = "chp-dashboard-shell-v17";
+const CACHE_NAME = "chp-dashboard-shell-v18";
 const API_ORIGIN = "https://chp-dashboard-api.aidenspearb.workers.dev";
 
 const SHELL_ASSETS = [
