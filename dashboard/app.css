@@ -1844,6 +1844,45 @@ select option {
 .review-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
 .review-delete-btn { font-size: 11.5px; padding: 6px 12px; }
 
+/* ── Infractions ── */
+.infraction-member-results[hidden] { display: none; }
+.infraction-member-results {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 6px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.infraction-member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  color: #fff;
+}
+.infraction-member-row:hover { background: rgba(201,166,107,0.10); }
+.infraction-member-row-role { font-size: 11.5px; color: rgba(255,255,255,0.45); }
+
+.infraction-selected-member {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(201,166,107,0.10);
+  border: 1px solid rgba(201,166,107,0.25);
+  color: var(--chp-gold-bright);
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 /* ── Profile / badges ── */
 .badges-grid {
   display: grid;
@@ -2830,6 +2869,55 @@ body.reduce-motion .loading-overlay-spinner { animation-duration: 0.01s; }
   color: var(--chp-gold-bright, #e0bf80);
 }
 .confirm-action-confirm:hover { background: rgba(201,166,107,0.42); }
+
+/* ── PWA install banner ── */
+.pwa-install-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 10px 8px;
+  padding: 10px 10px 10px 12px;
+  border-radius: 12px;
+  background: rgba(201,166,107,0.10);
+  border: 1px solid rgba(201,166,107,0.25);
+  color: rgba(255,255,255,0.75);
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+}
+/* [hidden] must win over the flex display above, same fix as the AI
+   Assistant's image-attachment preview earlier - author CSS beats the
+   browser's default [hidden]{display:none} unless explicitly restated. */
+.pwa-install-banner[hidden] { display: none; }
+.pwa-install-banner svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--chp-gold-bright); }
+.pwa-install-banner span { flex: 1; min-width: 0; }
+.pwa-install-banner button { flex-shrink: 0; }
+#pwaInstallBtn {
+  padding: 5px 10px;
+  border-radius: 7px;
+  background: rgba(201,166,107,0.18);
+  border: 1px solid rgba(201,166,107,0.35);
+  color: var(--chp-gold-bright);
+  font-family: "Inter", sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+#pwaInstallBtn:hover { background: rgba(201,166,107,0.28); }
+#pwaInstallDismiss {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 6px;
+}
+#pwaInstallDismiss:hover { color: #fff; background: rgba(255,255,255,0.08); }
 
 /* ── Sidebar bottom user-area (item 4): Discord/Slack-style fixed footer
    with a Settings gear + profile avatar, each opening a small floating

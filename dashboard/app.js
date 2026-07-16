@@ -848,6 +848,7 @@ const NAV_ICON_PATHS = {
   gear: `<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>`,
   code: `<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l2.1-2.1a4 4 0 01-5.3 5.3l-6.4 6.4a2 2 0 01-2.8-2.8l6.4-6.4a4 4 0 015.3-5.3l-2.1 2.1z"/>`,
   shield: `<path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4z"/>`,
+  warning: `<path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/>`,
 };
 function navIconSvg(key) {
   const path = NAV_ICON_PATHS[key];
@@ -925,6 +926,7 @@ async function bootMe() {
     // Transfer Requests stay visible for every admin+ tier as before.
     const phase4Items = [
       { section: "officers-mgmt", label: "Officers", icon: "users", onOpen: loadOfficersRoster },
+      { section: "infractions", label: "Infractions", icon: "warning", onOpen: loadInfractionsList },
       ...(me.tier === "admin"
         ? [
             {
@@ -2591,6 +2593,142 @@ async function loadSettings() {
       const key = select.dataset.key;
       const value = select.value === "" ? null : Number(select.value);
       saveSetting(select.closest(".settings-row"), key, value);
+    });
+  });
+}
+
+// ── Infractions ──
+
+let infractionSelectedUserId = null;
+let infractionMemberSearchSeq = 0;
+
+document.getElementById("infractionMemberQuery")?.addEventListener("input", (e) => {
+  const query = e.target.value.trim();
+  infractionSelectedUserId = null;
+  document.getElementById("infractionSelectedMember").hidden = true;
+  const resultsEl = document.getElementById("infractionMemberResults");
+  if (!query) {
+    resultsEl.hidden = true;
+    return;
+  }
+  const seq = ++infractionMemberSearchSeq;
+  clearTimeout(window._infractionSearchDebounce);
+  window._infractionSearchDebounce = setTimeout(async () => {
+    const res = await apiPost("/api/lookup/search", { query });
+    if (seq !== infractionMemberSearchSeq) return;
+    const results = (res && res.ok && res.data.results) || [];
+    if (!results.length) {
+      resultsEl.innerHTML = `<div class="empty-state">No matching members.</div>`;
+      resultsEl.hidden = false;
+      return;
+    }
+    resultsEl.innerHTML = results
+      .slice(0, 8)
+      .map(
+        (r) => `
+      <div class="infraction-member-row" data-user-id="${r.userId}" data-username="${escapeHtml(r.username)}">
+        <span>${escapeHtml(r.username)}</span>
+        <span class="infraction-member-row-role">${escapeHtml(r.topRole || "No rank")}</span>
+      </div>
+    `
+      )
+      .join("");
+    resultsEl.hidden = false;
+    resultsEl.querySelectorAll(".infraction-member-row").forEach((row) => {
+      row.addEventListener("click", () => {
+        infractionSelectedUserId = row.dataset.userId;
+        document.getElementById("infractionMemberQuery").value = "";
+        resultsEl.hidden = true;
+        const selected = document.getElementById("infractionSelectedMember");
+        selected.textContent = `Selected: ${row.dataset.username}`;
+        selected.hidden = false;
+      });
+    });
+  }, 200);
+});
+
+document.getElementById("infractionIssueForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const messageEl = document.getElementById("infractionIssueMessage");
+  messageEl.innerHTML = "";
+  if (!infractionSelectedUserId) {
+    messageEl.innerHTML = `<div class="form-message error">Pick a member first.</div>`;
+    return;
+  }
+  const infractionType = document.getElementById("infractionType").value;
+  const reason = document.getElementById("infractionReason").value.trim();
+  if (!reason) {
+    messageEl.innerHTML = `<div class="form-message error">Write a reason first.</div>`;
+    return;
+  }
+
+  const res = await apiPost("/api/hr/officers/action", {
+    targetUserId: infractionSelectedUserId,
+    kind: "infraction_issue",
+    infractionType,
+    reason,
+  });
+  if (!res || !res.ok || !res.data || !res.data.ok) {
+    messageEl.innerHTML = `<div class="form-message error">Could not issue the infraction. Please try again.</div>`;
+    return;
+  }
+
+  messageEl.innerHTML = `<div class="form-message success">${escapeHtml(infractionType)} issued.</div>`;
+  document.getElementById("infractionReason").value = "";
+  document.getElementById("infractionSelectedMember").hidden = true;
+  infractionSelectedUserId = null;
+  loadInfractionsList();
+});
+
+async function loadInfractionsList() {
+  const skeleton = document.getElementById("infractionsListSkeleton");
+  const list = document.getElementById("infractionsList");
+  if (!skeleton || !list) return;
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await apiPost("/api/hr/officers/infractions", {});
+  skeleton.hidden = true;
+  list.hidden = false;
+
+  if (!res || !res.ok || !res.data || !res.data.ok || !res.data.entries || !res.data.entries.length) {
+    list.innerHTML = `<div class="empty-state">No infractions on record.</div>`;
+    return;
+  }
+
+  list.innerHTML = res.data.entries
+    .map(
+      (e) => `
+    <div class="review-card liquid-glass">
+      <div class="review-card-body">
+        <div class="review-card-top">
+          <span class="review-card-name">&lt;@${e.userId}&gt; — ${escapeHtml(e.type || "Infraction")}</span>
+          <span class="notif-dropdown-item-time">${e.timestamp ? new Date(e.timestamp * 1000).toLocaleString() : ""}</span>
+        </div>
+        <p class="review-card-text">${escapeHtml(e.reason || "No reason recorded")}</p>
+        <div class="review-card-footer">
+          <span class="notif-dropdown-item-time">${e.issuerName ? `Issued by ${escapeHtml(e.issuerName)}` : ""}</span>
+          <button class="lookup-action-btn review-delete-btn" data-infraction-id="${e.id}">Void</button>
+        </div>
+      </div>
+    </div>
+  `
+    )
+    .join("");
+
+  list.querySelectorAll(".review-delete-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      const res = await apiPost("/api/hr/officers/action", {
+        kind: "infraction_void",
+        infractionId: btn.dataset.infractionId,
+        targetUserId: "0",
+      });
+      if (res && res.ok && res.data && res.data.ok) {
+        loadInfractionsList();
+      } else {
+        btn.disabled = false;
+      }
     });
   });
 }
@@ -6383,3 +6521,47 @@ function initUnifiedSearch() {
   });
 }
 initUnifiedSearch();
+
+// ── PWA install prompt ── the dashboard already has a manifest + service
+// worker (sw.js) but never actually asked anyone to install it. Chrome/Edge
+// fire beforeinstallprompt when the PWA criteria are met - stash the event
+// (calling .prompt() only works within the same event-loop turn it's
+// captured, so it must be saved for the user's later Install click) and
+// show a small dismissible banner instead of the disruptive native mini-
+// infobar. Safari/iOS never fire this event (no programmatic install
+// prompt exists there), so the banner simply never appears for them - no
+// special-casing needed.
+const PWA_INSTALL_DISMISSED_KEY = "chp_pwa_install_dismissed";
+let pwaDeferredPrompt = null;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  if (localStorage.getItem(PWA_INSTALL_DISMISSED_KEY) === "true") return;
+  pwaDeferredPrompt = e;
+  const banner = document.getElementById("pwaInstallBanner");
+  if (banner) banner.hidden = false;
+});
+
+document.getElementById("pwaInstallBtn")?.addEventListener("click", async () => {
+  const banner = document.getElementById("pwaInstallBanner");
+  if (!pwaDeferredPrompt) {
+    if (banner) banner.hidden = true;
+    return;
+  }
+  pwaDeferredPrompt.prompt();
+  await pwaDeferredPrompt.userChoice;
+  pwaDeferredPrompt = null;
+  if (banner) banner.hidden = true;
+});
+
+document.getElementById("pwaInstallDismiss")?.addEventListener("click", () => {
+  localStorage.setItem(PWA_INSTALL_DISMISSED_KEY, "true");
+  const banner = document.getElementById("pwaInstallBanner");
+  if (banner) banner.hidden = true;
+});
+
+window.addEventListener("appinstalled", () => {
+  const banner = document.getElementById("pwaInstallBanner");
+  if (banner) banner.hidden = true;
+  pwaDeferredPrompt = null;
+});
