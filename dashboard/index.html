@@ -218,30 +218,39 @@
 
   /* ── Right: sign-in panel ── */
   .login-panel {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 24px;
     overflow-y: auto;
+    background:
+      radial-gradient(ellipse 70% 55% at 50% 20%, rgba(201,166,107,0.10) 0%, transparent 65%),
+      linear-gradient(200deg, #14110a 0%, #0c0a06 55%, #08080b 100%);
   }
 
   .login-panel-inner {
     width: 100%;
-    max-width: 360px;
+    max-width: 380px;
   }
 
+  /* Global h2 (chp-theme.css) adds a gold left border + padding meant for
+     content pages - explicitly reset here, this is a form heading. */
   .login-panel-heading {
-    margin: 0 0 6px;
+    margin: 0 0 8px;
+    padding-left: 0;
+    border-left: none;
     font-family: "Manrope", sans-serif;
-    font-size: clamp(22px, 2.4vw, 26px);
+    font-size: clamp(24px, 2.6vw, 30px);
     font-weight: 800;
     letter-spacing: -0.01em;
     color: #fff;
     animation: fade-up 0.6s var(--ease-smooth) both;
   }
   .login-panel-sub {
-    margin: 0 0 26px;
-    font-size: 13.5px;
+    margin: 0 0 30px;
+    font-size: 14px;
+    line-height: 1.5;
     color: rgba(255,255,255,0.45);
     animation: fade-up 0.6s var(--ease-smooth) 0.04s both;
   }
@@ -419,19 +428,22 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 22px;
+    flex-wrap: nowrap;
+    gap: 2px;
+    margin-top: 26px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.07);
     animation: fade-up 0.6s var(--ease-smooth) 0.26s both;
   }
 
   .site-link {
     font-family: "Inter", sans-serif;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 500;
-    color: rgba(255,255,255,0.36);
+    color: rgba(255,255,255,0.4);
     text-decoration: none;
-    padding: 6px 10px;
+    white-space: nowrap;
+    padding: 6px 7px;
     border-radius: 8px;
     transition: color 0.2s var(--ease-smooth), background 0.2s var(--ease-smooth);
   }
@@ -444,8 +456,12 @@
     width: 3px;
     height: 3px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.16);
+    background: rgba(255,255,255,0.18);
     flex-shrink: 0;
+  }
+
+  @media (max-width: 360px) {
+    .site-links { flex-wrap: wrap; }
   }
 
   /* ── Responsive tiers ── */
