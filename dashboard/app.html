@@ -7,9 +7,9 @@
 <link rel="icon" href="../assets/images/chp-badge.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260731">
+<link rel="stylesheet" href="app.css?v=20260716">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 </head>
@@ -152,6 +152,10 @@
           <button class="nav-item" data-section="settings">
             <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             Personal Settings
+          </button>
+          <button class="nav-item" data-section="reviews">
+            <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17.3L6.2 20.5l1.1-6.5-4.7-4.6 6.5-.9L12 2.7l2.9 5.8 6.5.9-4.7 4.6 1.1 6.5z"/></svg>
+            Reviews
           </button>
           <button class="nav-item" data-section="contact">
             <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 6 10-6"/></svg>
@@ -448,6 +452,31 @@
 
       <div class="skeleton" id="settingsSkeleton" style="margin-top: 22px;"></div>
       <div class="settings-card-grid" id="settingsCardGrid" hidden></div>
+    </section>
+
+    <section class="panel" id="panel-reviews">
+      <div class="dashboard-banner" id="banner-reviews"></div>
+      <h1>Reviews</h1>
+      <p class="panel-subtitle">Rate and review the dashboard or CHP itself — the best ones rotate on the login page for everyone to see.</p>
+
+      <form class="contact-form review-form" id="reviewForm">
+        <div class="review-star-picker" id="reviewStarPicker" data-value="0">
+          <button type="button" class="review-star" data-star="1" aria-label="1 star">&#9733;</button>
+          <button type="button" class="review-star" data-star="2" aria-label="2 stars">&#9733;</button>
+          <button type="button" class="review-star" data-star="3" aria-label="3 stars">&#9733;</button>
+          <button type="button" class="review-star" data-star="4" aria-label="4 stars">&#9733;</button>
+          <button type="button" class="review-star" data-star="5" aria-label="5 stars">&#9733;</button>
+        </div>
+        <textarea id="reviewText" rows="4" maxlength="500" placeholder="What do you think of the dashboard or CHP?"></textarea>
+        <div class="review-char-count" id="reviewCharCount">0 / 500</div>
+        <button type="submit" class="lookup-search-btn" id="reviewSubmitBtn">Submit Review</button>
+      </form>
+      <div id="reviewFormSuccess" class="form-message success" hidden>&#10003; Review submitted — thank you</div>
+      <div id="reviewFormMessage"></div>
+
+      <h2 class="review-feed-heading">Recent Reviews</h2>
+      <div class="skeleton" id="reviewFeedSkeleton"></div>
+      <div class="review-feed" id="reviewFeed" hidden></div>
     </section>
 
     <section class="panel" id="panel-contact">
@@ -786,6 +815,7 @@
           <button class="dev-tab" data-boc-tab="audit-log">Audit Log</button>
           <button class="dev-tab" data-boc-tab="activity-log">Activity Log</button>
           <button class="dev-tab" data-boc-tab="anonymous-feedback">Anonymous Feedback</button>
+          <button class="dev-tab" data-boc-tab="reviews">Reviews</button>
           <button class="dev-tab" data-boc-tab="settings">Settings</button>
         </div>
       </div>
@@ -883,6 +913,12 @@
         <p class="panel-subtitle">Anonymous feedback submitted by staff, newest first. Submitter identity is never recorded.</p>
         <div class="skeleton" id="bocAnonFeedbackSkeleton"></div>
         <ul class="loa-history-list" id="bocAnonFeedbackList" hidden></ul>
+      </div>
+
+      <div class="dev-panel" id="bocPanel-reviews">
+        <p class="panel-subtitle">Every dashboard review, newest first. Delete any that shouldn't stay up on the login page.</p>
+        <div class="skeleton" id="bocReviewsSkeleton"></div>
+        <div class="review-feed" id="bocReviewsList" hidden></div>
       </div>
 
       <div class="dev-panel" id="bocPanel-dm-officers">
@@ -1078,6 +1114,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260731"></script>
+<script src="app.js?v=20260716"></script>
 </body>
 </html>

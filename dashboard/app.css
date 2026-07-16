@@ -1783,6 +1783,67 @@ select option {
 .form-message.success { background: rgba(90,200,120,0.10); border: 1px solid rgba(90,200,120,0.25); color: rgba(170,230,190,0.9); }
 .form-message.error { background: rgba(220,90,90,0.10); border: 1px solid rgba(220,90,90,0.25); color: rgba(255,180,180,0.9); }
 
+/* ── Reviews ── */
+.review-star-picker { display: flex; gap: 6px; }
+.review-star {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 26px;
+  line-height: 1;
+  color: rgba(255,255,255,0.18);
+  cursor: pointer;
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+.review-star:hover { transform: scale(1.1); }
+.review-star.filled { color: var(--chp-gold-bright); }
+
+.review-char-count {
+  align-self: flex-end;
+  font-size: 11.5px;
+  color: rgba(255,255,255,0.4);
+  font-family: "Inter", sans-serif;
+}
+
+.review-feed-heading {
+  margin: 26px 0 12px;
+  font-family: "Manrope", sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.review-feed { display: flex; flex-direction: column; gap: 12px; }
+
+.review-card {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+}
+
+.review-card-avatar { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; object-fit: cover; }
+.review-card-body { flex: 1; min-width: 0; }
+.review-card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.review-card-name { font-family: "Manrope", sans-serif; font-weight: 700; font-size: 13.5px; color: #fff; }
+.review-card-stars { display: flex; gap: 2px; }
+.review-star-display { font-size: 12px; color: rgba(255,255,255,0.18); }
+.review-star-display.filled { color: var(--chp-gold-bright); }
+
+.review-card-text {
+  margin: 8px 0 0;
+  font-family: "Playfair Display", Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.82);
+  word-break: break-word;
+}
+
+.review-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.review-delete-btn { font-size: 11.5px; padding: 6px 12px; }
+
 /* ── Profile / badges ── */
 .badges-grid {
   display: grid;

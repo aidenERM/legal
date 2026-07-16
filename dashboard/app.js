@@ -2595,6 +2595,166 @@ async function loadSettings() {
   });
 }
 
+// ── Reviews ──
+
+function reviewStarsHtml(rating) {
+  let out = "";
+  for (let i = 1; i <= 5; i++) {
+    out += `<span class="review-star-display${i <= rating ? " filled" : ""}">&#9733;</span>`;
+  }
+  return out;
+}
+
+(function initReviewStarPicker() {
+  const picker = document.getElementById("reviewStarPicker");
+  if (!picker) return;
+  const stars = Array.from(picker.querySelectorAll(".review-star"));
+
+  const paint = (value) => {
+    stars.forEach((s) => s.classList.toggle("filled", Number(s.dataset.star) <= value));
+  };
+
+  stars.forEach((star) => {
+    star.addEventListener("click", () => {
+      picker.dataset.value = star.dataset.star;
+      paint(Number(star.dataset.star));
+    });
+    star.addEventListener("mouseenter", () => paint(Number(star.dataset.star)));
+  });
+  picker.addEventListener("mouseleave", () => paint(Number(picker.dataset.value)));
+})();
+
+document.getElementById("reviewText")?.addEventListener("input", (e) => {
+  document.getElementById("reviewCharCount").textContent = `${e.target.value.length} / 500`;
+});
+
+document.getElementById("reviewForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const messageEl = document.getElementById("reviewFormMessage");
+  const successEl = document.getElementById("reviewFormSuccess");
+  const formEl = document.getElementById("reviewForm");
+  const picker = document.getElementById("reviewStarPicker");
+  const rating = Number(picker.dataset.value);
+  const text = document.getElementById("reviewText").value.trim();
+
+  messageEl.innerHTML = "";
+  if (!rating) {
+    messageEl.innerHTML = `<div class="form-message error">Pick a star rating first.</div>`;
+    return;
+  }
+  if (!text) {
+    messageEl.innerHTML = `<div class="form-message error">Write a review before submitting.</div>`;
+    return;
+  }
+
+  const res = await apiPost("/api/reviews", { rating, text });
+  if (!res || !res.ok || !res.data || res.data.ok === false) {
+    messageEl.innerHTML = `<div class="form-message error">Could not submit your review. Please try again.</div>`;
+    return;
+  }
+
+  document.getElementById("reviewText").value = "";
+  document.getElementById("reviewCharCount").textContent = "0 / 500";
+  picker.dataset.value = "0";
+  picker.querySelectorAll(".review-star").forEach((s) => s.classList.remove("filled"));
+  formEl.hidden = true;
+  successEl.hidden = false;
+  setTimeout(() => {
+    successEl.hidden = true;
+    formEl.hidden = false;
+  }, 3000);
+
+  loadReviewFeed();
+});
+
+async function loadReviewFeed() {
+  const skeleton = document.getElementById("reviewFeedSkeleton");
+  const feed = document.getElementById("reviewFeed");
+  if (!skeleton || !feed) return;
+  skeleton.hidden = false;
+  feed.hidden = true;
+
+  const res = await apiGet("/api/reviews/public");
+  skeleton.hidden = true;
+  feed.hidden = false;
+
+  if (!res || !res.entries || !res.entries.length) {
+    feed.innerHTML = `<div class="empty-state">No reviews yet — be the first.</div>`;
+    return;
+  }
+
+  feed.innerHTML = res.entries
+    .map((r) => {
+      const avatarUrl = avatarUrlFor(r.userId, r.avatar, 48);
+      return `
+    <div class="review-card liquid-glass">
+      <img class="review-card-avatar" src="${avatarUrl}" alt="" width="40" height="40">
+      <div class="review-card-body">
+        <div class="review-card-top">
+          <span class="review-card-name">${escapeHtml(r.username || "Unknown")}</span>
+          <span class="review-card-stars">${reviewStarsHtml(r.rating)}</span>
+        </div>
+        <p class="review-card-text">&ldquo;${escapeHtml(r.text || "")}&rdquo;</p>
+      </div>
+    </div>
+  `;
+    })
+    .join("");
+}
+
+async function loadBocReviews() {
+  const skeleton = document.getElementById("bocReviewsSkeleton");
+  const list = document.getElementById("bocReviewsList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await bocGet("/api/boc/reviews");
+  if (!res) return;
+  if (res.reason) return bocShowDenied(res.reason);
+
+  skeleton.hidden = true;
+  list.hidden = false;
+
+  if (!res.ok || !res.entries || !res.entries.length) {
+    list.innerHTML = `<div class="empty-state">No reviews submitted yet.</div>`;
+    return;
+  }
+
+  list.innerHTML = res.entries
+    .map((r) => {
+      const avatarUrl = avatarUrlFor(r.userId, r.avatar, 48);
+      return `
+    <div class="review-card liquid-glass">
+      <img class="review-card-avatar" src="${avatarUrl}" alt="" width="40" height="40">
+      <div class="review-card-body">
+        <div class="review-card-top">
+          <span class="review-card-name">${escapeHtml(r.username || "Unknown")}</span>
+          <span class="review-card-stars">${reviewStarsHtml(r.rating)}</span>
+        </div>
+        <p class="review-card-text">&ldquo;${escapeHtml(r.text || "")}&rdquo;</p>
+        <div class="review-card-footer">
+          <span class="notif-dropdown-item-time">${r.created_at ? new Date(r.created_at * 1000).toLocaleString() : ""}</span>
+          <button class="lookup-action-btn review-delete-btn" data-review-id="${escapeHtml(r._id || "")}">Delete</button>
+        </div>
+      </div>
+    </div>
+  `;
+    })
+    .join("");
+
+  list.querySelectorAll(".review-delete-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      const res = await apiPost("/api/boc/reviews/delete", { reviewId: btn.dataset.reviewId });
+      if (res && res.ok && res.data && res.data.ok) {
+        loadBocReviews();
+      } else {
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
 // ── Contact Us ──
 
 document.getElementById("contactForm").addEventListener("submit", async (e) => {
@@ -2874,6 +3034,7 @@ document.querySelectorAll(".nav-item[data-section]").forEach((item) => {
     if (section === "history") withLoadingOverlay(loadHistory);
     if (section === "profile") withLoadingOverlay(loadProfile);
     if (section === "settings") withLoadingOverlay(loadSettings, loadSessionInfo);
+    if (section === "reviews") withLoadingOverlay(loadReviewFeed);
     if (section === "leaderboard") {
       withLoadingOverlay(loadLeaderboard, loadRecognizedOfficers, loadDepartmentFeed);
       startLeaderboardAutoRefresh();
@@ -3924,6 +4085,7 @@ function loadBocActiveTab() {
   if (bocActiveTab === "audit-log") return loadBocAuditLog();
   if (bocActiveTab === "activity-log") return loadBocActivityLog();
   if (bocActiveTab === "anonymous-feedback") return loadBocAnonymousFeedback();
+  if (bocActiveTab === "reviews") return loadBocReviews();
   if (bocActiveTab === "ra-stats") return loadBocRaStats();
   if (bocActiveTab === "settings") return loadBocSettings();
 }

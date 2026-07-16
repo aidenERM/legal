@@ -7,9 +7,9 @@
 <link rel="icon" href="../assets/images/chp-badge.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260731">
+<link rel="stylesheet" href="app.css?v=20260716">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 <style>
@@ -406,6 +406,60 @@
     flex-shrink: 0;
   }
 
+  /* ── Login page review carousel — one rotating staff review, quoted in a
+       serif italic face to read distinctly from the rest of the UI's
+       sans-serif type. ── */
+  .login-review {
+    position: relative;
+    z-index: 10;
+    width: min(440px, 100%);
+    margin: 16px auto 0;
+    padding: 18px 22px;
+    border-radius: 22px;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.35s var(--ease-smooth), transform 0.35s var(--ease-smooth);
+  }
+  .login-review.visible { opacity: 1; transform: translateY(0); }
+
+  .login-review-stars { margin-bottom: 8px; }
+  .login-review-star { font-size: 14px; color: rgba(255,255,255,0.18); }
+  .login-review-star.filled { color: var(--chp-gold-bright); }
+
+  .login-review-text {
+    margin: 0 0 12px;
+    font-family: "Playfair Display", Georgia, serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 15.5px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .login-review-author {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: "Manrope", sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.55);
+  }
+
+  .login-review-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  @media (min-width: 1025px) {
+    .login-review { width: 520px; }
+  }
+
   /* ── Responsive tiers ── */
 
   /* Phone */
@@ -515,6 +569,15 @@
     </div>
 
     <p class="login-card-foot">Not on the roster? <a href="https://discord.gg/7fyPz8fMq6" target="_blank" rel="noopener noreferrer">Request staff access</a></p>
+  </div>
+
+  <div class="login-review liquid-glass" id="loginReview" hidden>
+    <div class="login-review-stars" id="loginReviewStars"></div>
+    <p class="login-review-text" id="loginReviewText"></p>
+    <div class="login-review-author">
+      <img class="login-review-avatar" id="loginReviewAvatar" src="" alt="" width="28" height="28">
+      <span id="loginReviewName"></span>
+    </div>
   </div>
 </main>
 
@@ -742,6 +805,63 @@
           index = (index + 1) % order.length;
           show(order[index]);
         }, 30000);
+      });
+  })();
+
+  // Rotating review carousel (public, unauthenticated - this is the whole
+  // point: staff-written reviews shown to a logged-out visitor). Same
+  // interval/crossfade shape as the banner rotator above, just simpler
+  // (text swap, no image preload race to worry about).
+  (function initLoginReviews() {
+    const WORKER_URL = "https://chp-dashboard-api.aidenspearb.workers.dev";
+    const card = document.getElementById("loginReview");
+    if (!card) return;
+
+    function avatarUrlFor(userId, avatarHash) {
+      return avatarHash
+        ? `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.png?size=64`
+        : `https://cdn.discordapp.com/embed/avatars/0.png`;
+    }
+    function starsHtml(rating) {
+      let out = "";
+      for (let i = 1; i <= 5; i++) {
+        out += `<span class="login-review-star${i <= rating ? " filled" : ""}">&#9733;</span>`;
+      }
+      return out;
+    }
+
+    fetch(`${WORKER_URL}/api/reviews/public`)
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then((data) => {
+        const entries = data && data.entries;
+        if (!entries || !entries.length) return;
+
+        const starsEl = document.getElementById("loginReviewStars");
+        const textEl = document.getElementById("loginReviewText");
+        const avatarEl = document.getElementById("loginReviewAvatar");
+        const nameEl = document.getElementById("loginReviewName");
+
+        let index = 0;
+        const show = (entry) => {
+          card.classList.remove("visible");
+          setTimeout(() => {
+            starsEl.innerHTML = starsHtml(entry.rating);
+            textEl.textContent = `“${entry.text || ""}”`;
+            avatarEl.src = avatarUrlFor(entry.userId, entry.avatar);
+            nameEl.textContent = entry.username || "Unknown";
+            card.hidden = false;
+            requestAnimationFrame(() => card.classList.add("visible"));
+          }, entries.length > 1 ? 220 : 0);
+        };
+
+        show(entries[index]);
+        if (entries.length > 1) {
+          setInterval(() => {
+            index = (index + 1) % entries.length;
+            show(entries[index]);
+          }, 8000);
+        }
       });
   })();
 </script>
