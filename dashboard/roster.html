@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHP Public Roster</title>
+<link rel="icon" href="../assets/images/chp-badge.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/chp-theme.css">
+<link rel="stylesheet" href="app.css?v=20260717">
+<style>
+  /* Standalone public page - deliberately not app.html's authenticated
+     shell (no sidebar, no session bootstrap). Reuses index.html's dark
+     gold gradient + Liquid Glass card treatment (see app.css's shared
+     --glass-* tokens), just not its split-screen login layout - this page
+     has no sign-in form to split against. */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(165deg, #1c1708 0%, #100d06 40%, #08080b 100%);
+    color: #fff;
+    min-height: 100vh;
+    padding: clamp(24px, 5vh, 56px) clamp(20px, 5vw, 48px);
+  }
+
+  .roster-wrap {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .roster-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .roster-badge { width: 36px; height: 36px; filter: drop-shadow(0 3px 10px rgba(0,0,0,0.4)); }
+  .roster-brand {
+    font-family: "Manrope", sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    color: rgba(255,255,255,0.7);
+  }
+
+  .roster-title {
+    margin: 18px 0 6px;
+    font-family: "Manrope", sans-serif;
+    font-weight: 800;
+    font-size: clamp(26px, 4vw, 36px);
+    letter-spacing: -0.02em;
+    color: var(--chp-gold-bright, #c9a66b);
+  }
+  .roster-subtitle {
+    margin: 0 0 28px;
+    max-width: 560px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .roster-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .roster-stat {
+    flex: 1 1 160px;
+    padding: 16px 18px;
+    border-radius: 16px;
+  }
+  .roster-stat-value {
+    font-family: "Manrope", sans-serif;
+    font-weight: 800;
+    font-size: 26px;
+    color: #fff;
+  }
+  .roster-stat-label {
+    margin-top: 2px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+  }
+
+  .roster-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .roster-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 14px;
+  }
+  .roster-position {
+    width: 26px;
+    flex-shrink: 0;
+    text-align: center;
+    font-family: "Manrope", sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    color: rgba(255,255,255,0.4);
+  }
+  .roster-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.15);
+    flex-shrink: 0;
+  }
+  .roster-identity { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+  .roster-name {
+    font-family: "Manrope", sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .roster-rank {
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+  }
+  .roster-hours {
+    font-family: "Manrope", sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--chp-gold-bright, #c9a66b);
+    flex-shrink: 0;
+  }
+
+  .roster-empty, .roster-error {
+    padding: 24px;
+    border-radius: 16px;
+    text-align: center;
+    color: rgba(255,255,255,0.5);
+    font-size: 14px;
+  }
+
+  .site-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-top: 36px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+  }
+  .site-link {
+    font-family: "Inter", sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.42);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: 6px 8px;
+    border-radius: 8px;
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+  .site-link:hover { color: var(--chp-gold-bright, #c9a66b); background: rgba(201,166,107,0.08); }
+  .site-link-dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,0.18); flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="roster-wrap">
+  <div class="roster-header">
+    <img class="roster-badge" src="../assets/images/chp-badge.png" alt="">
+    <span class="roster-brand">California Highway Patrol</span>
+  </div>
+
+  <h1 class="roster-title">Public Roster</h1>
+  <p class="roster-subtitle">
+    Top officers by logged on-duty hours, all-time. This page is public and
+    requires no staff login — it shows only what's already visible on
+    Discord and the department leaderboard.
+  </p>
+
+  <div class="roster-stats" id="rosterStats" hidden></div>
+
+  <ul class="roster-list liquid-glass-list" id="rosterList"></ul>
+  <div class="roster-empty liquid-glass" id="rosterEmpty" hidden>No duty hours logged yet.</div>
+  <div class="roster-error liquid-glass" id="rosterError" hidden>Couldn't load the roster right now. Try again later.</div>
+
+  <nav class="site-links" aria-label="Resource links">
+    <a class="site-link" href="index.html">Home</a>
+    <span class="site-link-dot" aria-hidden="true"></span>
+    <a class="site-link" href="../pp.html">Privacy Policy</a>
+    <span class="site-link-dot" aria-hidden="true"></span>
+    <a class="site-link" href="../tos.html">Terms of Service</a>
+    <span class="site-link-dot" aria-hidden="true"></span>
+    <a class="site-link" href="https://discord.gg/7fyPz8fMq6" target="_blank" rel="noopener noreferrer">Discord</a>
+  </nav>
+</div>
+
+<script>
+  // Standalone page - app.js isn't loaded here, so a small local escapeHtml
+  // mirrors the one used elsewhere in this codebase (e.g. app.js's own
+  // escapeHtml, and the same escaping index.html's review carousel relies
+  // on via textContent) rather than pulling in the whole authenticated
+  // dashboard bundle for one page.
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  function avatarUrlFor(userId, avatarHash, size) {
+    return avatarHash
+      ? `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.png?size=${size}`
+      : `https://cdn.discordapp.com/embed/avatars/0.png`;
+  }
+
+  function formatHours(totalSeconds) {
+    const hours = Math.floor((totalSeconds || 0) / 3600);
+    return `${hours.toLocaleString()}h`;
+  }
+
+  (function loadPublicRoster() {
+    const WORKER_URL = "https://chp-dashboard-api.aidenspearb.workers.dev";
+    const listEl = document.getElementById("rosterList");
+    const emptyEl = document.getElementById("rosterEmpty");
+    const errorEl = document.getElementById("rosterError");
+    const statsEl = document.getElementById("rosterStats");
+
+    fetch(`${WORKER_URL}/api/roster/public`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("bad status"))))
+      .then((data) => {
+        const entries = (data && data.entries) || [];
+        const stats = data && data.stats;
+
+        if (stats) {
+          statsEl.hidden = false;
+          statsEl.innerHTML = `
+            <div class="roster-stat liquid-glass">
+              <div class="roster-stat-value">${Number(stats.totalMembers || 0).toLocaleString()}</div>
+              <div class="roster-stat-label">Officers with logged duty time</div>
+            </div>
+            <div class="roster-stat liquid-glass">
+              <div class="roster-stat-value">${Number(stats.totalHours || 0).toLocaleString()}h</div>
+              <div class="roster-stat-label">Total hours logged, all-time</div>
+            </div>
+          `;
+        }
+
+        if (!entries.length) {
+          emptyEl.hidden = false;
+          return;
+        }
+
+        listEl.innerHTML = entries
+          .map((entry) => {
+            const avatarUrl = avatarUrlFor(entry.userId, entry.avatar, 64);
+            return `
+              <li class="roster-row liquid-glass">
+                <span class="roster-position">${entry.position}</span>
+                <img class="roster-avatar" src="${avatarUrl}" alt="" width="40" height="40">
+                <span class="roster-identity">
+                  <span class="roster-name">${escapeHtml(entry.username || "Unknown")}</span>
+                  ${entry.rank ? `<span class="roster-rank">${escapeHtml(entry.rank)}</span>` : ""}
+                </span>
+                <span class="roster-hours">${formatHours(entry.totalSeconds)}</span>
+              </li>
+            `;
+          })
+          .join("");
+      })
+      .catch(() => {
+        errorEl.hidden = false;
+      });
+  })();
+</script>
+</body>
+</html>
