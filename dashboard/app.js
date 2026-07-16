@@ -3458,21 +3458,81 @@ function aiGetActiveConversation() {
   return aiConversations.find((c) => c.id === aiActiveConversationId) || aiConversations[0];
 }
 
-function aiPopulateConvoSelect() {
-  const select = document.getElementById("aiConvoSelect");
-  if (!select) return;
-  select.innerHTML = "";
+function aiPopulateConvoMenu() {
+  const menu = document.getElementById("aiConvoMenu");
+  const triggerLabel = document.getElementById("aiConvoTriggerLabel");
+  if (!menu || !triggerLabel) return;
+
+  menu.innerHTML = "";
   aiConversations.forEach((c) => {
-    const opt = document.createElement("option");
-    opt.value = c.id;
-    opt.textContent = c.title || "New Chat";
-    // Full title on hover - the closed select box now truncates with an
-    // ellipsis (see .ai-convo-select in app.css), so long auto-generated
-    // titles are still fully readable via tooltip instead of just being cut.
-    opt.title = c.title || "New Chat";
-    select.appendChild(opt);
+    const row = document.createElement("div");
+    row.className = "ai-convo-row" + (c.id === aiActiveConversationId ? " active" : "");
+    row.setAttribute("role", "option");
+    row.setAttribute("aria-selected", String(c.id === aiActiveConversationId));
+    row.title = c.title || "New Chat";
+
+    const title = document.createElement("span");
+    title.className = "ai-convo-row-title";
+    title.textContent = c.title || "New Chat";
+    row.appendChild(title);
+
+    // Only offer delete when there's more than one conversation - always
+    // keeping at least one avoids an empty-picker dead end.
+    if (aiConversations.length > 1) {
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "ai-convo-row-delete";
+      del.setAttribute("aria-label", `Delete "${c.title || "New Chat"}"`);
+      del.textContent = "×";
+      del.addEventListener("click", (e) => {
+        e.stopPropagation();
+        aiDeleteConversation(c.id);
+      });
+      row.appendChild(del);
+    }
+
+    row.addEventListener("click", () => {
+      aiSwitchConversation(c.id);
+      aiCloseConvoMenu();
+    });
+    menu.appendChild(row);
   });
-  select.value = aiActiveConversationId;
+
+  const active = aiGetActiveConversation();
+  triggerLabel.textContent = (active && active.title) || "New Chat";
+}
+
+function aiOpenConvoMenu() {
+  const picker = document.getElementById("aiConvoPicker");
+  const menu = document.getElementById("aiConvoMenu");
+  const trigger = document.getElementById("aiConvoTrigger");
+  if (!picker || !menu || !trigger) return;
+  menu.hidden = false;
+  picker.classList.add("open");
+  trigger.setAttribute("aria-expanded", "true");
+}
+
+function aiCloseConvoMenu() {
+  const picker = document.getElementById("aiConvoPicker");
+  const menu = document.getElementById("aiConvoMenu");
+  const trigger = document.getElementById("aiConvoTrigger");
+  if (!picker || !menu || !trigger) return;
+  menu.hidden = true;
+  picker.classList.remove("open");
+  trigger.setAttribute("aria-expanded", "false");
+}
+
+function aiDeleteConversation(id) {
+  const idx = aiConversations.findIndex((c) => c.id === id);
+  if (idx === -1 || aiConversations.length <= 1) return;
+  aiConversations.splice(idx, 1);
+  if (aiActiveConversationId === id) {
+    aiActiveConversationId = aiConversations[0].id;
+    aiSaveActiveConversationId();
+    aiRenderActiveConversation();
+  }
+  aiSaveConversations();
+  aiPopulateConvoMenu();
 }
 
 function aiUpdateEmptyState() {
@@ -3525,7 +3585,7 @@ function aiInitConversations() {
   } else if (!aiActiveConversationId || !aiConversations.some((c) => c.id === aiActiveConversationId)) {
     aiActiveConversationId = aiConversations[0].id;
   }
-  aiPopulateConvoSelect();
+  aiPopulateConvoMenu();
   aiRenderActiveConversation();
 }
 
@@ -3535,7 +3595,7 @@ function aiNewChat() {
   aiActiveConversationId = convo.id;
   aiSaveConversations();
   aiSaveActiveConversationId();
-  aiPopulateConvoSelect();
+  aiPopulateConvoMenu();
   aiRenderActiveConversation();
   const input = document.getElementById("aiInput");
   if (input) input.focus();
@@ -3546,6 +3606,7 @@ function aiSwitchConversation(id) {
   aiActiveConversationId = id;
   aiSaveActiveConversationId();
   aiRenderActiveConversation();
+  aiPopulateConvoMenu();
 }
 
 function aiAppendBubble(role, text) {
@@ -3676,7 +3737,7 @@ async function aiSendMessage(message) {
     if ((!convo.title || convo.title === "New Chat") && convo.messages.filter((m) => m.role === "user").length === 1) {
       const trimmed = message.trim();
       convo.title = trimmed.length > 40 ? `${trimmed.slice(0, 37).trim()}…` : trimmed;
-      aiPopulateConvoSelect();
+      aiPopulateConvoMenu();
     }
     aiSaveConversations();
   }
@@ -4019,10 +4080,31 @@ document.getElementById("aiFab").addEventListener("click", () => {
 
 document.getElementById("aiPanelClose").addEventListener("click", aiClosePanel);
 
-document.getElementById("aiNewChatBtn").addEventListener("click", aiNewChat);
+document.getElementById("aiNewChatBtn").addEventListener("click", () => {
+  aiCloseConvoMenu();
+  aiNewChat();
+});
 
-document.getElementById("aiConvoSelect").addEventListener("change", (e) => {
-  aiSwitchConversation(e.target.value);
+document.getElementById("aiConvoTrigger").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const picker = document.getElementById("aiConvoPicker");
+  if (picker && picker.classList.contains("open")) {
+    aiCloseConvoMenu();
+  } else {
+    aiOpenConvoMenu();
+  }
+});
+
+// Click-outside and Escape both close the menu - it's a floating panel over
+// the message list, not a native <select> the browser manages for us.
+document.addEventListener("click", (e) => {
+  const picker = document.getElementById("aiConvoPicker");
+  if (picker && picker.classList.contains("open") && !picker.contains(e.target)) {
+    aiCloseConvoMenu();
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") aiCloseConvoMenu();
 });
 
 document.getElementById("aiInputForm").addEventListener("submit", (e) => {

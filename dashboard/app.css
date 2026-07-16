@@ -2079,11 +2079,20 @@ select option {
   flex-shrink: 0;
   touch-action: none;
 }
-.ai-panel-header > span {
+.ai-panel-title {
   flex-shrink: 0;
   white-space: nowrap;
 }
 .ai-panel-header:active { cursor: grabbing; }
+
+/* Header was cramped at min panel width (title + native <select> + text
+   "New Chat" button + close, all fighting for ~300px) - the title hides at
+   very narrow widths and the New Chat button became icon-only so the
+   conversation picker keeps a usable minimum width instead of getting
+   squeezed to nothing. */
+@media (max-width: 360px) {
+  .ai-panel-title { display: none; }
+}
 
 .ai-panel-resize-handle {
   position: absolute;
@@ -2117,45 +2126,128 @@ select option {
 }
 .ai-panel-close:hover { color: #fff; }
 
-.ai-convo-select {
+/* ── Conversation picker — custom dropdown, replaces the native <select>
+   which had no room for per-row delete buttons and couldn't be styled to
+   match the rest of the app (item request: "make them better, with the
+   style"). ── */
+.ai-convo-picker {
+  position: relative;
   flex: 1 1 auto;
-  min-width: 60px;
-  /* Was cramped at 12px with no truncation handling, which made long
-     auto-generated titles (e.g. "can you get me all the info yo...")
-     read poorly in the native select box. Bumped size slightly and added
-     proper ellipsis truncation on the closed control; each <option>'s
-     `title` attribute (set in aiPopulateConvoSelect) surfaces the full
-     text on hover so nothing is actually lost, just not force-fit into
-     the header row. */
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+}
+
+.ai-convo-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
   margin: 0 4px;
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 6px;
+  border-radius: 8px;
   color: #fff;
   font-family: "Inter", sans-serif;
   font-weight: 500;
   font-size: 12.5px;
-  padding: 5px 8px;
+  padding: 6px 8px 6px 10px;
   cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
 }
-.ai-convo-select:hover { border-color: rgba(201,166,107,0.35); }
+.ai-convo-trigger:hover, .ai-convo-picker.open .ai-convo-trigger {
+  border-color: rgba(201,166,107,0.35);
+  background: rgba(255,255,255,0.08);
+}
+.ai-convo-trigger-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai-convo-trigger-chevron {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  color: rgba(255,255,255,0.5);
+  transition: transform var(--transition-fast);
+}
+.ai-convo-picker.open .ai-convo-trigger-chevron { transform: rotate(180deg); }
+
+.ai-convo-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 4px;
+  right: 4px;
+  z-index: 5;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 6px;
+  border-radius: 12px;
+  background: rgba(20,17,10,0.97);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+  cursor: default;
+}
+
+.ai-convo-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 8px 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.ai-convo-row:hover { background: rgba(255,255,255,0.06); }
+.ai-convo-row.active {
+  background: rgba(201,166,107,0.12);
+  box-shadow: inset 2px 0 0 var(--chp-gold-bright, #e0bf80);
+}
+.ai-convo-row-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Inter", sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+}
+.ai-convo-row.active .ai-convo-row-title { color: #fff; font-weight: 600; }
+.ai-convo-row-delete {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: rgba(255,255,255,0.35);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+.ai-convo-row-delete:hover { color: #ff8a8a; background: rgba(220,90,90,0.15); }
+
 .ai-new-chat-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
   background: none;
   border: 1px solid var(--chp-gold-bright, #e0bf80);
   color: var(--chp-gold-bright, #e0bf80);
-  border-radius: 6px;
-  font-family: "Inter", sans-serif;
-  font-weight: 600;
-  font-size: 11px;
-  padding: 5px 9px;
+  border-radius: 7px;
+  padding: 0;
   cursor: pointer;
-  flex-shrink: 0;
-  white-space: nowrap;
 }
+.ai-new-chat-btn svg { width: 15px; height: 15px; }
 .ai-new-chat-btn:hover { background: rgba(201,166,107,0.14); }
 
 .ai-typing-label {

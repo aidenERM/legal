@@ -1086,9 +1086,17 @@
 
 <div class="ai-panel liquid-glass liquid-glass-distort" id="aiPanel">
   <div class="ai-panel-header" id="aiPanelHeader">
-    <span>CHP AI Assistant</span>
-    <select class="ai-convo-select" id="aiConvoSelect" aria-label="Select conversation"></select>
-    <button class="ai-new-chat-btn" id="aiNewChatBtn" type="button" aria-label="New Chat">New Chat</button>
+    <span class="ai-panel-title">CHP AI Assistant</span>
+    <div class="ai-convo-picker" id="aiConvoPicker">
+      <button class="ai-convo-trigger" id="aiConvoTrigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+        <span class="ai-convo-trigger-label" id="aiConvoTriggerLabel">New Chat</span>
+        <svg class="ai-convo-trigger-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="ai-convo-menu" id="aiConvoMenu" role="listbox" aria-label="Conversations" hidden></div>
+    </div>
+    <button class="ai-new-chat-btn" id="aiNewChatBtn" type="button" aria-label="New Chat" title="New Chat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
     <button class="ai-panel-close" id="aiPanelClose" aria-label="Close">&times;</button>
   </div>
   <div class="ai-messages" id="aiMessages"></div>
