@@ -3404,54 +3404,55 @@ document.getElementById("lookupSearchInput").addEventListener("input", (e) => {
 
 // ── AI Assistant (floating panel, present on every page) ──
 
-const AI_CONVERSATIONS_KEY = "chp_ai_conversations";
+// Item requested: chats should follow the ACCOUNT, not just this browser's
+// localStorage (which meant a different device/browser saw no history at
+// all) - conversations now live server-side per user (see /api/ai/
+// conversations*), fetched lazily. localStorage keeps exactly one thing:
+// which conversation was last open on THIS device, purely a UX convenience.
 const AI_ACTIVE_CONVERSATION_KEY = "chp_ai_active_conversation_id";
-let aiConversations = []; // [{id, title, messages: [{role, content, timestamp}]}]
+let aiConversations = []; // [{id, title, messages: [...] | undefined (not fetched yet)}]
 let aiActiveConversationId = null;
 let aiPendingProposal = null; // { proposalId } for the most recent unconfirmed proposal
 let aiTypingSlowTimer = null; // pending "Still working..." swap for the in-flight request
 
-function aiLoadConversations() {
-  try {
-    const raw = localStorage.getItem(AI_CONVERSATIONS_KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
-    if (Array.isArray(parsed) && parsed.length) {
-      aiConversations = parsed;
-      return;
-    }
-  } catch (e) {
-    // corrupt/unreadable storage - fall through to a fresh conversation
-  }
-  aiConversations = [aiCreateConversationObject()];
-}
-
-// Unbounded before this: every "New Chat" and every message in every
-// conversation persisted forever in both localStorage and this array in
-// memory for the life of the tab, no cap at all. Trims to the most recent
-// MAX_AI_CONVERSATIONS chats (oldest dropped first, matching push()'s
-// append-to-end ordering) and the most recent MAX_AI_MESSAGES_PER_CONVERSATION
-// messages within each one, every time conversations are persisted.
-const MAX_AI_CONVERSATIONS = 30;
 const MAX_AI_MESSAGES_PER_CONVERSATION = 300;
 
-function aiSaveConversations() {
-  if (aiConversations.length > MAX_AI_CONVERSATIONS) {
-    aiConversations = aiConversations.slice(-MAX_AI_CONVERSATIONS);
-  }
-  for (const convo of aiConversations) {
-    if (convo.messages.length > MAX_AI_MESSAGES_PER_CONVERSATION) {
-      convo.messages = convo.messages.slice(-MAX_AI_MESSAGES_PER_CONVERSATION);
-    }
-  }
+async function aiFetchConversationsList() {
   try {
-    localStorage.setItem(AI_CONVERSATIONS_KEY, JSON.stringify(aiConversations));
+    const res = await apiGet("/api/ai/conversations");
+    return (res && res.entries) || [];
   } catch (e) {
-    // storage full/unavailable - conversations still work for this page load
+    return [];
   }
+}
+
+async function aiFetchConversationMessages(id) {
+  try {
+    const res = await apiGet(`/api/ai/conversations/${id}`);
+    return res && res.conversation ? res.conversation.messages || [] : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Fire-and-forget - a save hiccup shouldn't block the chat UI from
+// continuing to work locally for the rest of this page load.
+function aiPersistConversation(convo) {
+  if (!convo) return;
+  if (convo.messages.length > MAX_AI_MESSAGES_PER_CONVERSATION) {
+    convo.messages = convo.messages.slice(-MAX_AI_MESSAGES_PER_CONVERSATION);
+  }
+  apiPost("/api/ai/conversations", {
+    conversationId: convo.id,
+    title: convo.title || "New Chat",
+    messages: convo.messages,
+  }).catch(() => {});
 }
 
 function aiCreateConversationObject() {
-  return { id: crypto.randomUUID(), title: "New Chat", messages: [] };
+  // `persisted: false` until the first message actually sends - avoids
+  // littering the sidebar with empty drafts from every "New Chat" click.
+  return { id: crypto.randomUUID(), title: "New Chat", messages: [], persisted: false };
 }
 
 function aiGetActiveConversation() {
@@ -3459,11 +3460,10 @@ function aiGetActiveConversation() {
 }
 
 function aiPopulateConvoMenu() {
-  const menu = document.getElementById("aiConvoMenu");
-  const triggerLabel = document.getElementById("aiConvoTriggerLabel");
-  if (!menu || !triggerLabel) return;
+  const list = document.getElementById("aiSidebarList");
+  if (!list) return;
 
-  menu.innerHTML = "";
+  list.innerHTML = "";
   aiConversations.forEach((c) => {
     const row = document.createElement("div");
     row.className = "ai-convo-row" + (c.id === aiActiveConversationId ? " active" : "");
@@ -3477,7 +3477,7 @@ function aiPopulateConvoMenu() {
     row.appendChild(title);
 
     // Only offer delete when there's more than one conversation - always
-    // keeping at least one avoids an empty-picker dead end.
+    // keeping at least one avoids an empty-sidebar dead end.
     if (aiConversations.length > 1) {
       const del = document.createElement("button");
       del.type = "button";
@@ -3493,45 +3493,29 @@ function aiPopulateConvoMenu() {
 
     row.addEventListener("click", () => {
       aiSwitchConversation(c.id);
-      aiCloseConvoMenu();
+      if (aiPanelIsMobile()) document.getElementById("aiPanel").classList.add("sidebar-collapsed");
     });
-    menu.appendChild(row);
+    list.appendChild(row);
   });
-
-  const active = aiGetActiveConversation();
-  triggerLabel.textContent = (active && active.title) || "New Chat";
 }
 
-function aiOpenConvoMenu() {
-  const picker = document.getElementById("aiConvoPicker");
-  const menu = document.getElementById("aiConvoMenu");
-  const trigger = document.getElementById("aiConvoTrigger");
-  if (!picker || !menu || !trigger) return;
-  menu.hidden = false;
-  picker.classList.add("open");
-  trigger.setAttribute("aria-expanded", "true");
-}
-
-function aiCloseConvoMenu() {
-  const picker = document.getElementById("aiConvoPicker");
-  const menu = document.getElementById("aiConvoMenu");
-  const trigger = document.getElementById("aiConvoTrigger");
-  if (!picker || !menu || !trigger) return;
-  menu.hidden = true;
-  picker.classList.remove("open");
-  trigger.setAttribute("aria-expanded", "false");
+function aiToggleSidebar() {
+  const panel = document.getElementById("aiPanel");
+  if (panel) panel.classList.toggle("sidebar-collapsed");
 }
 
 function aiDeleteConversation(id) {
   const idx = aiConversations.findIndex((c) => c.id === id);
   if (idx === -1 || aiConversations.length <= 1) return;
-  aiConversations.splice(idx, 1);
+  const [removed] = aiConversations.splice(idx, 1);
+  if (removed.persisted) {
+    apiDelete(`/api/ai/conversations/${id}`).catch(() => {});
+  }
   if (aiActiveConversationId === id) {
     aiActiveConversationId = aiConversations[0].id;
     aiSaveActiveConversationId();
-    aiRenderActiveConversation();
+    aiEnsureConversationLoaded(aiActiveConversationId).then(aiRenderActiveConversation);
   }
-  aiSaveConversations();
   aiPopulateConvoMenu();
 }
 
@@ -3558,7 +3542,7 @@ function aiRenderActiveConversation() {
   messages.innerHTML = "";
   const convo = aiGetActiveConversation();
   if (!convo) return;
-  convo.messages.forEach((m) => {
+  (convo.messages || []).forEach((m) => {
     aiAppendBubble(m.role, m.content);
   });
   aiUpdateEmptyState();
@@ -3572,28 +3556,44 @@ function aiSaveActiveConversationId() {
   }
 }
 
-function aiInitConversations() {
-  aiLoadConversations();
+// Fetches a conversation's messages the first time it's opened, caching
+// them on the in-memory object afterward - switching back and forth is
+// then instant, only ever hitting the network once per conversation per
+// page load.
+async function aiEnsureConversationLoaded(id) {
+  const convo = aiConversations.find((c) => c.id === id);
+  if (!convo || convo.messages !== undefined) return;
+  const fetched = await aiFetchConversationMessages(id);
+  convo.messages = fetched || [];
+}
+
+async function aiInitConversations() {
+  const entries = await aiFetchConversationsList();
+  aiConversations = entries.map((e) => ({ id: e._id, title: e.title || "New Chat", messages: undefined, persisted: true }));
+
+  if (aiConversations.length === 0) {
+    aiConversations = [aiCreateConversationObject()];
+  }
+
   let savedActiveId = null;
   try {
     savedActiveId = localStorage.getItem(AI_ACTIVE_CONVERSATION_KEY);
   } catch (e) {
     savedActiveId = null;
   }
-  if (savedActiveId && aiConversations.some((c) => c.id === savedActiveId)) {
-    aiActiveConversationId = savedActiveId;
-  } else if (!aiActiveConversationId || !aiConversations.some((c) => c.id === aiActiveConversationId)) {
-    aiActiveConversationId = aiConversations[0].id;
-  }
+  aiActiveConversationId = (savedActiveId && aiConversations.some((c) => c.id === savedActiveId))
+    ? savedActiveId
+    : aiConversations[0].id;
+
+  await aiEnsureConversationLoaded(aiActiveConversationId);
   aiPopulateConvoMenu();
   aiRenderActiveConversation();
 }
 
 function aiNewChat() {
   const convo = aiCreateConversationObject();
-  aiConversations.push(convo);
+  aiConversations.unshift(convo);
   aiActiveConversationId = convo.id;
-  aiSaveConversations();
   aiSaveActiveConversationId();
   aiPopulateConvoMenu();
   aiRenderActiveConversation();
@@ -3601,12 +3601,40 @@ function aiNewChat() {
   if (input) input.focus();
 }
 
-function aiSwitchConversation(id) {
+async function aiSwitchConversation(id) {
   if (!aiConversations.some((c) => c.id === id)) return;
   aiActiveConversationId = id;
   aiSaveActiveConversationId();
-  aiRenderActiveConversation();
   aiPopulateConvoMenu();
+  await aiEnsureConversationLoaded(id);
+  // The user could have switched again while the fetch above was in
+  // flight - only render if this is still the active conversation.
+  if (aiActiveConversationId === id) aiRenderActiveConversation();
+}
+
+// Item requested: users can export a chat. Plain markdown transcript,
+// downloaded client-side - no backend involved.
+function aiExportActiveConversation() {
+  const convo = aiGetActiveConversation();
+  if (!convo || !(convo.messages || []).length) return;
+  const lines = [`# ${convo.title || "CHP AI Assistant chat"}`, ""];
+  for (const m of convo.messages) {
+    const who = m.role === "user" ? "You" : "CHP Assistant";
+    const when = m.timestamp ? new Date(m.timestamp).toLocaleString() : "";
+    lines.push(`**${who}**${when ? ` — ${when}` : ""}`);
+    lines.push(m.content || "");
+    lines.push("");
+  }
+  const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const safeTitle = (convo.title || "chat").replace(/[^a-z0-9]+/gi, "-").toLowerCase().slice(0, 50);
+  a.download = `chp-ai-chat-${safeTitle || "export"}.md`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 function aiAppendBubble(role, text, imageDataUrl) {
@@ -3682,7 +3710,9 @@ function aiShowTyping() {
   const typing = document.createElement("div");
   typing.className = "ai-typing";
   typing.id = "aiTypingIndicator";
-  typing.innerHTML = '<span class="ai-typing-label">Thinking...</span><span></span><span></span><span></span>';
+  typing.innerHTML =
+    '<span class="ai-typing-label">Thinking...</span>' +
+    '<span class="ai-typing-dots"><span></span><span></span><span></span></span>';
   messages.appendChild(typing);
   messages.scrollTop = messages.scrollHeight;
 }
@@ -3760,7 +3790,8 @@ async function aiSendMessage(message, attachedImage) {
       convo.title = trimmed.length > 40 ? `${trimmed.slice(0, 37).trim()}…` : trimmed;
       aiPopulateConvoMenu();
     }
-    aiSaveConversations();
+    convo.persisted = true;
+    aiPersistConversation(convo);
   }
   aiShowTyping();
 
@@ -3788,7 +3819,7 @@ async function aiSendMessage(message, attachedImage) {
     });
     if (convo) {
       convo.messages.push({ role: "assistant", content: errText, timestamp: Date.now() });
-      aiSaveConversations();
+      aiPersistConversation(convo);
     }
   };
 
@@ -3908,7 +3939,7 @@ async function aiSendMessage(message, attachedImage) {
   const data = doneData;
   if (convo) {
     convo.messages.push({ role: "assistant", content: data.text || "", timestamp: Date.now() });
-    aiSaveConversations();
+    aiPersistConversation(convo);
   }
 
   const finalize = () => {
@@ -3936,11 +3967,13 @@ async function aiSendMessage(message, attachedImage) {
 }
 
 const AI_PANEL_GEOMETRY_KEY = "chp-dashboard-ai-panel-geometry";
-const AI_PANEL_DEFAULT_WIDTH = 500;
+const AI_PANEL_DEFAULT_WIDTH = 580;
 const AI_PANEL_DEFAULT_HEIGHT = 650;
-const AI_PANEL_MIN_WIDTH = 300;
+// Kept in sync with .ai-panel's min/max-width in app.css - the sidebar
+// layout needs more room than the old dropdown-in-header did.
+const AI_PANEL_MIN_WIDTH = 340;
 const AI_PANEL_MIN_HEIGHT = 360;
-const AI_PANEL_MAX_WIDTH = 720;
+const AI_PANEL_MAX_WIDTH = 760;
 
 function aiPanelIsMobile() {
   return window.innerWidth <= 480;
@@ -4086,9 +4119,14 @@ aiInitPanelDragResize();
 
 function aiOpenPanel() {
   aiRestorePanelGeometry();
+  const panel = document.getElementById("aiPanel");
+  // Sidebar starts collapsed on phone-width panels (it would otherwise
+  // overlay most of the message list on first open) - desktop keeps it
+  // open, matching the pre-existing "always visible" sidebar behavior.
+  panel.classList.toggle("sidebar-collapsed", aiPanelIsMobile());
   aiInitConversations();
-  document.getElementById("aiPanel").classList.add("open");
-  attachGlassPointerTracking(document.getElementById("aiPanel"));
+  panel.classList.add("open");
+  attachGlassPointerTracking(panel);
   document.getElementById("aiInput").focus();
 }
 
@@ -4106,32 +4144,13 @@ document.getElementById("aiFab").addEventListener("click", () => {
 });
 
 document.getElementById("aiPanelClose").addEventListener("click", aiClosePanel);
-
+document.getElementById("aiSidebarToggle").addEventListener("click", aiToggleSidebar);
+document.getElementById("aiExportBtn").addEventListener("click", aiExportActiveConversation);
 document.getElementById("aiNewChatBtn").addEventListener("click", () => {
-  aiCloseConvoMenu();
   aiNewChat();
-});
-
-document.getElementById("aiConvoTrigger").addEventListener("click", (e) => {
-  e.stopPropagation();
-  const picker = document.getElementById("aiConvoPicker");
-  if (picker && picker.classList.contains("open")) {
-    aiCloseConvoMenu();
-  } else {
-    aiOpenConvoMenu();
-  }
-});
-
-// Click-outside and Escape both close the menu - it's a floating panel over
-// the message list, not a native <select> the browser manages for us.
-document.addEventListener("click", (e) => {
-  const picker = document.getElementById("aiConvoPicker");
-  if (picker && picker.classList.contains("open") && !picker.contains(e.target)) {
-    aiCloseConvoMenu();
-  }
-});
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") aiCloseConvoMenu();
+  // On a phone-width panel the sidebar overlays the chat - collapse it
+  // back after picking "New Chat" so the fresh conversation is visible.
+  if (aiPanelIsMobile()) document.getElementById("aiPanel").classList.add("sidebar-collapsed");
 });
 
 // ── AI Assistant: attach-an-image ──
