@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260721">
+<link rel="stylesheet" href="app.css?v=20260722">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 <style>
@@ -413,6 +413,44 @@
   .login-processing.active { display: flex; }
   .login-btn.hidden { display: none; }
 
+  .twofa-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    animation: fade-up 0.4s var(--ease-smooth) both;
+  }
+  .twofa-prompt { margin: 0; font-size: 14px; color: rgba(255,255,255,0.6); text-align: center; }
+  .twofa-code-input {
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(255,255,255,0.15);
+    color: #fff;
+    font-family: "Manrope", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-align: center;
+  }
+  .twofa-code-input:focus { outline: none; border-color: var(--chp-gold, #c9a66b); }
+  .twofa-submit-btn { animation: none; }
+  .twofa-error {
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(220,90,90,0.10);
+    border: 1px solid rgba(220,90,90,0.25);
+    color: rgba(255,180,180,0.9);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    width: 100%;
+  }
+  .twofa-backup-hint { margin: 0; font-size: 12px; color: rgba(255,255,255,0.35); text-align: center; }
+
   .spinner {
     width: 18px;
     height: 18px;
@@ -580,6 +618,14 @@
         <span>Signing you in&hellip;</span>
       </div>
 
+      <form class="twofa-form" id="twofaForm" hidden>
+        <p class="twofa-prompt">Enter the 6-digit code from your authenticator app.</p>
+        <input type="text" id="twofaCodeInput" class="twofa-code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456" autofocus>
+        <button type="submit" class="login-btn twofa-submit-btn">Verify</button>
+        <p class="twofa-error" id="twofaError" hidden></p>
+        <p class="twofa-backup-hint">Lost your device? Use one of your backup codes instead.</p>
+      </form>
+
       <p class="login-card-foot">Not on the roster? <a href="https://discord.gg/7fyPz8fMq6" target="_blank" rel="noopener noreferrer">Request staff access</a></p>
 
       <nav class="site-links" aria-label="Resource links">
@@ -606,6 +652,9 @@
   const loginBtn        = document.getElementById("loginBtn");
   const loginProcessing = document.getElementById("loginProcessing");
   const rememberMe      = document.getElementById("rememberMe");
+  const twofaForm       = document.getElementById("twofaForm");
+  const twofaCodeInput  = document.getElementById("twofaCodeInput");
+  const twofaError      = document.getElementById("twofaError");
 
   const authorizeUrl =
     "https://discord.com/api/oauth2/authorize" +
@@ -621,7 +670,44 @@
   const WORKER_URL = "https://chp-dashboard-api.aidenspearb.workers.dev";
   const params = new URLSearchParams(window.location.search);
 
-  if (params.has("code")) {
+  // pending2fa=1 arrives via authCallback.js's GET redirect when the user
+  // has 2FA enabled - the real session hasn't been issued yet, only a
+  // short-lived pendingToken (in the URL fragment, never sent to any
+  // server) that /api/2fa/verify-login needs alongside the entered code.
+  if (params.has("pending2fa")) {
+    const pendingToken = window.location.hash.startsWith("#pending=")
+      ? decodeURIComponent(window.location.hash.slice("#pending=".length))
+      : null;
+    if (!pendingToken) {
+      window.location.href = "index.html?error=1";
+    } else {
+      loginBtn.classList.add("hidden");
+      twofaForm.hidden = false;
+      twofaForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        twofaError.hidden = true;
+        const code = twofaCodeInput.value.trim();
+        if (!code) return;
+        const res = await fetch(`${WORKER_URL}/api/2fa/verify-login`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ pendingToken, code }),
+        }).then((r) => r.json()).catch(() => null);
+
+        if (!res || !res.ok) {
+          twofaError.textContent = "Incorrect code - try again.";
+          twofaError.hidden = false;
+          twofaCodeInput.value = "";
+          twofaCodeInput.focus();
+          return;
+        }
+        // Same handoff app.html's bootstrapSessionToken expects from the
+        // normal login redirect - stash the token and land on the dashboard.
+        window.location.href = `app.html#session=${encodeURIComponent(res.token)}`;
+      });
+    }
+  } else if (params.has("code")) {
     loginBtn.classList.add("hidden");
     loginProcessing.classList.add("active");
 
@@ -648,7 +734,7 @@
   // after a failed attempt (?denied=/?error=), so a denied user isn't
   // stuck bouncing back into the dashboard on a stale cookie, and so this
   // check can't race the code-exchange redirect above.
-  if (!params.has("code") && !params.has("denied") && !params.has("error")) {
+  if (!params.has("code") && !params.has("denied") && !params.has("error") && !params.has("pending2fa")) {
     loginBtn.classList.add("hidden");
     loginProcessing.classList.add("active");
     // Mobile Safari/Chrome block the chp_session cookie on this cross-site

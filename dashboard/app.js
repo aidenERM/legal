@@ -1412,16 +1412,82 @@ async function loadProfile() {
     // that markup can't resolve to an image and was showing as ugly literal
     // text instead of a medal/ribbon icon. Strip it and render a real
     // medal-style badge card (icon + label) instead.
-    const badgeCards = badges
-      .map((b) => (b || "").replace(/^<a?:\w+:\d+>\s*/, "").trim())
-      .filter(Boolean)
-      .map(
-        (label) =>
-          `<div class="badge-card badge-card-earned"><span class="badge-icon" aria-hidden="true">🏅</span><span class="badge-label">${label}</span></div>`
-      )
-      .join("");
+    const labels = badges.map((b) => (b || "").replace(/^<a?:\w+:\d+>\s*/, "").trim()).filter(Boolean);
+    const badgeCards = labels.map((label) => badgeCardHtml(label)).join("");
     badgesGrid.innerHTML = extra + (badgeCards || `<div class="badge-card empty-state">No badges earned yet.</div>`);
+
+    celebrateNewBadges(me.userId, labels);
+    renderNextBadgeProgress(shifts.shiftCount, shifts.totalSeconds);
   }
+}
+
+// Tiers are inferred from the label text itself rather than a second bot-
+// side field, since BADGE_DEFINITIONS (cogs/Profile.py) names already
+// encode the milestone size ("10 Shifts" vs "50 Shifts", "100/500/1000
+// Hours", "6 Months" vs "1/2 Years") - matching on that avoids needing a
+// schema change just to color-code badges.
+function badgeTierFor(label) {
+  if (/\b(1000|2\s*Years?)\b/i.test(label)) return "platinum";
+  if (/\b(500|50 Shifts|1 Year)\b/i.test(label)) return "gold";
+  if (/\b(100|10 Shifts|6 Months|RA Veteran)\b/i.test(label)) return "silver";
+  return "bronze";
+}
+function badgeCardHtml(label) {
+  const tier = badgeTierFor(label);
+  return `<div class="badge-card badge-card-earned badge-tier-${tier}"><span class="badge-icon" aria-hidden="true">🏅</span><span class="badge-label">${label}</span></div>`;
+}
+
+// Fires confetti the first time a badge shows up that wasn't in the last
+// snapshot seen on this device - mirrors celebrateHourMilestone's
+// localStorage-diff approach, since there's no "badges seen" flag server-side.
+const BADGES_SEEN_KEY_PREFIX = "chp_badges_seen_";
+function celebrateNewBadges(userId, labels) {
+  const key = BADGES_SEEN_KEY_PREFIX + userId;
+  const seen = new Set(JSON.parse(localStorage.getItem(key) || "[]"));
+  const isFirstLoad = seen.size === 0 && localStorage.getItem(key) === null;
+  const hasNew = labels.some((l) => !seen.has(l));
+  labels.forEach((l) => seen.add(l));
+  localStorage.setItem(key, JSON.stringify([...seen]));
+  // Skip the celebration on this device's very first profile load ever -
+  // otherwise everyone with existing badges gets a confetti burst just for
+  // visiting once this shipped, which isn't "new".
+  if (hasNew && !isFirstLoad && !document.body.classList.contains("reduce-motion")) {
+    fireConfetti();
+  }
+}
+
+// Next-milestone progress bar - mirrors BADGE_DEFINITIONS' shift-count and
+// all-time-hours thresholds (cogs/Profile.py) so the dashboard can show
+// "how close" without a new bot-side endpoint. Service-tenure and RA-streak
+// badges aren't included here (tenure isn't available on this payload, and
+// streak already has its own stat card above).
+const SHIFT_COUNT_MILESTONES = [10, 50];
+const HOUR_MILESTONES_FOR_BADGES = [100, 500, 1000];
+function renderNextBadgeProgress(shiftCount, totalSeconds) {
+  const wrap = document.getElementById("nextBadgeProgress");
+  if (!wrap) return;
+  const hours = totalSeconds / 3600;
+  const nextShiftGoal = SHIFT_COUNT_MILESTONES.find((m) => shiftCount < m);
+  const nextHourGoal = HOUR_MILESTONES_FOR_BADGES.find((m) => hours < m);
+  const bars = [];
+  if (nextShiftGoal) {
+    bars.push(nextMilestoneBarHtml(`${nextShiftGoal} Shifts Completed`, shiftCount, nextShiftGoal));
+  }
+  if (nextHourGoal) {
+    bars.push(nextMilestoneBarHtml(`${nextHourGoal} Hours Worked`, Math.floor(hours), nextHourGoal));
+  }
+  wrap.innerHTML = bars.join("") || "";
+  wrap.hidden = bars.length === 0;
+}
+function nextMilestoneBarHtml(label, current, goal) {
+  const pct = Math.min(100, Math.round((current / goal) * 100));
+  return `
+    <div class="next-badge-row">
+      <div class="next-badge-label">${label}</div>
+      <div class="next-badge-track"><div class="next-badge-fill" style="width: ${pct}%"></div></div>
+      <div class="next-badge-count">${current} / ${goal}</div>
+    </div>
+  `;
 }
 
 async function loadHistory() {
@@ -1543,9 +1609,15 @@ async function loadLookupDetail(userId) {
     `;
   }
 
+  const detailAvatarEntry = (currentLeaderboardEntries || []).find((e) => String(e.userId) === String(userId));
+  const detailAvatarUrl = detailAvatarEntry ? avatarUrlFor(userId, detailAvatarEntry.avatar, 64) : avatarUrlFor(userId, null, 64);
+
   detailWrap.innerHTML = `
     <div class="lookup-detail-header-row">
-      <h2 class="lookup-detail-heading" style="margin: 0;">Current Info</h2>
+      <div class="lookup-detail-identity">
+        <img class="lookup-detail-avatar" id="lookupDetailAvatar" src="${detailAvatarUrl}" alt="">
+        <h2 class="lookup-detail-heading" style="margin: 0;">Current Info</h2>
+      </div>
       <button class="accent-reset-btn" id="lookupCopyLinkBtn" type="button">Copy link</button>
     </div>
     ${liveHtml}
@@ -1844,7 +1916,7 @@ function renderLeaderboardPodium(top3, period) {
         ? `<span class="leaderboard-rank-title">${entry.rank}</span>`
         : "";
       return `
-        <div class="podium-slot podium-place-${place}" style="animation-delay: ${(place === 1 ? 0.05 : place === 2 ? 0.15 : 0.25).toFixed(2)}s">
+        <div class="podium-slot podium-place-${place}" data-user-id="${entry.userId}" style="animation-delay: ${(place === 1 ? 0.05 : place === 2 ? 0.15 : 0.25).toFixed(2)}s">
           <span class="podium-medal">${place === 1 ? "&#129351;" : place === 2 ? "&#129352;" : "&#129353;"}</span>
           <img class="podium-avatar" src="${avatarUrl}" alt="" width="72" height="72">
           <span class="podium-name">${entry.username}</span>
@@ -1856,6 +1928,50 @@ function renderLeaderboardPodium(top3, period) {
     })
     .join("");
   return slots;
+}
+
+// Clicking a leaderboard row/podium slot jumps to that member's Member
+// Lookup profile - gated to whoever already has the Member Lookup nav item
+// (staff+), same access check the deep-link handler already relies on.
+// Uses the View Transitions API so the clicked avatar/name visually morphs
+// into the profile header instead of a hard cut, falling back to a plain
+// instant navigation on browsers that don't support it (Safari < 18, etc).
+function wireLeaderboardRowClicks(container) {
+  if (!document.querySelector('.nav-item[data-section="lookup"]')) return;
+  container.querySelectorAll("[data-user-id]").forEach((row) => {
+    row.classList.add("leaderboard-clickable");
+    row.addEventListener("click", () => {
+      const avatar = row.querySelector("img");
+      openLookupProfileWithTransition(row.dataset.userId, avatar);
+    });
+  });
+}
+
+function openLookupProfileWithTransition(userId, sourceAvatarEl) {
+  const go = async () => {
+    document.querySelector('.nav-item[data-section="lookup"]')?.click();
+    await loadLookupDetail(userId);
+  };
+  if (!document.startViewTransition || document.body.classList.contains("reduce-motion")) {
+    go();
+    return;
+  }
+  // Tag the clicked row's avatar as the transition's "before" state - the
+  // "after" state (#lookupDetailAvatar) gets the same name once loadLookupDetail
+  // renders it, inside the transition callback so both exist when the
+  // browser diffs old vs new. Cleared afterward since view-transition-name
+  // must be unique in the DOM at any given time and every row would collide
+  // on the next click otherwise.
+  if (sourceAvatarEl) sourceAvatarEl.style.viewTransitionName = "lookup-avatar-transition";
+  document.startViewTransition(async () => {
+    await go();
+    const destAvatar = document.getElementById("lookupDetailAvatar");
+    if (destAvatar) destAvatar.style.viewTransitionName = "lookup-avatar-transition";
+  }).finished.finally(() => {
+    if (sourceAvatarEl) sourceAvatarEl.style.viewTransitionName = "";
+    const destAvatar = document.getElementById("lookupDetailAvatar");
+    if (destAvatar) destAvatar.style.viewTransitionName = "";
+  });
 }
 
 // Kicks off the count-up animation for every `.count-target` span inside
@@ -1912,6 +2028,8 @@ async function loadLeaderboard(period) {
   list.innerHTML = renderLeaderboardRows(rest, currentLeaderboardPeriod, 3);
   animateLeaderboardCounts(podium);
   animateLeaderboardCounts(list);
+  wireLeaderboardRowClicks(podium);
+  wireLeaderboardRowClicks(list);
   // Snapshot today's ranks AFTER rendering (so the change indicator above
   // compared against the previous snapshot, not this one) for next visit.
   saveLeaderboardRankHistory(currentLeaderboardPeriod, leaderboard.entries);
@@ -1928,6 +2046,30 @@ document.getElementById("leaderboardExportBtn")?.addEventListener("click", () =>
   );
 });
 
+// ── Visibility-aware polling ──────────────────────────────────────────
+// A plain setInterval keeps firing (and burning API calls) while the tab is
+// backgrounded/minimized, where nobody is watching the "live" data anyway.
+// This wrapper pauses while document.hidden and immediately re-fires once
+// the tab becomes visible again, instead of waiting up to a full interval.
+function startVisibilityAwarePoll(fn, intervalMs) {
+  // Doesn't call fn() immediately - callers already trigger their own
+  // initial load (e.g. via withLoadingOverlay) before starting the poll, so
+  // firing here too would just double up the first request.
+  const id = setInterval(() => {
+    if (!document.hidden) fn();
+  }, intervalMs);
+  const onVisible = () => {
+    if (!document.hidden) fn();
+  };
+  document.addEventListener("visibilitychange", onVisible);
+  return { intervalId: id, visibilityHandler: onVisible };
+}
+function stopVisibilityAwarePoll(handle) {
+  if (!handle) return;
+  clearInterval(handle.intervalId);
+  document.removeEventListener("visibilitychange", handle.visibilityHandler);
+}
+
 async function refreshOnDutyBadge() {
   const badge = document.getElementById("onDutyBadge");
   const countEl = document.getElementById("onDutyCount");
@@ -1941,22 +2083,19 @@ async function refreshOnDutyBadge() {
   badge.hidden = false;
 }
 
-// "Live" leaderboard period + the on-duty badge both auto-refresh every 45s
-// while the Leaderboard panel is open, per the plan's "this-week auto-refresh
-// every 30-60s" requirement (the on-duty badge is always kept fresh too,
-// since it's meaningful regardless of which period is selected).
+// "Live" leaderboard period + the on-duty badge both auto-refresh while the
+// Leaderboard panel is open - tightened from a flat 45s poll to 12s via
+// startVisibilityAwarePoll (real-time presence upgrade), so rank/on-duty
+// changes show up close to immediately instead of up to 45s stale, without
+// burning API calls while the tab is backgrounded.
 function startLeaderboardAutoRefresh() {
   stopLeaderboardAutoRefresh();
-  leaderboardAutoRefreshInterval = setInterval(() => {
-    loadLeaderboard();
-  }, 45000);
+  leaderboardAutoRefreshInterval = startVisibilityAwarePoll(() => loadLeaderboard(), 12000);
 }
 
 function stopLeaderboardAutoRefresh() {
-  if (leaderboardAutoRefreshInterval) {
-    clearInterval(leaderboardAutoRefreshInterval);
-    leaderboardAutoRefreshInterval = null;
-  }
+  stopVisibilityAwarePoll(leaderboardAutoRefreshInterval);
+  leaderboardAutoRefreshInterval = null;
 }
 
 // ── Recognized Officers ──
@@ -2330,11 +2469,16 @@ async function loadShiftManagement() {
     loadOnDutyCard(),
   ]);
 
-  if (shiftPollInterval) clearInterval(shiftPollInterval);
-  shiftPollInterval = setInterval(() => {
+  stopShiftPoll();
+  shiftPollInterval = startVisibilityAwarePoll(() => {
     refreshCurrentShift();
     loadOnDutyCard();
-  }, 45000);
+  }, 12000);
+}
+
+function stopShiftPoll() {
+  stopVisibilityAwarePoll(shiftPollInterval);
+  shiftPollInterval = null;
 }
 
 async function startShift(shiftType) {
@@ -2712,6 +2856,78 @@ async function saveSetting(row, key, value) {
   }
   statusEl.textContent = "Saved";
   statusEl.className = "settings-row-status saved";
+}
+
+async function loadTwoFactorSettings() {
+  const statusDesc = document.getElementById("twofaStatusDesc");
+  const toggleBtn = document.getElementById("twofaToggleBtn");
+  if (!statusDesc || !toggleBtn) return;
+
+  const setupPanel = document.getElementById("twofaSetupPanel");
+  const backupPanel = document.getElementById("twofaBackupCodesPanel");
+  const disablePanel = document.getElementById("twofaDisablePanel");
+  const hideAllPanels = () => { setupPanel.hidden = true; backupPanel.hidden = true; disablePanel.hidden = true; };
+
+  const res = await apiGet("/api/2fa/status");
+  const enabled = !!(res && res.enabled);
+  statusDesc.textContent = enabled
+    ? "Enabled - a code from your authenticator app is required at login."
+    : "Not enabled. Add an extra layer of security to your account.";
+  toggleBtn.textContent = enabled ? "Disable" : "Enable";
+  toggleBtn.hidden = false;
+  hideAllPanels();
+
+  toggleBtn.onclick = async () => {
+    if (enabled) {
+      disablePanel.hidden = false;
+      return;
+    }
+    const setup = await apiPost("/api/2fa/setup", {});
+    if (!setup || !setup.ok || !setup.data || !setup.data.ok) {
+      statusDesc.textContent = "Couldn't start 2FA setup - try again.";
+      return;
+    }
+    const { secret, otpauthUri } = setup.data;
+    document.getElementById("twofaManualKey").textContent = secret.match(/.{1,4}/g).join(" ");
+    document.getElementById("twofaOpenAppLink").href = otpauthUri;
+    setupPanel.hidden = false;
+  };
+
+  document.getElementById("twofaConfirmBtn").onclick = async () => {
+    const code = document.getElementById("twofaConfirmCodeInput").value.trim();
+    const msgEl = document.getElementById("twofaSetupMessage");
+    if (!code) return;
+    const confirmRes = await apiPost("/api/2fa/confirm", { code });
+    if (!confirmRes || !confirmRes.ok || !confirmRes.data || !confirmRes.data.ok) {
+      msgEl.innerHTML = `<div class="form-message error">Incorrect code - try again.</div>`;
+      return;
+    }
+    msgEl.innerHTML = "";
+    setupPanel.hidden = true;
+    document.getElementById("twofaBackupCodesList").innerHTML = confirmRes.data.backupCodes
+      .map((c) => `<code class="twofa-backup-code">${c}</code>`)
+      .join("");
+    backupPanel.hidden = false;
+  };
+
+  document.getElementById("twofaBackupCodesDoneBtn").onclick = () => {
+    backupPanel.hidden = true;
+    loadTwoFactorSettings();
+  };
+
+  document.getElementById("twofaDisableConfirmBtn").onclick = async () => {
+    const code = document.getElementById("twofaDisableCodeInput").value.trim();
+    const msgEl = document.getElementById("twofaDisableMessage");
+    if (!code) return;
+    const disableRes = await apiPost("/api/2fa/disable", { code });
+    if (!disableRes || !disableRes.ok || !disableRes.data || !disableRes.data.ok) {
+      msgEl.innerHTML = `<div class="form-message error">Incorrect code - try again.</div>`;
+      return;
+    }
+    msgEl.innerHTML = "";
+    disablePanel.hidden = true;
+    loadTwoFactorSettings();
+  };
 }
 
 async function loadConnectedAccounts() {
@@ -3386,7 +3602,7 @@ document.querySelectorAll(".nav-item[data-section]").forEach((item) => {
     if (section === "loa-ra") withLoadingOverlay(loadLoa, loadRa);
     if (section === "history") withLoadingOverlay(loadHistory);
     if (section === "profile") withLoadingOverlay(loadProfile);
-    if (section === "settings") withLoadingOverlay(loadSettings, loadSessionInfo, loadConnectedAccounts);
+    if (section === "settings") withLoadingOverlay(loadSettings, loadSessionInfo, loadConnectedAccounts, loadTwoFactorSettings);
     if (section === "reviews") withLoadingOverlay(loadReviewFeed);
     if (section === "leaderboard") {
       withLoadingOverlay(loadLeaderboard, loadRecognizedOfficers, loadDepartmentFeed);
@@ -3394,6 +3610,11 @@ document.querySelectorAll(".nav-item[data-section]").forEach((item) => {
     } else {
       stopLeaderboardAutoRefresh();
     }
+    // Bug fix: shiftPollInterval (Shift Management's on-duty/current-shift
+    // poll) previously never stopped when navigating to a different section -
+    // it just kept polling every 45s in the background forever, for every
+    // panel visited afterward, for the rest of the session.
+    if (section !== "shift-management") stopShiftPoll();
   });
 });
 
