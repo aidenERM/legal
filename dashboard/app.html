@@ -861,11 +861,16 @@
         <input type="text" id="infractionMemberQuery" placeholder="Member name or Discord ID..." autocomplete="off">
         <div class="infraction-member-results" id="infractionMemberResults" hidden></div>
         <div class="infraction-selected-member" id="infractionSelectedMember" hidden></div>
+        <!-- Matches utils/infractions.py's escalation ladder - the rung
+             (e.g. "2 Warnings") is computed server-side from the member's
+             existing infraction count, not chosen here. "Note" was removed:
+             the new shared issue_infraction() only accepts these 4
+             categories, a free-form "Note" doesn't fit the ladder. -->
         <select id="infractionType">
-          <option value="Warning">Warning</option>
-          <option value="Strike">Strike</option>
-          <option value="Suspension">Suspension</option>
-          <option value="Note">Note</option>
+          <option value="warn">Warning</option>
+          <option value="strike">Strike</option>
+          <option value="suspend">Suspension</option>
+          <option value="terminate">Termination</option>
         </select>
         <textarea id="infractionReason" rows="3" placeholder="Reason..."></textarea>
         <button type="submit" class="lookup-search-btn" id="infractionIssueBtn">Issue Infraction</button>
