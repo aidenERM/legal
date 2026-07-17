@@ -381,6 +381,17 @@ function initCommandPalette() {
       isOpen ? close() : open();
       return;
     }
+    // "/" opens the palette too (Slack/Discord/Linear convention) - only
+    // outside of text inputs so it doesn't hijack normal typing.
+    if (!isOpen && e.key === "/") {
+      const active = document.activeElement;
+      const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
+      if (!isTyping) {
+        e.preventDefault();
+        open();
+        return;
+      }
+    }
     if (!isOpen) return;
     if (e.key === "Escape") {
       e.preventDefault();
@@ -495,6 +506,25 @@ function formatDuration(totalSeconds) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   return `${hours}h ${minutes}m`;
+}
+
+// Animates a stat-card value counting up from 0 to `end` instead of
+// snapping straight to its final value. Respects Settings > Reduce motion
+// (skips straight to the end value) the same way showPanel's crossfade does.
+function animateCountUp(el, end, formatter, duration = 800) {
+  if (!el) return;
+  if (document.body.classList.contains("reduce-motion") || !end) {
+    el.textContent = formatter(end);
+    return;
+  }
+  const start = performance.now();
+  function tick(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out-cubic
+    el.textContent = formatter(Math.round(end * eased));
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
 }
 
 function formatHms(totalSeconds) {
@@ -1293,9 +1323,11 @@ async function loadProfile() {
   const cards = document.getElementById("overviewCards");
   cards.hidden = false;
   cards.innerHTML = `
-    <div class="stat-card"><div class="label">Total duty time</div><div class="value">${formatDuration(shifts.totalSeconds)}</div></div>
-    <div class="stat-card"><div class="label">Shifts logged</div><div class="value">${shifts.shiftCount}</div></div>
+    <div class="stat-card"><div class="label">Total duty time</div><div class="value" id="statTotalDutyTime">${formatDuration(0)}</div></div>
+    <div class="stat-card"><div class="label">Shifts logged</div><div class="value" id="statShiftsLogged">0</div></div>
   `;
+  animateCountUp(document.getElementById("statTotalDutyTime"), shifts.totalSeconds, formatDuration);
+  animateCountUp(document.getElementById("statShiftsLogged"), shifts.shiftCount, (n) => String(n));
 
   document.getElementById("shiftsSkeleton").hidden = true;
   const body = document.getElementById("shiftsBody");
@@ -1454,7 +1486,10 @@ async function loadLookupDetail(userId) {
   }
 
   detailWrap.innerHTML = `
-    <h2 class="lookup-detail-heading">Current Info</h2>
+    <div class="lookup-detail-header-row">
+      <h2 class="lookup-detail-heading" style="margin: 0;">Current Info</h2>
+      <button class="accent-reset-btn" id="lookupCopyLinkBtn" type="button">Copy link</button>
+    </div>
     ${liveHtml}
     <h2 class="lookup-detail-heading" style="margin-top: 22px;">Shifts</h2>
     ${renderShiftsSummaryHtml(shifts)}
@@ -1490,6 +1525,15 @@ async function loadLookupDetail(userId) {
     btn.addEventListener("click", () => handleAdminActionClick(btn));
   });
   wireLookupRecentShiftActions(detailWrap);
+
+  document.getElementById("lookupCopyLinkBtn")?.addEventListener("click", async (e) => {
+    const url = `${window.location.origin}${window.location.pathname}?section=lookup&user=${userId}`;
+    await navigator.clipboard.writeText(url);
+    const btn = e.currentTarget;
+    const original = btn.textContent;
+    btn.textContent = "Copied!";
+    window.setTimeout(() => { btn.textContent = original; }, 1500);
+  });
 
   // HR Notes (client-side render gate only - the real access gate is the
   // Worker's /api/hr-notes route, isAdminPlus-or-isIa, same as officersRoster.js).
@@ -2120,6 +2164,7 @@ function renderOnDutyRows(entries) {
       const meta = e.onBreak ? "On break" : (e.shiftType || "On duty");
       return `
         <li class="on-duty-row ${e.onBreak ? "on-break" : ""}">
+          <span class="on-duty-row-dot"></span>
           <img src="${avatarUrlFor(e.userId, e.avatar, 28)}" alt="">
           <div class="on-duty-row-body">
             <span class="on-duty-row-name">${e.displayName}</span>
@@ -3401,6 +3446,24 @@ function initPersonalPrefs() {
       bannersToggle.classList.toggle("on", next);
       bannersToggle.dataset.value = String(next);
       document.querySelectorAll(".dashboard-banner").forEach((el) => { el.hidden = !next; });
+    });
+  }
+
+  const hideFromRosterToggle = document.getElementById("hideFromRosterToggle");
+  if (hideFromRosterToggle) {
+    // Server-synced (not localStorage) since publicRoster.js's bridge
+    // aggregation needs to see this to actually exclude the user - a purely
+    // client-side flag couldn't hide anyone from a page they never visit.
+    apiGet("/api/settings").then((res) => {
+      const on = !!(res && res.settings && res.settings.hide_from_public_roster);
+      hideFromRosterToggle.classList.toggle("on", on);
+      hideFromRosterToggle.dataset.value = String(on);
+    });
+    hideFromRosterToggle.addEventListener("click", async () => {
+      const next = hideFromRosterToggle.dataset.value !== "true";
+      hideFromRosterToggle.classList.toggle("on", next);
+      hideFromRosterToggle.dataset.value = String(next);
+      await apiPost("/api/settings", { key: "hide_from_public_roster", value: next });
     });
   }
 
@@ -6589,3 +6652,17 @@ window.addEventListener("appinstalled", () => {
   if (banner) banner.hidden = true;
   pwaDeferredPrompt = null;
 });
+
+// ── Deep link from "Copy link" on a lookup profile (?section=lookup&user=ID) ──
+// Jumps straight to that member's detail panel instead of leaving the
+// recipient to manually search for them. Runs after everything above has
+// wired up its own click handlers, since it just simulates the same clicks a
+// real user would make.
+(function handleProfileDeepLink() {
+  const params = new URLSearchParams(window.location.search);
+  const section = params.get("section");
+  const userId = params.get("user");
+  if (section !== "lookup" || !userId) return;
+  document.querySelector('.nav-item[data-section="lookup"]')?.click();
+  loadLookupDetail(userId);
+})();
