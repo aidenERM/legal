@@ -1118,6 +1118,7 @@
         <button class="dev-tab" data-dev-tab="access-control">Access Control</button>
         <button class="dev-tab" data-dev-tab="anomalous-logins">Anomalous Logins</button>
         <button class="dev-tab" data-dev-tab="dashboard-logins">Dashboard Logins</button>
+        <button class="dev-tab" data-dev-tab="self-test">Self Test</button>
       </div>
 
       <div class="dev-panel active" id="devPanel-kill-switches">
@@ -1211,6 +1212,20 @@
         <p class="panel-subtitle">Everyone who has ever logged into the dashboard, most recent login first.</p>
         <div class="skeleton" id="dashboardLoginsSkeleton"></div>
         <ul class="loa-history-list" id="dashboardLoginsList" hidden></ul>
+      </div>
+
+      <div class="dev-panel" id="devPanel-self-test">
+        <p class="panel-subtitle">
+          Runs real checks against every major system - shift management, officers/infractions, HR/BOC,
+          LOA/RA, FTO, communications, AI, and infraction proof validation - even features added after this
+          page was last updated get picked up automatically since it calls the real handlers, not a hardcoded
+          list. Writes only ever touch your own account (never a real officer); anything that would post
+          somewhere visible goes to bot-logs only. Safe to run anytime, including right before launch.
+        </p>
+        <button class="lookup-action-btn" id="selfTestRunBtn" type="button">Run Self Test</button>
+        <div id="selfTestSummary" hidden></div>
+        <div class="skeleton" id="selfTestSkeleton" hidden></div>
+        <div id="selfTestResults" hidden></div>
       </div>
     </section>
   </main>

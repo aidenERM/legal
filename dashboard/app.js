@@ -5721,6 +5721,60 @@ document.querySelectorAll(".dev-tab").forEach((tab) => {
   });
 });
 
+document.getElementById("selfTestRunBtn")?.addEventListener("click", runDevSelfTest);
+
+async function runDevSelfTest() {
+  const btn = document.getElementById("selfTestRunBtn");
+  const summary = document.getElementById("selfTestSummary");
+  const skeleton = document.getElementById("selfTestSkeleton");
+  const results = document.getElementById("selfTestResults");
+
+  btn.disabled = true;
+  btn.textContent = "Running...";
+  summary.hidden = true;
+  results.hidden = true;
+  skeleton.hidden = false;
+
+  const res = await apiPost("/api/dev/selftest", {});
+
+  skeleton.hidden = true;
+  btn.disabled = false;
+  btn.textContent = "Run Self Test";
+
+  if (!res || !res.ok) {
+    results.hidden = false;
+    results.innerHTML = `<div class="empty-state">Self test failed to run: ${escapeHtml(res?.error || res?.reason || "unknown error")}</div>`;
+    return;
+  }
+
+  summary.hidden = false;
+  const allPassed = res.passed === res.total;
+  summary.innerHTML = `<div class="self-test-summary ${allPassed ? "self-test-summary-pass" : "self-test-summary-fail"}">
+    ${res.passed}/${res.total} checks passed${allPassed ? " - everything's clean." : " - see below for what needs fixing."}
+  </div>`;
+
+  results.hidden = false;
+  results.innerHTML = (res.categories || [])
+    .map((cat) => {
+      const rows = (cat.checks || [])
+        .map(
+          (c) => `
+      <li class="self-test-row ${c.ok ? "self-test-row-pass" : "self-test-row-fail"}">
+        <span class="self-test-icon">${c.ok ? "✓" : "✗"}</span>
+        <span class="self-test-name">${escapeHtml(c.name)}</span>
+        <span class="self-test-detail">${escapeHtml(c.detail || "")}</span>
+        <span class="self-test-ms">${c.ms}ms</span>
+      </li>`
+        )
+        .join("");
+      return `<div class="self-test-category">
+        <h3>${escapeHtml(cat.category)}</h3>
+        <ul class="self-test-list">${rows}</ul>
+      </div>`;
+    })
+    .join("");
+}
+
 async function loadDevDashboardLogins() {
   const skeleton = document.getElementById("dashboardLoginsSkeleton");
   const list = document.getElementById("dashboardLoginsList");

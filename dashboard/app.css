@@ -2897,6 +2897,36 @@ select option {
 }
 .dev-health-card.ok { border-color: rgba(80,200,120,0.5); }
 .dev-health-card.down { border-color: rgba(220,80,80,0.6); }
+.self-test-summary {
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.self-test-summary-pass { border-color: rgba(80,200,120,0.5); color: #6fd88a; }
+.self-test-summary-fail { border-color: rgba(220,80,80,0.6); color: #e28a8a; }
+.self-test-category { margin-bottom: 20px; }
+.self-test-category h3 { margin: 0 0 8px; font-size: 0.95rem; color: var(--chp-gold-bright); }
+.self-test-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.self-test-row {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  font-size: 0.88rem;
+}
+.self-test-row-pass { border-left: 3px solid #4caf6f; }
+.self-test-row-fail { border-left: 3px solid #d95c5c; background: rgba(220,80,80,0.06); }
+.self-test-icon { font-weight: 700; }
+.self-test-row-pass .self-test-icon { color: #4caf6f; }
+.self-test-row-fail .self-test-icon { color: #d95c5c; }
+.self-test-name { font-weight: 600; }
+.self-test-detail { grid-column: 2 / 3; color: rgba(255,255,255,0.55); font-size: 0.82rem; }
+.self-test-ms { grid-row: 1; grid-column: 3; color: rgba(255,255,255,0.4); font-size: 0.78rem; white-space: nowrap; }
 .dev-diagnostics-warning { color: var(--chp-gold-bright); margin-bottom: 12px; }
 .dev-diagnostics-form { display: flex; flex-direction: column; gap: 8px; max-width: 560px; }
 .dev-diagnostics-form select,
