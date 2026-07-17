@@ -2366,6 +2366,27 @@ select option {
 }
 .ai-sidebar-toggle:hover, .ai-export-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
 .ai-sidebar-toggle svg, .ai-export-btn svg { width: 16px; height: 16px; }
+.ai-export-btn.active { background: rgba(194,102,31,0.14); color: var(--chp-gold-bright); }
+
+.ai-action-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+.ai-action-log-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ai-action-log-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.ai-action-log-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ai-action-log-summary { font-size: 13px; color: #fff; }
+.ai-action-log-meta { font-size: 11px; color: rgba(255,255,255,0.4); }
 
 .ai-panel-resize-handle {
   position: absolute;

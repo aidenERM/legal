@@ -4884,6 +4884,93 @@ document.getElementById("aiFab").addEventListener("click", () => {
 document.getElementById("aiPanelClose").addEventListener("click", aiClosePanel);
 document.getElementById("aiSidebarToggle").addEventListener("click", aiToggleSidebar);
 document.getElementById("aiExportBtn").addEventListener("click", aiExportActiveConversation);
+
+// ── AI Action Log (Undo-capable audit trail) ──────────────────────────
+// The bot has logged every AI-taken write action to dashboard_ai_actions
+// since this feature existed, but GET /api/ai/actions was dead code - never
+// called from anywhere in the dashboard, and its Mongo sort was on a field
+// ("createdAt") that doesn't exist on these docs, so it wouldn't even have
+// come back in the right order. Both fixed; this is the first UI for it.
+const AI_UNDOABLE_TOOLS = new Set(["admin_shift_action", "adjust_shift_time"]);
+
+function aiActionSummary(entry) {
+  const args = entry.args || {};
+  if (entry.tool === "admin_shift_action") {
+    return `${args.action === "force_end" ? "Force-ended" : "Force-started"} a shift for <@${args.userId}>`;
+  }
+  if (entry.tool === "adjust_shift_time") {
+    const mins = args.minutes;
+    return `${mins > 0 ? "Added" : "Removed"} ${Math.abs(mins)} minute(s) ${mins > 0 ? "to" : "from"} <@${args.userId}>'s shift`;
+  }
+  if (entry.tool === "officer_action") {
+    return `${args.kind || "action"} on <@${args.userId}>`;
+  }
+  if (entry.tool === "dm_officers") return `DM sent to ${(args.target && args.target.type) || "officers"}`;
+  if (entry.tool === "send_announcement") return `Announcement sent: ${args.title || ""}`;
+  return entry.tool.replace(/_/g, " ");
+}
+
+async function loadAiActionLog() {
+  const skeleton = document.getElementById("aiActionLogSkeleton");
+  const list = document.getElementById("aiActionLogList");
+  skeleton.hidden = false;
+  list.hidden = true;
+
+  const res = await apiGet("/api/ai/actions");
+  skeleton.hidden = true;
+  list.hidden = false;
+
+  const entries = (res && res.entries) || [];
+  if (!entries.length) {
+    list.innerHTML = `<li class="empty-state">No AI actions logged yet.</li>`;
+    return;
+  }
+
+  list.innerHTML = entries
+    .map((entry) => {
+      const undoable = AI_UNDOABLE_TOOLS.has(entry.tool) && !entry.undone && entry.result && entry.result.ok !== false;
+      const when = entry.timestamp ? new Date(entry.timestamp * 1000).toLocaleString() : "";
+      return `
+        <li class="ai-action-log-row" data-action-id="${entry._id}">
+          <div class="ai-action-log-body">
+            <span class="ai-action-log-summary">${escapeHtml(aiActionSummary(entry))}</span>
+            <span class="ai-action-log-meta">${when}${entry.undone ? " — undone" : ""}</span>
+          </div>
+          ${undoable ? `<button class="accent-reset-btn ai-action-undo-btn" type="button">Undo</button>` : ""}
+        </li>
+      `;
+    })
+    .join("");
+
+  list.querySelectorAll(".ai-action-undo-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const row = btn.closest(".ai-action-log-row");
+      const actionId = row.dataset.actionId;
+      btn.disabled = true;
+      btn.textContent = "Undoing...";
+      const undoRes = await apiPost("/api/ai/actions/undo", { actionId });
+      if (!undoRes || !undoRes.ok || !undoRes.data || !undoRes.data.ok) {
+        btn.disabled = false;
+        btn.textContent = "Undo failed";
+        window.setTimeout(() => { btn.textContent = "Undo"; }, 2000);
+        return;
+      }
+      loadAiActionLog();
+    });
+  });
+}
+
+document.getElementById("aiActionLogBtn").addEventListener("click", () => {
+  const log = document.getElementById("aiActionLog");
+  const messages = document.getElementById("aiMessages");
+  const inputForm = document.getElementById("aiInputForm");
+  const showingLog = log.hidden;
+  log.hidden = !showingLog;
+  messages.hidden = showingLog;
+  inputForm.hidden = showingLog;
+  document.getElementById("aiActionLogBtn").classList.toggle("active", showingLog);
+  if (showingLog) loadAiActionLog();
+});
 document.getElementById("aiNewChatBtn").addEventListener("click", () => {
   aiNewChat();
   // On a phone-width panel the sidebar overlays the chat - collapse it
