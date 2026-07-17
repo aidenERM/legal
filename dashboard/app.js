@@ -215,6 +215,9 @@ function initCommandPalette() {
     page: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>`,
     tab: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>`,
     action: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>`,
+    member: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>`,
+    transfer: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>`,
+    audit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6M9 16h6M9 8h6"/><rect x="4" y="3" width="16" height="18" rx="2"/></svg>`,
   };
 
   // Recent selections, most-recent first, capped - surfaced before you type
@@ -279,8 +282,28 @@ function initCommandPalette() {
   let activeIndex = 0;
   let visible = [];
 
+  // Merged with the old separate sidebar "Find a member, transfer, or audit
+  // entry" search box (was a second, redundant search UI sitting right
+  // below this palette's own trigger button) - typing here now also
+  // debounces a /api/search call and appends Members/Transfers/Audit Log
+  // matches below the static page/action matches, in the same list.
+  let searchSeq = 0;
+  let searchDebounceTimer = null;
+  let dynamicItems = [];
+
+  function itemsToGroups(list) {
+    // Static matches first, then whichever dynamic (server-search) groups
+    // have results, in a fixed, predictable order.
+    const staticItems = list.filter((i) => !i.dynamic);
+    const dynamicList = list.filter((i) => i.dynamic);
+    return groupBy(staticItems).concat(groupBy(dynamicList));
+  }
+
   function render(query) {
     const q = query.trim().toLowerCase();
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    dynamicItems = [];
+
     if (!q) {
       const recentIds = getRecent();
       const recentItems = recentIds.map((id) => items.find((i) => i.id === id)).filter(Boolean);
@@ -290,10 +313,42 @@ function initCommandPalette() {
     }
     // Simple substring match across label + sub + group - not true fuzzy
     // matching, but fast and predictable for a ~15-item static index.
-    visible = items.filter(
+    const staticMatches = items.filter(
       (i) => i.label.toLowerCase().includes(q) || (i.sub && i.sub.toLowerCase().includes(q)) || i.group.toLowerCase().includes(q)
     );
-    renderGroups(groupBy(visible));
+    visible = staticMatches;
+    renderGroups(itemsToGroups(visible));
+
+    if (q.length < 2) return; // avoid a network call per single keystroke
+    const mySeq = ++searchSeq;
+    searchDebounceTimer = setTimeout(async () => {
+      const res = await apiPost("/api/search", { query: query.trim() });
+      if (mySeq !== searchSeq) return; // superseded by a newer keystroke
+      if (!res || !res.ok || !res.data) return;
+
+      const members = (res.data.members || []).map((m) => ({
+        id: `member:${m.userId}`, group: "Members", icon: "member", dynamic: true,
+        label: m.nickname || m.username || "Unknown",
+        sub: m.username || "",
+        run: () => { showPanel("lookup"); loadLookupDetail(m.userId); },
+      }));
+      const transfers = (res.data.transfers || []).map((t) => ({
+        id: `transfer:${t.transferId}`, group: "Transfer Requests", icon: "transfer", dynamic: true,
+        label: `Transfer ${(t.transferId || "").slice(-8)}`,
+        sub: t.status || "unknown status",
+        run: () => { showPanel("transfers"); loadTransfersQueue(); },
+      }));
+      const auditEntries = (res.data.auditEntries || []).map((a, idx) => ({
+        id: `audit:${idx}:${a.action}`, group: "Audit Log", icon: "audit", dynamic: true,
+        label: a.action || "Unknown action",
+        sub: a.detail || "",
+        run: () => { showPanel("boc"); bocSwitchToTab("audit-log"); },
+      }));
+
+      dynamicItems = [...members, ...transfers, ...auditEntries];
+      visible = [...staticMatches, ...dynamicItems];
+      renderGroups(itemsToGroups(visible));
+    }, 220);
   }
 
   function groupBy(list) {
@@ -345,7 +400,10 @@ function initCommandPalette() {
   function selectActive() {
     const item = visible[activeIndex];
     if (!item) return;
-    pushRecent(item.id);
+    // Only static (page/action) selections go into "Recent" - a dynamic
+    // search result (member/transfer/audit row) isn't in the static `items`
+    // index, so it'd never be found again by getRecent()'s items.find lookup.
+    if (!item.dynamic) pushRecent(item.id);
     close();
     item.run();
   }
@@ -6865,116 +6923,11 @@ initNotificationsCenter();
   (section) => initDashboardBanner(`banner-${section}`)
 );
 
-// ── Unified search (header quick-jump: members / transfers / audit log) ──
-// Deliberately separate from the Ctrl+K command palette (nav-only, defined
-// above around goToSection) and from Member Lookup's own runLookupSearch
-// (member-only, lives on the Lookup page). This one lives in the sidebar so
-// it's reachable from every page, hits the new /api/search route, and only
-// ever renders for tiers that route already gates server-side (non-admin
-// tiers just get a 403 and an empty dropdown).
-function initUnifiedSearch() {
-  const input = document.getElementById("unifiedSearchInput");
-  const results = document.getElementById("unifiedSearchResults");
-  if (!input || !results) return;
-
-  let seq = 0;
-  let debounceTimer = null;
-
-  function closeResults() {
-    results.hidden = true;
-    results.innerHTML = "";
-  }
-
-  function renderGroup(label, items, renderItem) {
-    if (!items.length) return "";
-    return `
-      <div class="unified-search-group-label">${label}</div>
-      ${items.map(renderItem).join("")}
-    `;
-  }
-
-  async function runSearch(query) {
-    const mySeq = ++seq;
-    if (!query) {
-      closeResults();
-      return;
-    }
-
-    results.hidden = false;
-    results.innerHTML = `<div class="unified-search-loading">Searching...</div>`;
-
-    const res = await apiPost("/api/search", { query });
-    if (mySeq !== seq) return; // superseded by a newer keystroke
-
-    if (!res || !res.ok) {
-      results.innerHTML = `<div class="unified-search-empty">Search unavailable right now.</div>`;
-      return;
-    }
-
-    const members = res.data.members || [];
-    const transfers = res.data.transfers || [];
-    const auditEntries = res.data.auditEntries || [];
-
-    if (!members.length && !transfers.length && !auditEntries.length) {
-      results.innerHTML = `<div class="unified-search-empty">No matches found.</div>`;
-      return;
-    }
-
-    results.innerHTML =
-      renderGroup("Members", members, (m) => `
-        <div class="unified-search-item" data-type="member" data-user-id="${escapeHtml(m.userId)}">
-          <span class="unified-search-item-title">${escapeHtml(m.nickname || m.username || "Unknown")}</span>
-          <span class="unified-search-item-sub">${escapeHtml(m.username || "")}</span>
-        </div>
-      `) +
-      renderGroup("Transfer Requests", transfers, (t) => `
-        <div class="unified-search-item" data-type="transfer" data-transfer-id="${escapeHtml(t.transferId)}">
-          <span class="unified-search-item-title">Transfer ${escapeHtml((t.transferId || "").slice(-8))}</span>
-          <span class="unified-search-item-sub">${escapeHtml(t.status || "unknown status")}</span>
-        </div>
-      `) +
-      renderGroup("Audit Log", auditEntries, (a) => `
-        <div class="unified-search-item" data-type="audit">
-          <span class="unified-search-item-title">${escapeHtml(a.action || "Unknown action")}</span>
-          <span class="unified-search-item-sub">${escapeHtml(a.detail || "")}</span>
-        </div>
-      `);
-
-    results.querySelectorAll(".unified-search-item").forEach((item) => {
-      item.addEventListener("click", () => {
-        const type = item.dataset.type;
-        if (type === "member") {
-          showPanel("lookup");
-          loadLookupDetail(item.dataset.userId);
-        } else if (type === "transfer") {
-          showPanel("transfers");
-          loadTransfersQueue();
-        } else if (type === "audit") {
-          showPanel("boc");
-          bocSwitchToTab("audit-log");
-        }
-        closeResults();
-        input.value = "";
-      });
-    });
-  }
-
-  input.addEventListener("input", (e) => {
-    const query = e.target.value.trim();
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => runSearch(query), 200);
-  });
-  input.addEventListener("focus", () => {
-    if (input.value.trim() && !results.hidden) results.hidden = false;
-  });
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest("#unifiedSearchWrap")) closeResults();
-  });
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeResults();
-  });
-}
-initUnifiedSearch();
+// Unified member/transfer/audit search used to live in its own sidebar text
+// box (initUnifiedSearch) directly below the Ctrl+K palette trigger - two
+// separate search UIs stacked on top of each other. Merged into the command
+// palette itself (see initCommandPalette's render()), so this function no
+// longer exists.
 
 // ── PWA install prompt ── the dashboard already has a manifest + service
 // worker (sw.js) but never actually asked anyone to install it. Chrome/Edge

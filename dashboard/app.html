@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260722">
+<link rel="stylesheet" href="app.css?v=20260723">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 </head>
@@ -92,23 +92,17 @@
       <span>CHP Dashboard</span>
     </div>
 
-    <button class="sidebar-cmdk-trigger" id="sidebarCmdkTrigger" type="button" aria-label="Open command palette">
+    <!-- Single merged search entry point - used to be two stacked search UIs
+         here (this trigger for a page/action palette, plus a separate member/
+         transfer/audit text box right below it). The palette itself
+         (#cmdkInput) now also runs /api/search as you type, so this button is
+         the only search affordance in the sidebar. -->
+    <button class="sidebar-cmdk-trigger" id="sidebarCmdkTrigger" type="button" aria-label="Open search and command palette">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      <span>Search...</span>
+      <span>Search or jump to...</span>
       <kbd>Ctrl K</kbd>
       <kbd>/</kbd>
     </button>
-
-    <!-- Unified search (members / transfers / audit log) - distinct from the
-         Ctrl+K command palette above, which only jumps between pages. Debounced
-         as-you-type against /api/search, wired in app.js (initUnifiedSearch). -->
-    <div class="unified-search-wrap" id="unifiedSearchWrap">
-      <div class="unified-search-input-row">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-        <input type="text" id="unifiedSearchInput" placeholder="Find a member, transfer, or audit entry..." autocomplete="off">
-      </div>
-      <div class="unified-search-results liquid-glass" id="unifiedSearchResults" hidden></div>
-    </div>
 
     <!-- Notifications Center bell - isolated addition, does not touch the
          rest of the sidebar layout. Dropdown panel + badge built/wired in
@@ -1264,6 +1258,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260722"></script>
+<script src="app.js?v=20260723"></script>
 </body>
 </html>
