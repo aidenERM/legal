@@ -602,6 +602,15 @@ body.reduce-motion, body.reduce-motion * {
   text-transform: uppercase;
 }
 
+.about-me-text {
+  margin: 8px 0 0;
+  max-width: 480px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.55);
+  font-style: italic;
+}
+
 .welcome-intro {
   margin: 8px 0 0;
   max-width: 480px;
@@ -983,6 +992,50 @@ select option {
   transition: opacity var(--transition-fast);
 }
 .leaderboard-list.is-loading { opacity: 0; }
+
+/* Pins the current user's own row to the top of .content's scroll (the
+   nearest scrolling ancestor) once scrolled past, so you don't lose track
+   of your own rank while scrolling a long leaderboard. */
+.leaderboard-row-me {
+  position: sticky;
+  top: -1px;
+  z-index: 5;
+  background: rgba(201,166,107,0.12);
+  border: 1px solid rgba(201,166,107,0.35);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+}
+
+.rank-change {
+  flex-shrink: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+.rank-change.rank-up { color: rgba(180,255,200,0.9); background: rgba(90,200,120,0.12); }
+.rank-change.rank-down { color: rgba(255,180,180,0.9); background: rgba(220,90,90,0.12); }
+
+/* ── Milestone confetti burst (duty-hours round numbers) ── */
+.confetti-burst {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 900;
+  overflow: hidden;
+}
+.confetti-piece {
+  position: absolute;
+  top: -10px;
+  width: 8px;
+  height: 14px;
+  opacity: 0.9;
+  animation: confetti-fall linear forwards;
+}
+@keyframes confetti-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(105vh) rotate(540deg); opacity: 0; }
+}
 
 .leaderboard-row {
   display: flex;

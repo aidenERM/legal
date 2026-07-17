@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260720">
+<link rel="stylesheet" href="app.css?v=20260721">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 </head>
@@ -372,12 +372,17 @@
           <div class="welcome-hero-text">
             <h1 class="welcome-title">Welcome back, <span id="welcomeName"></span></h1>
             <p class="access-badge" id="accessBadge"></p>
+            <p class="about-me-text" id="aboutMeText" hidden></p>
           </div>
         </div>
       </div>
 
       <div class="skeleton" id="overviewSkeleton"></div>
       <div class="card-grid" id="overviewCards" hidden></div>
+
+      <h2 class="lookup-detail-heading" style="margin-top: 26px;">Recent Activity</h2>
+      <div class="skeleton" id="profileActivitySkeleton"></div>
+      <ul class="history-list" id="profileActivityList" hidden></ul>
 
       <h2 class="lookup-detail-heading" style="margin-top: 26px;">Weekly Hours Trend</h2>
       <div class="skeleton" id="weeklyTrendSkeleton"></div>
@@ -466,6 +471,26 @@
           <p class="settings-row-desc" style="margin: 0 0 8px;">Devices currently signed in to your account.</p>
           <div class="skeleton" id="sessionDevicesSkeleton" style="height: 60px;"></div>
           <div id="sessionDevicesList" hidden></div>
+        </div>
+
+        <div class="settings-card">
+          <h2 class="settings-section-heading">Connected Accounts</h2>
+          <div class="settings-list">
+            <div class="settings-row">
+              <div class="settings-row-text">
+                <span class="settings-row-label">Discord</span>
+                <span class="settings-row-desc" id="connectedDiscordDesc">Loading…</span>
+              </div>
+              <span class="settings-row-status saved">Connected</span>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-text">
+                <span class="settings-row-label">Roblox</span>
+                <span class="settings-row-desc" id="connectedRobloxDesc">Loading…</span>
+              </div>
+              <button class="accent-reset-btn" id="robloxResyncBtn" type="button">Re-sync</button>
+            </div>
+          </div>
         </div>
 
         <div class="settings-card">
@@ -583,6 +608,7 @@
             <span class="on-duty-dot"></span>
             <span id="onDutyCount">0</span> on duty now
           </div>
+          <button class="accent-reset-btn" id="leaderboardExportBtn" type="button">Export CSV</button>
         </div>
         <div class="custom-range-row" id="customRangeRow" hidden>
           <div class="field-row">
@@ -1201,6 +1227,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260720"></script>
+<script src="app.js?v=20260721"></script>
 </body>
 </html>

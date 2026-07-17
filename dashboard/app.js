@@ -1303,6 +1303,40 @@ async function loadWeeklyTrendChart(userId) {
   wrap.innerHTML = res ? renderWeeklyTrendChart(res.points) : `<div class="empty-state">Trend data is unavailable right now.</div>`;
 }
 
+// Celebrates crossing a round duty-hours milestone with a brief confetti
+// burst - fires at most once per milestone per user (tracked in
+// localStorage, since there's no server-side "milestones seen" field).
+const HOUR_MILESTONES = [100, 250, 500, 1000, 2500, 5000, 10000];
+const MILESTONE_SEEN_KEY_PREFIX = "chp_hour_milestone_seen_";
+function celebrateHourMilestone(userId, totalSeconds) {
+  if (document.body.classList.contains("reduce-motion")) return;
+  const hours = totalSeconds / 3600;
+  const key = MILESTONE_SEEN_KEY_PREFIX + userId;
+  const seen = new Set(JSON.parse(localStorage.getItem(key) || "[]"));
+  const justCrossed = HOUR_MILESTONES.find((m) => hours >= m && !seen.has(m));
+  if (!justCrossed) return;
+  seen.add(justCrossed);
+  localStorage.setItem(key, JSON.stringify([...seen]));
+  fireConfetti();
+}
+
+function fireConfetti() {
+  const colors = ["#c9a66b", "#e0bf80", "#5ae078", "#7ab8ff", "#ff9d7a"];
+  const container = document.createElement("div");
+  container.className = "confetti-burst";
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement("span");
+    piece.className = "confetti-piece";
+    piece.style.left = `${Math.random() * 100}vw`;
+    piece.style.background = colors[i % colors.length];
+    piece.style.animationDelay = `${Math.random() * 0.3}s`;
+    piece.style.animationDuration = `${1.6 + Math.random() * 0.8}s`;
+    container.appendChild(piece);
+  }
+  document.body.appendChild(container);
+  window.setTimeout(() => container.remove(), 2600);
+}
+
 async function loadProfile() {
   const me = currentMe || (await bootMe());
   const [shifts, badgesRes] = await Promise.all([apiGet("/api/shifts"), apiGet("/api/profile")]);
@@ -1313,6 +1347,29 @@ async function loadProfile() {
   document.getElementById("welcomeName").textContent = displayNameFor(me);
   document.getElementById("accessBadge").textContent = TIER_BADGE_COPY[me.tier] || me.tier;
   document.getElementById("welcomeHero").hidden = false;
+
+  apiGet("/api/settings").then((res) => {
+    const aboutMe = res && res.settings && res.settings.about_me;
+    const el = document.getElementById("aboutMeText");
+    if (el && aboutMe) {
+      el.textContent = aboutMe;
+      el.hidden = false;
+    }
+  });
+
+  // Recent Activity: reuses /api/history (already powering the full History
+  // panel's category tabs) - just the latest 6 entries across every
+  // category, flattened, for a quick at-a-glance feed on the profile page.
+  apiGet("/api/history").then((historyRes) => {
+    const skeleton = document.getElementById("profileActivitySkeleton");
+    const list = document.getElementById("profileActivityList");
+    if (!skeleton || !list) return;
+    skeleton.hidden = true;
+    list.hidden = false;
+    const entries = (historyRes && historyRes.entries) || [];
+    const recent = [...entries].sort((a, b) => b.timestamp - a.timestamp).slice(0, 6);
+    list.innerHTML = renderHistoryEntries(recent);
+  });
 
   // Bug fix: this card grid used to lead with an "Access tier" stat card
   // showing the exact same value as the accessBadge pill in welcomeHero
@@ -1328,6 +1385,7 @@ async function loadProfile() {
   `;
   animateCountUp(document.getElementById("statTotalDutyTime"), shifts.totalSeconds, formatDuration);
   animateCountUp(document.getElementById("statShiftsLogged"), shifts.shiftCount, (n) => String(n));
+  celebrateHourMilestone(me.userId, shifts.totalSeconds);
 
   document.getElementById("shiftsSkeleton").hidden = true;
   const body = document.getElementById("shiftsBody");
@@ -1695,6 +1753,50 @@ function animateCountUp(el, endValue, formatFn, duration) {
   requestAnimationFrame(frame);
 }
 
+// Generic CSV download - escapes quotes/commas per RFC 4180, triggers a
+// client-side download via an object URL (no server round-trip needed
+// since the data driving these exports is already loaded on screen).
+function downloadCsv(filename, headers, rows) {
+  const escape = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const lines = [headers.map(escape).join(","), ...rows.map((row) => row.map(escape).join(","))];
+  const blob = new Blob([lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+let currentLeaderboardEntries = [];
+
+// Remembers each user's rank per period across visits (no server-side
+// history exists for this) so a return visit can show whether they moved
+// up/down since the last time this leaderboard was viewed on this device.
+const LEADERBOARD_RANK_HISTORY_KEY = "chp_leaderboard_rank_history";
+function loadLeaderboardRankHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(LEADERBOARD_RANK_HISTORY_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+function saveLeaderboardRankHistory(period, entries) {
+  const history = loadLeaderboardRankHistory();
+  history[period] = {};
+  entries.forEach((entry, index) => { history[period][entry.userId] = index + 1; });
+  localStorage.setItem(LEADERBOARD_RANK_HISTORY_KEY, JSON.stringify(history));
+}
+function rankChangeIndicatorHtml(period, userId, currentRank) {
+  const previous = (loadLeaderboardRankHistory()[period] || {})[userId];
+  if (previous == null || previous === currentRank) return "";
+  const up = previous > currentRank; // lower rank number = better
+  const delta = Math.abs(previous - currentRank);
+  return `<span class="rank-change ${up ? "rank-up" : "rank-down"}" title="${up ? "Up" : "Down"} ${delta} since your last visit">${up ? "&#9650;" : "&#9660;"} ${delta}</span>`;
+}
+
 function renderLeaderboardRows(entries, period, startRank = 0) {
   if (entries.length === 0) {
     return `<li class="empty-state">No leaderboard data yet.</li>`;
@@ -1706,14 +1808,17 @@ function renderLeaderboardRows(entries, period, startRank = 0) {
         ? `<span class="leaderboard-rank-title">${entry.rank}</span>`
         : `<span class="leaderboard-rank-title unranked">Unranked</span>`;
       const liveBadge = period === "live" ? `<span class="live-badge">LIVE</span>` : "";
+      const rank = startRank + index + 1;
+      const isMe = currentMe && String(entry.userId) === String(currentMe.userId);
       return `
-        <li class="leaderboard-row" style="animation-delay: ${Math.min(index, 20) * 0.02}s">
-          <span class="leaderboard-rank">${startRank + index + 1}</span>
+        <li class="leaderboard-row ${isMe ? "leaderboard-row-me" : ""}" data-user-id="${entry.userId}" style="animation-delay: ${Math.min(index, 20) * 0.02}s">
+          <span class="leaderboard-rank">${rank}</span>
           <img class="leaderboard-avatar" src="${avatarUrl}" alt="" width="32" height="32">
           <span class="leaderboard-identity">
-            <span class="leaderboard-name">${entry.username}</span>
+            <span class="leaderboard-name">${entry.username}${isMe ? " (You)" : ""}</span>
             ${rankTitle}
           </span>
+          ${rankChangeIndicatorHtml(period, entry.userId, rank)}
           <span class="leaderboard-time">${liveBadge}<span class="count-target" data-seconds="${entry.totalSeconds}">0h 0m</span></span>
         </li>
       `;
@@ -1807,9 +1912,21 @@ async function loadLeaderboard(period) {
   list.innerHTML = renderLeaderboardRows(rest, currentLeaderboardPeriod, 3);
   animateLeaderboardCounts(podium);
   animateLeaderboardCounts(list);
+  // Snapshot today's ranks AFTER rendering (so the change indicator above
+  // compared against the previous snapshot, not this one) for next visit.
+  saveLeaderboardRankHistory(currentLeaderboardPeriod, leaderboard.entries);
+  currentLeaderboardEntries = leaderboard.entries;
 
   refreshOnDutyBadge();
 }
+
+document.getElementById("leaderboardExportBtn")?.addEventListener("click", () => {
+  downloadCsv(
+    `leaderboard-${currentLeaderboardPeriod}-${new Date().toISOString().slice(0, 10)}.csv`,
+    ["Rank", "Username", "Rank Title", "Total Duty Seconds", "Total Duty Hours"],
+    currentLeaderboardEntries.map((e, i) => [i + 1, e.username, e.rank || "Unranked", e.totalSeconds, (e.totalSeconds / 3600).toFixed(1)])
+  );
+});
 
 async function refreshOnDutyBadge() {
   const badge = document.getElementById("onDutyBadge");
@@ -2434,6 +2551,10 @@ const DAY_OPTIONS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Sa
 const HOUR_OPTIONS = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, "0")}:00`);
 
 const SETTING_META = {
+  about_me: {
+    card: "Profile & Privacy", label: "About me",
+    desc: "A short blurb shown on your profile page.", type: "text",
+  },
   nudge_opt_out: {
     card: "Notifications", label: "Opt out of nudges",
     desc: "Stop receiving reminder nudges from the bot.", type: "toggle",
@@ -2591,6 +2712,31 @@ async function saveSetting(row, key, value) {
   }
   statusEl.textContent = "Saved";
   statusEl.className = "settings-row-status saved";
+}
+
+async function loadConnectedAccounts() {
+  const me = currentMe || (await bootMe());
+  if (!me) return;
+
+  const discordDesc = document.getElementById("connectedDiscordDesc");
+  if (discordDesc) discordDesc.textContent = `Signed in as ${displayNameFor(me)}`;
+
+  async function refreshRoblox() {
+    const robloxDesc = document.getElementById("connectedRobloxDesc");
+    if (!robloxDesc) return;
+    robloxDesc.textContent = "Checking…";
+    const roblox = await apiGet(`/api/lookup/${me.userId}/roblox`);
+    robloxDesc.textContent = roblox && roblox.ok
+      ? (roblox.linked ? `Linked - Roblox ID ${roblox.robloxId}` : "Not linked")
+      : "Unavailable right now";
+  }
+  await refreshRoblox();
+
+  const resyncBtn = document.getElementById("robloxResyncBtn");
+  if (resyncBtn && !resyncBtn.dataset.wired) {
+    resyncBtn.dataset.wired = "true";
+    resyncBtn.addEventListener("click", refreshRoblox);
+  }
 }
 
 async function loadSettings() {
@@ -3240,7 +3386,7 @@ document.querySelectorAll(".nav-item[data-section]").forEach((item) => {
     if (section === "loa-ra") withLoadingOverlay(loadLoa, loadRa);
     if (section === "history") withLoadingOverlay(loadHistory);
     if (section === "profile") withLoadingOverlay(loadProfile);
-    if (section === "settings") withLoadingOverlay(loadSettings, loadSessionInfo);
+    if (section === "settings") withLoadingOverlay(loadSettings, loadSessionInfo, loadConnectedAccounts);
     if (section === "reviews") withLoadingOverlay(loadReviewFeed);
     if (section === "leaderboard") {
       withLoadingOverlay(loadLeaderboard, loadRecognizedOfficers, loadDepartmentFeed);
