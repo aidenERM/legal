@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260718">
+<link rel="stylesheet" href="app.css?v=20260719">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 <style>
@@ -764,6 +764,24 @@
         ? `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.png?size=64`
         : `https://cdn.discordapp.com/embed/avatars/0.png`;
     }
+    // Same hardening as app.js's delegated avatar-fallback listener - a
+    // stale cached avatar hash (member changed their pfp) shouldn't leave a
+    // permanently broken image icon on the login page's review carousel.
+    document.addEventListener(
+      "error",
+      (e) => {
+        const el = e.target;
+        if (
+          el instanceof HTMLImageElement &&
+          el.src.startsWith("https://cdn.discordapp.com/avatars/") &&
+          !el.dataset.avatarFallbackApplied
+        ) {
+          el.dataset.avatarFallbackApplied = "true";
+          el.src = "https://cdn.discordapp.com/embed/avatars/0.png";
+        }
+      },
+      true
+    );
     function starsHtml(rating) {
       let out = "";
       for (let i = 1; i <= 5; i++) {

@@ -520,6 +520,30 @@ function avatarUrlFor(userId, avatarHash, size) {
     : `https://cdn.discordapp.com/embed/avatars/0.png`;
 }
 
+// Item requested: harden every image against breaking, not just onboarding -
+// a cached avatar hash going stale (member changed their pfp) or a
+// transient CDN hiccup would otherwise leave a permanently broken image
+// icon in the leaderboard/profile/sidebar/department feed/etc, since none
+// of the ~15 call sites building an avatar <img> had error handling. One
+// delegated listener covers all of them (present and future) instead of
+// repeating an onerror handler at every call site - "error" doesn't bubble
+// on <img>, so this must be registered with capture: true.
+document.addEventListener(
+  "error",
+  (e) => {
+    const el = e.target;
+    if (
+      el instanceof HTMLImageElement &&
+      el.src.startsWith("https://cdn.discordapp.com/avatars/") &&
+      !el.dataset.avatarFallbackApplied
+    ) {
+      el.dataset.avatarFallbackApplied = "true";
+      el.src = "https://cdn.discordapp.com/embed/avatars/0.png";
+    }
+  },
+  true
+);
+
 async function apiGet(path) {
   const response = await fetch(`${WORKER_URL}${path}`, { credentials: "include" });
   if (response.status === 401) {
