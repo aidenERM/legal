@@ -2510,6 +2510,66 @@ async function loadOnDutyCard() {
   list.innerHTML = renderOnDutyRows(onDuty);
 }
 
+async function loadStaleShifts() {
+  const card = document.getElementById("staleShiftsCard");
+  if (!card) return;
+  const me = currentMe || (await bootMe());
+  if (!me || !tierAtLeast(me.tier, "admin")) {
+    card.hidden = true;
+    return;
+  }
+  card.hidden = false;
+
+  const list = document.getElementById("staleShiftsList");
+  const countEl = document.getElementById("staleShiftsCount");
+  const bulkBtn = document.getElementById("staleShiftsBulkEndBtn");
+  const msgEl = document.getElementById("staleShiftsMessage");
+  msgEl.innerHTML = "";
+
+  const res = await apiPost("/api/shift/stale", { thresholdHours: 12 });
+  if (!res || !res.ok || !res.data || !res.data.ok) {
+    list.innerHTML = `<li class="empty-state">Stale-shift data is unavailable right now.</li>`;
+    countEl.textContent = "";
+    bulkBtn.hidden = true;
+    return;
+  }
+
+  const stale = res.data.staleShifts || [];
+  countEl.textContent = stale.length ? `(${stale.length})` : "";
+  bulkBtn.hidden = stale.length === 0;
+
+  if (!stale.length) {
+    list.innerHTML = `<li class="empty-state">No stale shifts right now.</li>`;
+    return;
+  }
+
+  list.innerHTML = stale
+    .map((s) => `
+      <li class="on-duty-row" data-shift-id="${s.shiftId}">
+        <img src="${avatarUrlFor(s.userId, s.avatar, 28)}" alt="">
+        <div class="on-duty-row-body">
+          <span class="on-duty-row-name">${s.displayName}</span>
+          <span class="on-duty-row-meta">${s.shiftType || "Default"}</span>
+        </div>
+        <span class="on-duty-row-elapsed">${formatHms(s.elapsedSeconds)}</span>
+      </li>
+    `)
+    .join("");
+
+  bulkBtn.onclick = () => {
+    confirmAction(`Force-end all ${stale.length} stale shift(s)? This cannot be undone individually.`, async () => {
+      const shiftIds = stale.map((s) => s.shiftId);
+      const bulkRes = await apiPost("/api/shift/stale/bulk-end", { shiftIds });
+      if (!bulkRes || !bulkRes.ok || !bulkRes.data || !bulkRes.data.ok) {
+        msgEl.innerHTML = `<div class="form-message error">Bulk end failed - try again.</div>`;
+        return;
+      }
+      msgEl.innerHTML = `<div class="form-message success">Ended ${bulkRes.data.endedCount} shift(s).</div>`;
+      loadStaleShifts();
+    });
+  };
+}
+
 async function loadShiftManagement() {
   document.getElementById("shiftMgmtSkeleton").hidden = true;
   document.getElementById("shiftMgmtBody").hidden = false;
@@ -2525,6 +2585,7 @@ async function loadShiftManagement() {
     loadQuotaRing(),
     loadQuickStats(),
     loadOnDutyCard(),
+    loadStaleShifts(),
   ]);
 
   stopShiftPoll();
@@ -4169,6 +4230,20 @@ function aiDeleteConversation(id) {
   aiPopulateConvoMenu();
 }
 
+// Suggestion chips shown on a blank chat - picked to showcase categories of
+// what the assistant can do (self-service, department-wide, management)
+// rather than one generic hint line, since "what can I even ask it" was the
+// main organization gap here. Management-tier suggestions are simply extra
+// chips shown to everyone - a lower-tier caller asking one just gets the
+// assistant's normal honest "I don't have permission" response, same as
+// typing it by hand.
+const AI_SUGGESTIONS = [
+  "What's my rank and how many hours have I logged?",
+  "How close am I to my next badge?",
+  "Show me this week's leaderboard",
+  "What needs review right now?",
+];
+
 function aiUpdateEmptyState() {
   const messages = document.getElementById("aiMessages");
   if (!messages) return;
@@ -4181,8 +4256,16 @@ function aiUpdateEmptyState() {
   if (!empty) {
     empty = document.createElement("div");
     empty.className = "empty-state ai-empty-state";
-    empty.textContent = "Ask me anything about CHP — shifts, ranks, quota, and more.";
+    empty.innerHTML = `
+      <p class="ai-empty-headline">Ask me anything about CHP — shifts, ranks, quota, and more.</p>
+      <div class="ai-suggestion-chips">
+        ${AI_SUGGESTIONS.map((s) => `<button type="button" class="ai-suggestion-chip">${s}</button>`).join("")}
+      </div>
+    `;
     messages.appendChild(empty);
+    empty.querySelectorAll(".ai-suggestion-chip").forEach((chip) => {
+      chip.addEventListener("click", () => aiSendMessage(chip.textContent));
+    });
   }
 }
 

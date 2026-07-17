@@ -2521,6 +2521,32 @@ select option {
   gap: 10px;
 }
 
+.ai-empty-state {
+  margin: auto;
+  max-width: 360px;
+  background: transparent;
+  border: none;
+}
+.ai-empty-headline { margin: 0 0 14px; }
+.ai-suggestion-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ai-suggestion-chip {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.75);
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast, 0.15s ease), border-color var(--transition-fast, 0.15s ease);
+}
+.ai-suggestion-chip:hover { background: rgba(194,102,31,0.08); border-color: rgba(194,102,31,0.25); }
+
 .ai-bubble {
   max-width: 84%;
   padding: 10px 14px;

@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/chp-theme.css">
-<link rel="stylesheet" href="app.css?v=20260723">
+<link rel="stylesheet" href="app.css?v=20260724">
 <link rel="manifest" href="manifest.json">
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 </head>
@@ -292,6 +292,17 @@
             <h2 class="lookup-detail-heading">Currently On Duty <span class="on-duty-card-count" id="onDutyCardCount"></span></h2>
             <div class="skeleton" id="onDutyCardSkeleton" style="height: 140px;"></div>
             <ul class="on-duty-list" id="onDutyCardList" hidden></ul>
+          </div>
+
+          <!-- Admin+ only (see loadStaleShifts's tier check) - shifts nobody
+               ever ended, since auto_end_shift is opt-in per-user and misses
+               anyone who didn't turn it on. -->
+          <div class="on-duty-card" id="staleShiftsCard" hidden>
+            <h2 class="lookup-detail-heading">Stale Shifts <span class="on-duty-card-count" id="staleShiftsCount"></span></h2>
+            <p class="settings-row-desc" style="margin: 0 0 10px;">Currently open shifts running 12+ hours - likely forgotten, not real duty time.</p>
+            <ul class="on-duty-list" id="staleShiftsList"></ul>
+            <button class="lookup-search-btn" id="staleShiftsBulkEndBtn" type="button" style="margin-top: 10px;" hidden>Force End All</button>
+            <div id="staleShiftsMessage"></div>
           </div>
         </div>
       </div>
@@ -1258,6 +1269,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260723"></script>
+<script src="app.js?v=20260724"></script>
 </body>
 </html>
