@@ -2056,7 +2056,25 @@ function leaderboardQueryFor(period, shiftType) {
   return `/api/leaderboard?period=custom&start=${customRangeValues.start}&end=${customRangeValues.end}${typeParam}`;
 }
 
-async function loadLeaderboard(period) {
+// Bug fix (smoothness): the 12s auto-refresh (startLeaderboardAutoRefresh)
+// used to call this exact same path as a real navigation/filter change -
+// full skeleton flash + complete innerHTML rebuild + every row's count-up
+// animation retriggering, every 12 seconds, even when nobody's hours had
+// actually changed since the last tick. On a full roster that's a visible
+// flicker and a DOM rebuild for nothing, most ticks. `isAutoRefresh` lets
+// the poll skip all of that when the data is byte-for-byte the same, and
+// even when it did change, skip the loading-skeleton flash (a background
+// refresh shouldn't visually interrupt someone who's just looking at the
+// page) while still keeping the count-up animation for genuinely new numbers.
+function _leaderboardEntriesEqual(a, b) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].userId !== b[i].userId || a[i].totalSeconds !== b[i].totalSeconds) return false;
+  }
+  return true;
+}
+
+async function loadLeaderboard(period, isAutoRefresh = false) {
   if (period) currentLeaderboardPeriod = period;
   const path = leaderboardQueryFor(currentLeaderboardPeriod, currentLeaderboardShiftType);
   if (!path) return; // custom period selected but no range applied yet
@@ -2067,23 +2085,34 @@ async function loadLeaderboard(period) {
 
   // Smooth transition: fade the existing list out, fetch, then fade+slide the
   // fresh rows in (extends the .panel-in / .leaderboard-row animation pattern
-  // already used elsewhere rather than introducing a new one).
-  if (!list.hidden) {
+  // already used elsewhere rather than introducing a new one). Skipped
+  // entirely on a background auto-refresh tick - see comment above.
+  if (!list.hidden && !isAutoRefresh) {
     list.classList.add("is-loading");
     podium.classList.add("is-loading");
     skeleton.hidden = false;
   }
 
   const leaderboard = await apiGet(path);
-  skeleton.hidden = true;
-  list.classList.remove("is-loading");
-  podium.classList.remove("is-loading");
-  list.hidden = false;
-  podium.hidden = false;
+
+  if (!isAutoRefresh) {
+    skeleton.hidden = true;
+    list.classList.remove("is-loading");
+    podium.classList.remove("is-loading");
+    list.hidden = false;
+    podium.hidden = false;
+  }
 
   if (!leaderboard) {
-    podium.innerHTML = "";
-    list.innerHTML = `<li class="empty-state">Failed to load leaderboard. Try again.</li>`;
+    if (!isAutoRefresh) {
+      podium.innerHTML = "";
+      list.innerHTML = `<li class="empty-state">Failed to load leaderboard. Try again.</li>`;
+    }
+    return;
+  }
+
+  if (isAutoRefresh && _leaderboardEntriesEqual(leaderboard.entries, currentLeaderboardEntries)) {
+    refreshOnDutyBadge();
     return;
   }
 
@@ -2155,7 +2184,7 @@ async function refreshOnDutyBadge() {
 // burning API calls while the tab is backgrounded.
 function startLeaderboardAutoRefresh() {
   stopLeaderboardAutoRefresh();
-  leaderboardAutoRefreshInterval = startVisibilityAwarePoll(() => loadLeaderboard(), 12000);
+  leaderboardAutoRefreshInterval = startVisibilityAwarePoll(() => loadLeaderboard(undefined, true), 12000);
 }
 
 function stopLeaderboardAutoRefresh() {
