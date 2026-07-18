@@ -3539,10 +3539,15 @@ document.getElementById("anonFeedbackForm").addEventListener("submit", async (e)
 
 // ── Nav wiring ──
 
-document.querySelectorAll(".period-btn").forEach((btn) => {
+// Bug fix: ".period-btn" is also reused (same class, different purpose) by
+// RA Oversight's tab strip - a document-wide querySelectorAll(".period-btn")
+// here treated both groups as one, so clicking an RA Oversight tab wiped the
+// Leaderboard's period highlight (and vice versa) and fired a pointless
+// loadLeaderboard(undefined) on every RA tab click. Scoped to #periodSelector.
+document.querySelectorAll("#periodSelector .period-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     const period = btn.dataset.period;
-    document.querySelectorAll(".period-btn").forEach((b) => b.classList.toggle("active", b === btn));
+    document.querySelectorAll("#periodSelector .period-btn").forEach((b) => b.classList.toggle("active", b === btn));
 
     const customRow = document.getElementById("customRangeRow");
     if (period === "custom") {
