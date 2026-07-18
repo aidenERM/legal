@@ -3291,7 +3291,7 @@ async function loadInfractionsList() {
           <span class="review-card-name">&lt;@${e.userId}&gt; — ${escapeHtml(e.type || "Infraction")}</span>
           <span class="notif-dropdown-item-time">${e.timestamp ? new Date(e.timestamp * 1000).toLocaleString() : ""}</span>
         </div>
-        <p class="review-card-text">${escapeHtml(e.reason || "No reason recorded")}</p>
+        <p class="infraction-reason-text">${escapeHtml(e.reason || "No reason recorded")}</p>
         <div class="review-card-footer">
           <span class="notif-dropdown-item-time">${e.issuerName ? `Issued by ${escapeHtml(e.issuerName)}` : ""}</span>
           <button class="lookup-action-btn review-delete-btn" data-infraction-id="${e.id}">Void</button>
