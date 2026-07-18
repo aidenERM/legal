@@ -3313,7 +3313,11 @@ async function loadInfractionsList() {
       if (res && res.ok && res.data && res.data.ok) {
         loadInfractionsList();
       } else {
+        // Bug fix: the button used to just silently re-enable on failure -
+        // no indication whether voiding actually failed or something else
+        // went wrong, easy to click again and assume it's broken.
         btn.disabled = false;
+        showUndoToast("Failed to void that infraction - try again.");
       }
     });
   });
@@ -3474,6 +3478,7 @@ async function loadBocReviews() {
         loadBocReviews();
       } else {
         btn.disabled = false;
+        showUndoToast("Failed to delete that review - try again.");
       }
     });
   });
@@ -4956,7 +4961,11 @@ async function loadAiActionLog() {
   skeleton.hidden = true;
   list.hidden = false;
 
-  const entries = (res && res.entries) || [];
+  if (!res || res.ok === false) {
+    list.innerHTML = `<li class="empty-state">Couldn't load the action log.</li>`;
+    return;
+  }
+  const entries = res.entries || [];
   if (!entries.length) {
     list.innerHTML = `<li class="empty-state">No AI actions logged yet.</li>`;
     return;
@@ -5941,6 +5950,11 @@ document.getElementById("emergencyLockdownBtn")?.addEventListener("click", () =>
     btn.disabled = false;
     if (res && res.ok && res.data && res.data.ok) {
       setEmergencyLockdownBtnState(typeof res.data.enabled === "boolean" ? res.data.enabled : nextEnabled);
+    } else {
+      // Bug fix: failed completely silently before - for a control this
+      // consequential (blocks every write dashboard-wide), a failed toggle
+      // needs to be impossible to miss, not just re-enable the button.
+      showUndoToast(`Failed to ${nextEnabled ? "enable" : "disable"} emergency lockdown - try again.`);
     }
   });
 });
@@ -5983,6 +5997,8 @@ async function loadDevKillSwitches() {
       if (res && res.ok) {
         btn.dataset.enabled = String(nextEnabled);
         btn.textContent = nextEnabled ? "Enabled" : "Disabled";
+      } else {
+        showUndoToast(`Failed to ${nextEnabled ? "enable" : "disable"} "${key}" - try again.`);
       }
     });
   });
@@ -6112,7 +6128,10 @@ async function loadDevTesters() {
       btn.disabled = true;
       const res = await apiDelete("/api/dev/testers", { userId });
       if (res && res.ok) loadDevTesters();
-      else btn.disabled = false;
+      else {
+        btn.disabled = false;
+        showUndoToast("Failed to remove that tester - try again.");
+      }
     });
   });
 }
@@ -6164,7 +6183,12 @@ async function loadLoaManagement() {
 
   pendingSkeleton.hidden = true;
   pendingList.hidden = false;
-  if (!pending || !pending.entries || pending.entries.length === 0) {
+  // Bug fix: a failed fetch (pending === null) rendered the exact same
+  // "No pending requests" as a genuinely empty queue - no way to tell an
+  // admin whether they're actually caught up or the panel just broke.
+  if (!pending) {
+    pendingList.innerHTML = `<li class="empty-state">Couldn't load pending requests.</li>`;
+  } else if (!pending.entries || pending.entries.length === 0) {
     pendingList.innerHTML = `<li class="empty-state">No pending requests.</li>`;
   } else {
     pendingList.innerHTML = pending.entries.map((item) => renderLoaRow(item, { withActions: true })).join("");
@@ -6173,14 +6197,19 @@ async function loadLoaManagement() {
         btn.disabled = true;
         const res = await apiPost("/api/hr/loa/decide", { loaId: btn.dataset.loaId, decision: btn.dataset.decision });
         if (res && res.ok && res.data && res.data.ok) loadLoaManagement();
-        else btn.disabled = false;
+        else {
+          btn.disabled = false;
+          showUndoToast("Failed to record that decision - try again.");
+        }
       });
     });
   }
 
   activeSkeleton.hidden = true;
   activeList.hidden = false;
-  activeList.innerHTML = !active || !active.entries || active.entries.length === 0
+  activeList.innerHTML = !active
+    ? `<li class="empty-state">Couldn't load active LOAs/RAs.</li>`
+    : !active.entries || active.entries.length === 0
     ? `<li class="empty-state">No active LOAs/RAs.</li>`
     : active.entries.map((item) => renderLoaRow(item)).join("");
 }
@@ -6193,7 +6222,11 @@ async function loadTransfersQueue() {
   const queue = await apiGet("/api/hr/transfers/queue");
   skeleton.hidden = true;
   list.hidden = false;
-  if (!queue || !queue.entries || queue.entries.length === 0) {
+  if (!queue) {
+    list.innerHTML = `<li class="empty-state">Couldn't load transfer requests.</li>`;
+    return;
+  }
+  if (!queue.entries || queue.entries.length === 0) {
     list.innerHTML = `<li class="empty-state">No pending transfer requests.</li>`;
     return;
   }
@@ -6220,7 +6253,10 @@ async function loadTransfersQueue() {
       btn.disabled = true;
       const res = await apiPost("/api/hr/transfers/decide", { transferId: btn.dataset.id, decision: "deny", reason });
       if (res && res.ok && res.data && res.data.ok) loadTransfersQueue();
-      else btn.disabled = false;
+      else {
+        btn.disabled = false;
+        showUndoToast("Failed to deny that transfer - try again.");
+      }
     });
   });
 }
@@ -6259,7 +6295,11 @@ async function loadRaOversight(tab) {
   skeleton.hidden = true;
   list.hidden = false;
 
-  const entries = (data && data.entries) || [];
+  if (!data) {
+    list.innerHTML = `<li class="empty-state">Couldn't load this view.</li>`;
+    return;
+  }
+  const entries = data.entries || [];
   if (entries.length === 0) {
     list.innerHTML = `<li class="empty-state">No data for this view.</li>`;
     return;
@@ -6618,7 +6658,11 @@ async function loadFtoLeaderboard() {
   const data = await apiGet("/api/fto/leaderboard");
   skeleton.hidden = true;
   list.hidden = false;
-  const entries = (data && data.entries) || [];
+  if (!data) {
+    list.innerHTML = `<li class="empty-state">Couldn't load the FTO leaderboard.</li>`;
+    return;
+  }
+  const entries = data.entries || [];
   if (entries.length === 0) {
     list.innerHTML = `<li class="empty-state">No RA sessions logged this period yet.</li>`;
     return;
