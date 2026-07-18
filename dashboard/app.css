@@ -1,5 +1,18 @@
 * { box-sizing: border-box; }
 
+/* Bug fix: any class that sets its own unconditional `display` (flex/grid/
+   block/etc) beats the browser's UA-stylesheet `[hidden] { display: none }`
+   rule at equal specificity, since author styles always win ties over UA
+   styles - so an element with BOTH a layout class and the `hidden`
+   attribute stays visible regardless of `.hidden = true`. This exact bug
+   had already been individually patched 8 separate times elsewhere in this
+   file (search "[hidden] { display: none }" below) for whichever element
+   happened to get noticed - card-grid, leaderboard-list, on-duty-list,
+   current-shift-on/off, history-list, and ~25 others never got the same
+   treatment. One global, maximum-specificity rule closes all of them at
+   once instead of relying on remembering to patch every future one by hand. */
+[hidden] { display: none !important; }
+
 /* ── Liquid Glass system ──────────────────────────────────────────────
    One shared set of tokens + a `.liquid-glass` class used everywhere the
    dashboard wants the "real" Apple liquid-glass look (specular highlight +

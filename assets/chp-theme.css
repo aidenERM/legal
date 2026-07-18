@@ -1,3 +1,15 @@
+/* Bug fix: any element's own class setting an unconditional `display`
+   (flex/grid/block/etc) beats the browser's UA-stylesheet
+   `[hidden] { display: none }` rule at equal specificity - author styles
+   always win ties over UA styles. Concretely: an element with both a
+   layout class and the `hidden` attribute stays visible regardless of
+   `.hidden = true` in JS, unless something re-asserts `display: none` at
+   equal-or-higher priority. This global rule guarantees `hidden` always
+   wins site-wide, on every page that loads this stylesheet, instead of
+   requiring every future `class="foo" hidden` element to be remembered
+   and special-cased one at a time. */
+[hidden] { display: none !important; }
+
 :root {
   --chp-black:        #08080b;
   --chp-black-soft:   #111116;

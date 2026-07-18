@@ -421,6 +421,12 @@
     width: 100%;
     animation: fade-up 0.4s var(--ease-smooth) both;
   }
+  /* Bug fix (#1): an author stylesheet's "display" declaration always wins
+     over the UA stylesheet's [hidden] { display: none } at equal
+     specificity, so the plain hidden attribute above did nothing on its
+     own - the 2FA code form was visible on every login regardless of
+     whether the account actually has 2FA enabled. */
+  .twofa-form[hidden] { display: none; }
   .twofa-prompt { margin: 0; font-size: 14px; color: rgba(255,255,255,0.6); text-align: center; }
   .twofa-code-input {
     width: 100%;
