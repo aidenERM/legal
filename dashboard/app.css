@@ -2998,25 +2998,78 @@ body.reduce-motion .loading-overlay { animation: none; }
   from { opacity: 0; }
   to { opacity: 1; }
 }
-.access-control-options {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* Tile-grid multi-select (item: Self Test / Access Control redesign) - a
+   real checkbox drives everything (kept for the existing querySelectorAll
+   logic in app.js), just visually hidden and replaced with a card that
+   reacts to :checked via :has(), rather than a bare OS checkbox glued
+   into a card like the old .access-control-option did. */
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
   margin: 16px 0;
 }
-.access-control-option {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.09);
+.tile {
+  position: relative;
+  padding: 16px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
   cursor: pointer;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 240ms var(--ease-smooth, ease), background 240ms var(--ease-smooth, ease),
+    transform 200ms var(--ease-smooth, ease), box-shadow 240ms var(--ease-smooth, ease);
 }
-.access-control-option input {
-  margin-top: 3px;
+.tile:hover { transform: translateY(-2px); border-color: rgba(194,102,31,0.35); }
+.tile:active { transform: translateY(0) scale(0.98); }
+.tile-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
+.tile-top { display: flex; align-items: flex-start; justify-content: space-between; }
+.tile-glyph { font-size: 18px; line-height: 1; }
+.tile-badge {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1.5px solid var(--chp-text-faint, #4a4640);
+  display: grid;
+  place-items: center;
+  flex: none;
+  transition: background 220ms var(--ease-smooth, ease), border-color 220ms var(--ease-smooth, ease), transform 220ms var(--ease-smooth, ease);
+}
+.tile-badge svg {
+  width: 10px;
+  height: 10px;
+  stroke: var(--chp-black, #08080b);
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity 160ms var(--ease-smooth, ease), transform 160ms var(--ease-smooth, ease);
+}
+.tile-name { font-size: 13.5px; font-weight: 650; color: var(--chp-text, #ede9e0); }
+.tile-meta { font-size: 11.5px; color: var(--chp-text-muted, #8a857a); }
+.tile:has(.tile-input:checked) {
+  border-color: var(--chp-gold, #c2661f);
+  background: rgba(194,102,31,0.12);
+  box-shadow: 0 0 0 1px rgba(194,102,31,0.25), 0 10px 24px -12px rgba(194,102,31,0.35);
+}
+.tile:has(.tile-input:checked) .tile-badge {
+  background: var(--chp-gold-bright, #d9762f);
+  border-color: var(--chp-gold-bright, #d9762f);
+  transform: scale(1.05);
+}
+.tile:has(.tile-input:checked) .tile-badge svg { opacity: 1; transform: scale(1); }
+.tile:has(.tile-input:focus-visible) { outline: 2px solid var(--chp-gold-bright, #d9762f); outline-offset: 2px; }
+.tile.tile-locked { cursor: default; }
+.tile.tile-locked:hover { transform: none; }
+.tile.tile-locked .tile-meta { font-style: italic; }
 .access-restricted-screen {
   display: flex;
   flex-direction: column;

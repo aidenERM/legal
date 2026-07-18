@@ -1175,26 +1175,36 @@
         </p>
         <div class="skeleton" id="accessControlSkeleton"></div>
         <div id="accessControlBody" hidden>
-          <div class="access-control-options" id="accessControlOptions">
-            <label class="access-control-option">
-              <input type="checkbox" name="accessControlTier" value="staff">
-              <span><strong>Staff</strong> — regular officers/staff tier.</span>
+          <div class="tile-grid" id="accessControlOptions">
+            <label class="tile">
+              <input type="checkbox" name="accessControlTier" value="staff" class="tile-input">
+              <span class="tile-top"><span class="tile-glyph">🎫</span><span class="tile-badge"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3 3 7-7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
+              <span class="tile-name">Staff</span>
+              <span class="tile-meta">regular officers/staff tier</span>
             </label>
-            <label class="access-control-option">
-              <input type="checkbox" name="accessControlTier" value="admin">
-              <span><strong>High Ranks</strong> — admin tier.</span>
+            <label class="tile">
+              <input type="checkbox" name="accessControlTier" value="admin" class="tile-input">
+              <span class="tile-top"><span class="tile-glyph">🛡️</span><span class="tile-badge"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3 3 7-7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
+              <span class="tile-name">High Ranks</span>
+              <span class="tile-meta">admin tier</span>
             </label>
-            <label class="access-control-option">
-              <input type="checkbox" name="accessControlTier" value="management">
-              <span><strong>Board of Commissioners (HICOM)</strong> — management tier.</span>
+            <label class="tile">
+              <input type="checkbox" name="accessControlTier" value="management" class="tile-input">
+              <span class="tile-top"><span class="tile-glyph">⭐</span><span class="tile-badge"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3 3 7-7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
+              <span class="tile-name">Board of Commissioners</span>
+              <span class="tile-meta">management tier (HICOM)</span>
             </label>
-            <label class="access-control-option">
-              <input type="checkbox" name="accessControlTier" value="developer" checked disabled>
-              <span><strong>Developer</strong> — always allowed, can't be turned off.</span>
+            <label class="tile tile-locked">
+              <input type="checkbox" name="accessControlTier" value="developer" class="tile-input" checked disabled>
+              <span class="tile-top"><span class="tile-glyph">👑</span><span class="tile-badge"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3 3 7-7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
+              <span class="tile-name">Developer</span>
+              <span class="tile-meta">always allowed, can't turn off</span>
             </label>
-            <label class="access-control-option">
-              <input type="checkbox" id="accessControlTesters">
-              <span><strong>Testers</strong> — anyone with the Tester flag gets in regardless of their tier.</span>
+            <label class="tile">
+              <input type="checkbox" id="accessControlTesters" class="tile-input">
+              <span class="tile-top"><span class="tile-glyph">🧪</span><span class="tile-badge"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3 3 7-7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
+              <span class="tile-name">Testers</span>
+              <span class="tile-meta">Tester flag, any tier</span>
             </label>
           </div>
           <button class="lookup-search-btn" id="accessControlSaveBtn">Save</button>

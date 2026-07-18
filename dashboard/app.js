@@ -1424,7 +1424,14 @@ async function loadProfile() {
     if (!skeleton || !list) return;
     skeleton.hidden = true;
     list.hidden = false;
-    const entries = (historyRes && historyRes.entries) || [];
+    // Bug fix: a failed fetch (historyRes null) used to fall through to the
+    // same empty-state as "genuinely no activity yet" - looked identical to
+    // a brand new account, no way to tell it actually broke.
+    if (!historyRes || !historyRes.ok) {
+      list.innerHTML = `<li class="empty-state">Couldn't load recent activity.</li>`;
+      return;
+    }
+    const entries = historyRes.entries || [];
     const recent = [...entries].sort((a, b) => b.timestamp - a.timestamp).slice(0, 6);
     list.innerHTML = renderHistoryEntries(recent);
   });
