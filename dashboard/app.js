@@ -5755,10 +5755,20 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-document.querySelectorAll(".dev-tab").forEach((tab) => {
+// Bug fix: ".dev-tab" / ".dev-panel" are also reused by the Board of
+// Commissioners panel's own two tab strips (#bocTabs, #bocHrSubTabs), which
+// already have their own correctly-scoped handlers (bocSwitchToTab etc).
+// This handler used to query both classes completely unscoped - every click
+// on a BOC subtab ALSO ran this DevTools logic: it wiped .active off every
+// .dev-panel site-wide (silently killing whichever BOC subtab was showing,
+// with nothing to restore it except re-clicking a sidebar nav item, which is
+// exactly the "the pill doesn't work, I have to use the sidebar" bug
+// report), then threw a TypeError trying to find "devPanel-undefined" since
+// a BOC button has no data-dev-tab. Scoped to #devTabs/#panel-developer only.
+document.querySelectorAll("#devTabs .dev-tab").forEach((tab) => {
   tab.addEventListener("click", () => {
-    document.querySelectorAll(".dev-tab").forEach((t) => t.classList.toggle("active", t === tab));
-    document.querySelectorAll(".dev-panel").forEach((p) => p.classList.remove("active"));
+    document.querySelectorAll("#devTabs .dev-tab").forEach((t) => t.classList.toggle("active", t === tab));
+    document.querySelectorAll("#panel-developer > .dev-panel").forEach((p) => p.classList.remove("active"));
     document.getElementById(`devPanel-${tab.dataset.devTab}`).classList.add("active");
 
     if (tab.dataset.devTab === "kill-switches") loadDevKillSwitches();
