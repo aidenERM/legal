@@ -413,16 +413,25 @@ code {
 .chp-stat:nth-child(2) { animation-delay: 0.16s; }
 .chp-stat:nth-child(3) { animation-delay: 0.27s; }
 
-/* Slow gold sweep across each card - same beam-sweep keyframe already used
-   elsewhere in this theme, kept subtle (long duration, low opacity). */
+/* Slow gold sweep across each card - a translateX pass, not the rotating
+   beam-sweep keyframe used for large ambient background beams elsewhere in
+   this theme (that one's rotation transform looks wrong at this small a
+   size - purpose-built animation instead of reusing one designed for a
+   different element). */
 .chp-stat::before {
   content: "";
   position: absolute;
-  inset: 0;
-  background: linear-gradient(100deg, transparent 30%, rgba(217,118,47,0.14) 50%, transparent 70%);
-  background-size: 220% 100%;
-  animation: beam-sweep 5s linear infinite;
+  top: 0; bottom: 0; left: -60%;
+  width: 60%;
+  background: linear-gradient(100deg, transparent, rgba(217,118,47,0.16), transparent);
+  animation: stat-sweep 4.5s ease-in-out infinite;
   pointer-events: none;
+}
+
+@keyframes stat-sweep {
+  0%   { left: -60%; }
+  60%  { left: 120%; }
+  100% { left: 120%; }
 }
 
 .chp-stat-value {
@@ -443,6 +452,96 @@ code {
   color: var(--chp-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+/* ─── Feature grid: changelog details as scannable cards, not one long
+   bulleted wall of text. Each card reveals with a staggered fade-up as it
+   scrolls into view (IntersectionObserver in the page script adds
+   .is-visible; cards default to invisible so JS controls the reveal). ── */
+.chp-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  margin: 16px 0 20px;
+}
+
+.chp-feature-card {
+  position: relative;
+  padding: 14px 16px 14px 18px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left: 3px solid var(--chp-gold);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s var(--ease-out-expo), transform 0.5s var(--ease-out-expo),
+              border-color 0.25s var(--ease-smooth), background 0.25s var(--ease-smooth);
+}
+.chp-feature-card.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.chp-feature-card:hover {
+  border-color: var(--chp-gold-bright);
+  background: rgba(255,255,255,0.045);
+}
+
+.chp-feature-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--chp-gold-bright);
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+
+.chp-feature-body {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--chp-text);
+  margin: 0;
+}
+
+/* ─── Fixes highlight: a short, human list of specific things that were
+   broken and now aren't - distinct from the feature grid above so "we
+   fixed real bugs" reads as its own honest note, not buried mid-list. ── */
+.chp-fixes {
+  margin: 18px 0 8px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(120,140,255,0.045);
+  border: 1px solid rgba(120,140,255,0.16);
+}
+
+.chp-fixes-heading {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b9c2ff;
+  margin: 0 0 8px;
+}
+
+.chp-fixes ul {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+.chp-fixes li {
+  position: relative;
+  padding: 5px 0 5px 20px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--chp-text);
+}
+.chp-fixes li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #8ea0ff;
+  font-weight: 700;
 }
 
 table {

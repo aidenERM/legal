@@ -27,30 +27,42 @@
     </div>
 
     <p>The biggest update since launch: the AI assistant now runs on a smarter model with real member-record grounding and tool-calling, transfers got a full self-service rebuild with fraud detection, a brand-new self-service shift correction flow, automatic promotion-list processing, plus new Sergeant Exam, Watch, Check, Retirement/Reinstatement, Service Stripe, Tester Program, and dashboard systems — on top of well over 250 fixes and performance improvements.</p>
-    <ul>
-      <li>AI ASSISTANT — /ask now runs on a more capable model with real grounding: it knows your own rank/history when you ask about yourself, resolves plain names (not just @mentions) against real records, and can call live tools (leaderboard, your shifts, your history, on-duty count) instead of guessing. Added a rank whitelist so it can never state a rank that doesn&#x27;t exist, a hard rule against inventing evidence/dates it doesn&#x27;t have, a post-answer fact-check safety net, 👍/👎 feedback on every answer, and semantic knowledge-base search so a rephrased question can still find the right indexed answer.</li>
-      <li>The dashboard&#x27;s AI Assistant gained full tool-calling across every tier — self-service (your shifts/history/badges), Officer tools (on-duty count, recognized officers, department feed), High-Rank tools (officer roster, infractions, watch summaries, LOA/transfer decisions), and Board of Commissioners tools (quota enforcement, HR review, applications, audit log, announcements) — plus image/vision support, real-time streaming responses, conversation memory, and an undo button for reversible AI-driven actions.</li>
-      <li>DUTY FIX — &gt;duty fix lets you request a correction to one of your own recent shifts (wrong time, wrong type, or void it entirely) with a reason. A supervisor reviews and approves or denies it — you&#x27;re never editing your own record directly — and you get a DM either way.</li>
-      <li>AUTO-PROMOTIONS FROM LIST — Post a weekly promotion list, medal announcement, or Trooper of the Week callout in the promotions channel and the bot recognizes it, DMs you to confirm, and automatically applies the rank roles, nicknames, medal roles, and Trooper of the Week role for everyone listed — no manual role-clicking required.</li>
-      <li>TRANSFERS — Completely rebuilt: a member-initiated self-service panel, a private channel per transfer with a single pinned status card and visual step-tracker, auto-accept for high-confidence clean transfers, multi-image screenshot verification with fraud/reuse detection, post-denial and post-approval cooldowns, stalled-transfer auto-recheck, and a weekly throughput digest to Command.</li>
-      <li>INFRACTIONS &amp; DISCIPLINE — New !infract/!demote system with full appeal handling, a Disciplinary Score on member profiles, suspension/termination enforcement, and proof collection wired directly into HR documentation threads.</li>
-      <li>SERGEANT EXAM — A full Corporal-to-Sergeant promotion exam: supervisory scenario questions, a staggered review queue, per-answer AI-assisted grading, and cooldowns shown as live Discord timestamps.</li>
-      <li>&gt;check — a full member-lookup command (single member, multiple, by role, or server-wide) surfacing scanned history: promotions, demotions, infractions, transfers, tickets, and LOAs, with pagination and date-range filtering.</li>
-      <li>WATCH — &gt;watch flags members for closer attention (e.g. suspected shift-farming) with automatic activity summaries and an auto-close task once the concern resolves.</li>
-      <li>RETIREMENT &amp; REINSTATEMENT — New end-to-end systems for retiring and reinstating members, including multi-stage reinstatement window warnings and service-stripe protection.</li>
-      <li>SERVICE STRIPES — Tenure is now tracked automatically (from your real ride-along hire date, not just your Discord join date) and stripe roles are assigned for time served across 14 tiers, with a weekly coverage report flagging anyone whose tenure data looks unclear so it can be fixed before it affects them.</li>
-      <li>HICOM INACTIVITY REVIEW — Automatically flags command-staff who&#x27;ve gone quiet (30-day window, tuned to exclude LOA/ZTP/Probationary members) with one-click Warn/Terminate/Dismiss actions.</li>
-      <li>ERLC PRESENCE — Presence checks now re-sweep periodically instead of only at bot startup (so staff promoted mid-week are actually covered), tolerate transient lookup failures instead of permanently giving up, and can optionally auto-end a shift after several consecutive misses with no real in-game presence. New Long Shift (3h+) and heavy Break-Time alerts post to Internal Affairs. A separate daily check flags if your linked Roblox account changes after the fact.</li>
-      <li>TESTER PROGRAM — A CHP Management Tester Program lets designated testers try new features in a sandbox server, shown with a badge on their profile, with dashboard access synced automatically.</li>
-      <li>CLEANER COMMANDS — /duty went from 18 subcommands down to 13 (several merged together), &gt;member and &gt;scan are now organized groups instead of loose top-level commands, and &gt;help &lt;command&gt; gives focused help for one command instead of only the full category list. &gt;agentchannel brings the same AI tool-calling the dashboard uses into a Discord channel — plain-language requests that read data immediately and ask for a confirm click before writing anything.</li>
-      <li>PRIVACY &amp; PROFILE — New dashboard settings: a personal bio (about_me), an option to hide yourself from the public roster, and a welcome tour for first-time dashboard visitors. New milestone badges at 100/500/1000 duty hours and 6-month/2-year tenure.</li>
-      <li>PUBLIC BOT LOGS — A new officer-visible log channel mirrors non-confidential activity (shifts, promotions, transfers) separately from the private staff-only audit log.</li>
-      <li>SECURITY — Added rate limiting to the dashboard AI chat (every other AI surface already had it), a denylist so no developer tool can ever touch secrets/credentials, and timing-safe comparisons on both bridge authentication paths.</li>
-      <li>LIVE LEADERBOARD — Fixed the pinned leaderboard reposting itself and losing its pin every hour, fixed a rare session-creation race, and decoupled the bot&#x27;s presence rotation so it no longer silently depends on a live leaderboard existing. The regular leaderboard also got a redesigned period picker (Past Week / This Month / a custom date range) with .txt/.csv exports and a one-click push to Google Sheets for Management+.</li>
-      <li>DASHBOARD — A full bot-side API server now backs the web dashboard end to end: Officers roster, a Watch List panel, dedicated FTO Tools and IA Tools sections gated by your live Discord roles, a Board of Commissioners control center (scheduled quota/promotion runs, leaderboard resets, HR oversight), and dozens of endpoints spanning every permission tier from self-service up to Developer.</li>
-      <li>AUTOMATION — Historical channel data (promotions, demotions, infractions, transfers, LOAs, RAs, applications, tickets, callsigns) now scans and self-heals automatically on a schedule instead of needing a manual command, feeding both /ask&#x27;s knowledge base and &gt;check.</li>
-      <li>RELIABILITY — Well over 250 fixes and performance improvements this cycle: N+1 query fixes across officer rosters and leaderboards, database index additions, race-condition fixes in shift logging and RA results, decoration/stripe protection hardened against accidental removal, and dozens of crash fixes surfaced by real production use.</li>
-    </ul>
+    <div class="chp-feature-grid">
+      <div class="chp-feature-card"><p class="chp-feature-title">AI ASSISTANT</p><p class="chp-feature-body">/ask now runs on a more capable model with real grounding: it knows your own rank/history when you ask about yourself, resolves plain names (not just @mentions) against real records, and can call live tools (leaderboard, your shifts, your history, on-duty count) instead of guessing. Added a rank whitelist so it can never state a rank that doesn&#x27;t exist, a hard rule against inventing evidence/dates it doesn&#x27;t have, a post-answer fact-check safety net, 👍/👎 feedback on every answer, and semantic knowledge-base search so a rephrased question can still find the right indexed answer.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">The dashboard&#x27;s AI Assistant gained full tool-calling across every tier</p><p class="chp-feature-body">self-service (your shifts/history/badges), Officer tools (on-duty count, recognized officers, department feed), High-Rank tools (officer roster, infractions, watch summaries, LOA/transfer decisions), and Board of Commissioners tools (quota enforcement, HR review, applications, audit log, announcements) — plus image/vision support, real-time streaming responses, conversation memory, and an undo button for reversible AI-driven actions.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">DUTY FIX</p><p class="chp-feature-body">&gt;duty fix lets you request a correction to one of your own recent shifts (wrong time, wrong type, or void it entirely) with a reason. A supervisor reviews and approves or denies it — you&#x27;re never editing your own record directly — and you get a DM either way.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">AUTO-PROMOTIONS FROM LIST</p><p class="chp-feature-body">Post a weekly promotion list, medal announcement, or Trooper of the Week callout in the promotions channel and the bot recognizes it, DMs you to confirm, and automatically applies the rank roles, nicknames, medal roles, and Trooper of the Week role for everyone listed — no manual role-clicking required.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">TRANSFERS</p><p class="chp-feature-body">Completely rebuilt: a member-initiated self-service panel, a private channel per transfer with a single pinned status card and visual step-tracker, auto-accept for high-confidence clean transfers, multi-image screenshot verification with fraud/reuse detection, post-denial and post-approval cooldowns, stalled-transfer auto-recheck, and a weekly throughput digest to Command.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">INFRACTIONS &amp; DISCIPLINE</p><p class="chp-feature-body">New !infract/!demote system with full appeal handling, a Disciplinary Score on member profiles, suspension/termination enforcement, and proof collection wired directly into HR documentation threads.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">SERGEANT EXAM</p><p class="chp-feature-body">A full Corporal-to-Sergeant promotion exam: supervisory scenario questions, a staggered review queue, per-answer AI-assisted grading, and cooldowns shown as live Discord timestamps.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">&gt;check</p><p class="chp-feature-body">a full member-lookup command (single member, multiple, by role, or server-wide) surfacing scanned history: promotions, demotions, infractions, transfers, tickets, and LOAs, with pagination and date-range filtering.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">WATCH</p><p class="chp-feature-body">&gt;watch flags members for closer attention (e.g. suspected shift-farming) with automatic activity summaries and an auto-close task once the concern resolves.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">RETIREMENT &amp; REINSTATEMENT</p><p class="chp-feature-body">New end-to-end systems for retiring and reinstating members, including multi-stage reinstatement window warnings and service-stripe protection.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">SERVICE STRIPES</p><p class="chp-feature-body">Tenure is now tracked automatically (from your real ride-along hire date, not just your Discord join date) and stripe roles are assigned for time served across 14 tiers, with a weekly coverage report flagging anyone whose tenure data looks unclear so it can be fixed before it affects them.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">HICOM INACTIVITY REVIEW</p><p class="chp-feature-body">Automatically flags command-staff who&#x27;ve gone quiet (30-day window, tuned to exclude LOA/ZTP/Probationary members) with one-click Warn/Terminate/Dismiss actions.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">ERLC PRESENCE</p><p class="chp-feature-body">Presence checks now re-sweep periodically instead of only at bot startup (so staff promoted mid-week are actually covered), tolerate transient lookup failures instead of permanently giving up, and can optionally auto-end a shift after several consecutive misses with no real in-game presence. New Long Shift (3h+) and heavy Break-Time alerts post to Internal Affairs. A separate daily check flags if your linked Roblox account changes after the fact.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">TESTER PROGRAM</p><p class="chp-feature-body">A CHP Management Tester Program lets designated testers try new features in a sandbox server, shown with a badge on their profile, with dashboard access synced automatically.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">CLEANER COMMANDS</p><p class="chp-feature-body">/duty went from 18 subcommands down to 13 (several merged together), &gt;member and &gt;scan are now organized groups instead of loose top-level commands, and &gt;help &lt;command&gt; gives focused help for one command instead of only the full category list. &gt;agentchannel brings the same AI tool-calling the dashboard uses into a Discord channel — plain-language requests that read data immediately and ask for a confirm click before writing anything.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">PRIVACY &amp; PROFILE</p><p class="chp-feature-body">New dashboard settings: a personal bio (about_me), an option to hide yourself from the public roster, and a welcome tour for first-time dashboard visitors. New milestone badges at 100/500/1000 duty hours and 6-month/2-year tenure.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">PUBLIC BOT LOGS</p><p class="chp-feature-body">A new officer-visible log channel mirrors non-confidential activity (shifts, promotions, transfers) separately from the private staff-only audit log.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">SECURITY</p><p class="chp-feature-body">Added rate limiting to the dashboard AI chat (every other AI surface already had it), a denylist so no developer tool can ever touch secrets/credentials, and timing-safe comparisons on both bridge authentication paths.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">LIVE LEADERBOARD</p><p class="chp-feature-body">Fixed the pinned leaderboard reposting itself and losing its pin every hour, fixed a rare session-creation race, and decoupled the bot&#x27;s presence rotation so it no longer silently depends on a live leaderboard existing. The regular leaderboard also got a redesigned period picker (Past Week / This Month / a custom date range) with .txt/.csv exports and a one-click push to Google Sheets for Management+.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">DASHBOARD</p><p class="chp-feature-body">A full bot-side API server now backs the web dashboard end to end: Officers roster, a Watch List panel, dedicated FTO Tools and IA Tools sections gated by your live Discord roles, a Board of Commissioners control center (scheduled quota/promotion runs, leaderboard resets, HR oversight), and dozens of endpoints spanning every permission tier from self-service up to Developer.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">AUTOMATION</p><p class="chp-feature-body">Historical channel data (promotions, demotions, infractions, transfers, LOAs, RAs, applications, tickets, callsigns) now scans and self-heals automatically on a schedule instead of needing a manual command, feeding both /ask&#x27;s knowledge base and &gt;check.</p></div>
+      <div class="chp-feature-card"><p class="chp-feature-title">RELIABILITY</p><p class="chp-feature-body">Well over 250 fixes and performance improvements this cycle: N+1 query fixes across officer rosters and leaderboards, database index additions, race-condition fixes in shift logging and RA results, decoration/stripe protection hardened against accidental removal, and dozens of crash fixes surfaced by real production use.</p></div>
+    </div>
+    <div class="chp-fixes">
+      <p class="chp-fixes-heading">Also fixed this cycle</p>
+      <ul>
+        <li>The live leaderboard used to repost itself and lose its pin every hour — that&#x27;s gone for good.</li>
+        <li>The AI assistant could occasionally invent a rank that doesn&#x27;t exist — every answer is now checked against the real 14-rank list.</li>
+        <li>Officer roster pages that used to take 60+ seconds to load now load in a couple of seconds.</li>
+        <li>A rare timing bug could let two people submit the exact same request at nearly the same moment and both go through — closed.</li>
+        <li>A subdivision shift-mirroring bug that could double-count a shift (and once caused a wrongful infraction) has been fixed at the root cause.</li>
+        <li>Sergeant Exam&#x27;s &#x27;View Answers&#x27; used to crash on longer exams — fixed.</li>
+      </ul>
+    </div>
+
   </div>
 
     <div class="old-updates-header chp-subtitle" style="font-size:18px;font-weight:600;margin:16px 0;">Old Updates</div>
@@ -87,6 +99,7 @@
       <li>PRIVACY — Profile visibility can be set to Everyone, Staff only, or Command Team only. When management uses an override to view a locked profile, it is automatically logged to the server&#x27;s audit channel.</li>
       <li>RELIABILITY — Single-instance enforcement prevents two bots starting on restart. Slash commands no longer throw &#x27;already responded&#x27; errors. MongoDB connectivity issues no longer crash the prefix handler. All custom emojis are now used throughout every embed and message.</li>
     </ul>
+    
   </div>
 
   <div class="entry chp-panel old-entry">
@@ -119,6 +132,7 @@
       <li>/ask is now capped at one request every 30 seconds bot-wide to keep AI costs in check, and the application flow skips its own Privacy Policy step if you&#x27;ve already agreed to the bot&#x27;s Terms/Privacy Policy elsewhere.</li>
       <li>Refreshed embed styling using the server&#x27;s own custom emojis across Applications, /profile, and /dashboard.</li>
     </ul>
+    
   </div>
 
 </div>
@@ -131,29 +145,68 @@
   });
 
   // Animated "by the numbers" count-up for the newest entry's stat strip
-  // (see .chp-stat-strip in chp-theme.css for the visual side). Runs once,
-  // shortly after load so it plays after the panel's own fade-up animation
-  // instead of racing it - a number that's already landed before its own
-  // container has finished appearing looks broken, not premium.
+  // (see .chp-stat-strip in chp-theme.css for the visual side).
+  //
+  // Bug fix: the first version of this only ran once, on window "load",
+  // driven purely by requestAnimationFrame - if that page (the actual
+  // update entry, not the intro page) wasn't the visible/active paginator
+  // page yet when "load" fired, or rAF was throttled/suspended for any
+  // reason, the numbers stayed frozen at "0" forever with no way to
+  // recover. Now: (1) triggers via IntersectionObserver the moment the
+  // strip actually becomes visible (i.e. when the reader pages to this
+  // entry, not before), and (2) a hard setTimeout fallback guarantees the
+  // real final number lands within 1.5s no matter what happened to the
+  // rAF-driven animation - a stat stuck at 0 is worse than one that just
+  // pops to its answer.
   function chpCountUp(el) {
     var target = parseFloat(el.dataset.countTarget);
     var suffix = el.dataset.countSuffix || "";
     var duration = 1100;
     var start = null;
+    var done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      el.textContent = target.toLocaleString() + suffix;
+    }
     function step(ts) {
+      if (done) return;
       if (start === null) start = ts;
       var progress = Math.min((ts - start) / duration, 1);
       var eased = 1 - Math.pow(1 - progress, 3); // ease-out-cubic
       var value = Math.round(target * eased);
       el.textContent = value.toLocaleString() + suffix;
       if (progress < 1) requestAnimationFrame(step);
+      else finish();
     }
     requestAnimationFrame(step);
+    setTimeout(finish, 1500);
   }
-  window.addEventListener("load", function () {
-    setTimeout(function () {
-      document.querySelectorAll("[data-count-target]").forEach(chpCountUp);
-    }, 350);
+
+  var chpStatObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+      entry.target.querySelectorAll("[data-count-target]").forEach(chpCountUp);
+      chpStatObserver.unobserve(entry.target);
+    });
+  }, {threshold: 0.25});
+  document.querySelectorAll(".chp-stat-strip").forEach(function (strip) {
+    chpStatObserver.observe(strip);
+  });
+
+  // Staggered reveal for feature-grid cards as they scroll into view -
+  // see .chp-feature-card in chp-theme.css (defaults to invisible,
+  // .is-visible fades/slides it in).
+  var chpCardObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add("is-visible");
+      chpCardObserver.unobserve(entry.target);
+    });
+  }, {threshold: 0.15});
+  document.querySelectorAll(".chp-feature-card").forEach(function (card, i) {
+    card.style.transitionDelay = Math.min(i * 45, 400) + "ms";
+    chpCardObserver.observe(card);
   });
 </script>
 </body>
