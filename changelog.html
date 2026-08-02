@@ -144,70 +144,90 @@
     introLabel: "Latest",
   });
 
-  // Animated "by the numbers" count-up for the newest entry's stat strip
-  // (see .chp-stat-strip in chp-theme.css for the visual side).
+  // Animated "by the numbers" count-up (.chp-stat-strip) and staggered
+  // feature-card reveal (.chp-feature-card) - see chp-theme.css for the
+  // visual side of both.
   //
-  // Bug fix: the first version of this only ran once, on window "load",
-  // driven purely by requestAnimationFrame - if that page (the actual
-  // update entry, not the intro page) wasn't the visible/active paginator
-  // page yet when "load" fired, or rAF was throttled/suspended for any
-  // reason, the numbers stayed frozen at "0" forever with no way to
-  // recover. Now: (1) triggers via IntersectionObserver the moment the
-  // strip actually becomes visible (i.e. when the reader pages to this
-  // entry, not before), and (2) a hard setTimeout fallback guarantees the
-  // real final number lands within 1.5s no matter what happened to the
-  // rAF-driven animation - a stat stuck at 0 is worse than one that just
-  // pops to its answer.
+  // Bug fix (two rounds): v1 only ran the count-up once on window "load"
+  // via requestAnimationFrame with no fallback - if rAF was ever throttled/
+  // suspended, the numbers stuck at "0" forever. v2 moved the trigger to
+  // IntersectionObserver plus a setTimeout fallback - better, but the
+  // fallback was nested INSIDE the observer's callback, so if the observer
+  // itself never fired (same class of problem as rAF - a suspended/
+  // non-compositing tab doesn't fire IntersectionObserver callbacks either),
+  // the fallback never even got scheduled. Root cause both times: making the
+  // GUARANTEED-correct end state depend on the SAME fragile trigger as the
+  // nice-to-have animation.
+  //
+  // Fixed properly this time: the animated reveal (IntersectionObserver +
+  // rAF) and the guarantee (a plain, top-level setTimeout with zero
+  // dependency on any observer or animation frame ever firing) are now
+  // fully independent. In a normal browser the animated path wins the race
+  // and the guarantee's assignments are no-ops on already-correct content.
+  // In a degraded/throttled environment, the guarantee alone still gets
+  // every number to its right value and every card visible - nothing can
+  // end up permanently stuck at "0" or permanently invisible again.
+  function chpFinishCount(el) {
+    var target = parseFloat(el.dataset.countTarget);
+    var suffix = el.dataset.countSuffix || "";
+    el.textContent = target.toLocaleString() + suffix;
+    el.dataset.counted = "1";
+  }
   function chpCountUp(el) {
+    if (el.dataset.counted === "1") return;
     var target = parseFloat(el.dataset.countTarget);
     var suffix = el.dataset.countSuffix || "";
     var duration = 1100;
     var start = null;
-    var done = false;
-    function finish() {
-      if (done) return;
-      done = true;
-      el.textContent = target.toLocaleString() + suffix;
-    }
     function step(ts) {
-      if (done) return;
+      if (el.dataset.counted === "1") return;
       if (start === null) start = ts;
       var progress = Math.min((ts - start) / duration, 1);
       var eased = 1 - Math.pow(1 - progress, 3); // ease-out-cubic
       var value = Math.round(target * eased);
       el.textContent = value.toLocaleString() + suffix;
       if (progress < 1) requestAnimationFrame(step);
-      else finish();
+      else chpFinishCount(el);
     }
     requestAnimationFrame(step);
-    setTimeout(finish, 1500);
   }
 
-  var chpStatObserver = new IntersectionObserver(function (entries) {
-    entries.forEach(function (entry) {
-      if (!entry.isIntersecting) return;
-      entry.target.querySelectorAll("[data-count-target]").forEach(chpCountUp);
-      chpStatObserver.unobserve(entry.target);
+  try {
+    var chpStatObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.querySelectorAll("[data-count-target]").forEach(chpCountUp);
+        chpStatObserver.unobserve(entry.target);
+      });
+    }, {threshold: 0.25});
+    document.querySelectorAll(".chp-stat-strip").forEach(function (strip) {
+      chpStatObserver.observe(strip);
     });
-  }, {threshold: 0.25});
-  document.querySelectorAll(".chp-stat-strip").forEach(function (strip) {
-    chpStatObserver.observe(strip);
-  });
 
-  // Staggered reveal for feature-grid cards as they scroll into view -
-  // see .chp-feature-card in chp-theme.css (defaults to invisible,
-  // .is-visible fades/slides it in).
-  var chpCardObserver = new IntersectionObserver(function (entries) {
-    entries.forEach(function (entry) {
-      if (!entry.isIntersecting) return;
-      entry.target.classList.add("is-visible");
-      chpCardObserver.unobserve(entry.target);
+    var chpCardObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        chpCardObserver.unobserve(entry.target);
+      });
+    }, {threshold: 0.15});
+    document.querySelectorAll(".chp-feature-card").forEach(function (card, i) {
+      card.style.transitionDelay = Math.min(i * 45, 400) + "ms";
+      chpCardObserver.observe(card);
     });
-  }, {threshold: 0.15});
-  document.querySelectorAll(".chp-feature-card").forEach(function (card, i) {
-    card.style.transitionDelay = Math.min(i * 45, 400) + "ms";
-    chpCardObserver.observe(card);
-  });
+  } catch (e) {
+    // IntersectionObserver missing/broken entirely - the guarantee below
+    // still runs regardless, nothing left half-built.
+  }
+
+  // The guarantee: independent of everything above, force the final,
+  // correct visual state after a short delay no matter what happened.
+  setTimeout(function () {
+    document.querySelectorAll("[data-count-target]").forEach(chpFinishCount);
+    document.querySelectorAll(".chp-feature-card").forEach(function (card) {
+      card.classList.add("is-visible");
+    });
+  }, 900);
 </script>
 </body>
 </html>
