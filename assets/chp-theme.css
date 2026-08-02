@@ -383,6 +383,68 @@ code {
   -webkit-backdrop-filter: blur(6px) saturate(140%);
 }
 
+/* ─── Stat strip: animated "by the numbers" row for a changelog entry ──
+   Used on the newest update page only - a quick, vibrant sense of scale
+   before the reader dives into the bullet list. Numbers count up via JS
+   (see chp-count-up in the page script); this file only owns the visual
+   treatment so it stays reusable for any future page, not just changelog. */
+.chp-stat-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 20px;
+}
+
+.chp-stat {
+  flex: 1 1 150px;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  padding: 18px 12px 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border-gold);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  opacity: 0;
+  animation: fade-up 0.55s var(--ease-out-expo) both;
+}
+.chp-stat:nth-child(1) { animation-delay: 0.05s; }
+.chp-stat:nth-child(2) { animation-delay: 0.16s; }
+.chp-stat:nth-child(3) { animation-delay: 0.27s; }
+
+/* Slow gold sweep across each card - same beam-sweep keyframe already used
+   elsewhere in this theme, kept subtle (long duration, low opacity). */
+.chp-stat::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(217,118,47,0.14) 50%, transparent 70%);
+  background-size: 220% 100%;
+  animation: beam-sweep 5s linear infinite;
+  pointer-events: none;
+}
+
+.chp-stat-value {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+  background: linear-gradient(135deg, var(--chp-gold-bright), #ffb066 55%, var(--chp-gold-bright));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.chp-stat-label {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--chp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
