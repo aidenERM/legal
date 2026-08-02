@@ -636,6 +636,27 @@ tr:hover td { background: rgba(255,255,255,0.03); transition: background 0.2s va
   opacity: 0;
   transform: translateY(14px) scale(0.985);
 }
+/* .chp-page also carries .chp-glass, whose background/::before use a
+   radial-gradient positioned at --mx/--my. That gradient's radius (no
+   explicit <size>, so it defaults to farthest-corner) is fine on a small
+   card, but .chp-page is a very tall, page-length container - "transparent
+   55%" of a multi-thousand-pixel farthest-corner distance covers most of
+   the visible page in a bright white wash. This used to be masked
+   somewhat by --mx/--my constantly moving with the cursor; now that the
+   page-level highlight is frozen at a fixed point (see chp-paginate.js -
+   .chp-page is excluded from pointer tracking on purpose, it was reading
+   as a glow chasing the mouse around the screen), that same gradient sits
+   permanently in one place and the wash becomes obvious. Overriding it
+   here to a flat tint removes the wash while every smaller .chp-glass
+   element (header, cards) keeps its normal specular highlight. */
+.chp-page.chp-glass {
+  background: linear-gradient(180deg, var(--glass-tint), var(--glass-tint-soft));
+}
+.chp-page.chp-glass::before {
+  background:
+    radial-gradient(circle at 10% 20%, rgba(255,255,255,0.04), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.03), transparent 45%);
+}
 .chp-page.is-active {
   display: block;
   animation: page-in 0.45s var(--ease-out-expo) both;
