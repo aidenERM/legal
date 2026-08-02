@@ -7,6 +7,13 @@
 
 // Drives the --mx/--my specular highlight on .chp-glass surfaces so the
 // reflection tracks the pointer, like light moving across real glass.
+//
+// .chp-page (the paginated content card) also carries .chp-glass, but it
+// spans nearly the whole content column - tracking the pointer across an
+// element that large doesn't read as "light on a small glass card", it
+// reads as a big glow chasing the cursor around the page. Excluded here
+// so it keeps its static top-center highlight instead; smaller .chp-glass
+// elements (the header, individual panels) still track normally.
 function initChpGlassHighlight() {
   let raf = null;
   document.addEventListener("pointermove", (e) => {
@@ -14,7 +21,7 @@ function initChpGlassHighlight() {
     raf = requestAnimationFrame(() => {
       raf = null;
       const target = e.target.closest(".chp-glass, .latest-hero");
-      if (!target) return;
+      if (!target || target.classList.contains("chp-page")) return;
       const rect = target.getBoundingClientRect();
       target.style.setProperty("--mx", `${((e.clientX - rect.left) / rect.width) * 100}%`);
       target.style.setProperty("--my", `${((e.clientY - rect.top) / rect.height) * 100}%`);
