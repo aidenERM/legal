@@ -1285,3 +1285,22 @@ html, body {
   .chp-hero-card { padding: 20px 18px; }
   .chp-item-grid { grid-template-columns: 1fr; }
 }
+
+/* ─── Persistent (non-paginated) header, changelog page only ────────────
+   chp-paginate.js groups every element before the first breakSelector
+   match into its own leading page - useful on tos.html/pp.html where real
+   overview content sits there, but on the changelog the only thing before
+   the first .entry was the bare header, producing an empty-looking first
+   page on load. Moving the header outside .chp-wrap keeps it visible on
+   every page instead (a real improvement, not just a workaround) and
+   means the paginator's first page starts on real content immediately. */
+.chp-header-wrap {
+  position: relative;
+  z-index: 2;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 64px 22px 0;
+}
+@media (max-width: 768px) {
+  .chp-header-wrap { padding: 48px 14px 0; }
+}
