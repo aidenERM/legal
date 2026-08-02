@@ -138,7 +138,14 @@ body {
   border-radius: 50%;
   filter: blur(90px);
   opacity: 0.85;
-  will-change: transform;
+  will-change: transform, translate;
+  /* Scroll-linked parallax offset (page script sets --chp-parallax-y
+     continuously as you scroll). Uses the standalone `translate` property
+     rather than folding into `transform` deliberately - `translate` and
+     `transform` compose additively (CSS Transforms Level 2), so this layers
+     on top of each orb's own orb-drift-N keyframe animation (which already
+     owns `transform`) instead of fighting it for the same property. */
+  translate: 0 var(--chp-parallax-y, 0px);
 }
 
 .chp-orb-1 {
@@ -454,10 +461,39 @@ code {
   letter-spacing: 0.06em;
 }
 
+/* ─── Scroll reveal: a reusable "coming into focus" entrance - starts
+   softly blurred, slightly scaled down and offset, and settles into place
+   as the element crosses into view. This is the actual Apple-style effect
+   (apple.com product pages use this exact blur+scale+translate combo, not
+   a plain fade) - .chp-feature-card below is the main user, but any
+   element can opt in by getting .chp-reveal + .is-visible from JS. ── */
+.chp-reveal {
+  opacity: 0;
+  transform: translateY(22px) scale(0.97);
+  filter: blur(6px);
+  transition: opacity 0.7s var(--ease-out-expo), transform 0.7s var(--ease-out-expo),
+              filter 0.7s var(--ease-out-expo);
+  will-change: opacity, transform, filter;
+}
+.chp-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+/* Respect reduced-motion users instead of forcing the effect on everyone -
+   content still reveals, just instantly instead of animated. */
+@media (prefers-reduced-motion: reduce) {
+  .chp-reveal {
+    transition-duration: 0.01s;
+    filter: none;
+    transform: none;
+  }
+}
+
 /* ─── Feature grid: changelog details as scannable cards, not one long
-   bulleted wall of text. Each card reveals with a staggered fade-up as it
-   scrolls into view (IntersectionObserver in the page script adds
-   .is-visible; cards default to invisible so JS controls the reveal). ── */
+   bulleted wall of text. Each card is a .chp-reveal instance staggered by
+   JS-assigned transition-delay, so they settle into focus one after
+   another as you scroll down instead of all fading in at once. ── */
 .chp-feature-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -474,14 +510,8 @@ code {
   border-left: 3px solid var(--chp-gold);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.5s var(--ease-out-expo), transform 0.5s var(--ease-out-expo),
-              border-color 0.25s var(--ease-smooth), background 0.25s var(--ease-smooth);
-}
-.chp-feature-card.is-visible {
-  opacity: 1;
-  transform: translateY(0);
+  transition: border-color 0.25s var(--ease-smooth), background 0.25s var(--ease-smooth),
+              opacity 0.7s var(--ease-out-expo), transform 0.7s var(--ease-out-expo), filter 0.7s var(--ease-out-expo);
 }
 .chp-feature-card:hover {
   border-color: var(--chp-gold-bright);
