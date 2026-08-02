@@ -922,6 +922,18 @@ html, body {
   gap: 14px;
   margin: 22px 0 30px;
 }
+
+/* Labels a second hero-card group (e.g. "war story" bug writeups) as
+   distinct from the entry's main 2-3 hero features above it, without
+   needing a whole new visual language. */
+.chp-hero-subheading {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--chp-text-muted);
+  margin: 30px 0 12px;
+}
 .chp-hero-card {
   position: relative;
   padding: 26px 28px;
