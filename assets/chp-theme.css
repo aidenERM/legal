@@ -1324,3 +1324,69 @@ html, body {
 @media (max-width: 768px) {
   .chp-header-wrap { padding: 48px 14px 0; }
 }
+
+/* ─── fixes.html: dense filterable list, distinct from the changelog's
+   padded item-cards ───────────────────────────────────────────────────
+   Deliberately NO backdrop-filter and NO per-row will-change here - this
+   page can have dozens of rows per section, and the changelog page
+   already taught the lesson that many simultaneous blurred/GPU-promoted
+   elements is the single biggest cost on a page like this. Rows are flat
+   color + a left accent border, cheap regardless of how many exist. */
+.chp-fix-section {
+  position: relative;
+  margin: 10px 0 6px;
+  padding: 4px 0 4px 18px;
+  border-left: 2px solid transparent;
+  --cat-color: var(--chp-accent-gold);
+}
+.chp-fix-section[data-accent="blue"] { --cat-color: var(--chp-accent-blue); }
+.chp-fix-section[data-accent="gold"] { --cat-color: var(--chp-accent-gold); }
+.chp-fix-section[data-accent="warm"] { --cat-color: var(--chp-accent-warm); }
+.chp-fix-section { border-left-color: color-mix(in srgb, var(--cat-color) 35%, transparent); }
+
+.chp-fix-count {
+  font-size: 12px;
+  color: var(--chp-text-muted);
+  white-space: nowrap;
+}
+
+.chp-fix-list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+}
+.chp-fix-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border-left: 2px solid transparent;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--chp-text);
+  transition: background 0.2s var(--ease-smooth), border-color 0.2s var(--ease-smooth);
+}
+.chp-fix-row:hover {
+  background: rgba(255,255,255,0.03);
+  border-left-color: var(--cat-color, var(--chp-gold));
+}
+.chp-fix-row .chp-checkmark {
+  width: 16px; height: 16px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--cat-color, var(--chp-gold-bright));
+}
+.chp-fix-row .chp-checkmark-path {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  transition: stroke-dashoffset 0.5s var(--ease-out-expo);
+}
+.chp-fix-row.is-visible .chp-checkmark-path {
+  stroke-dashoffset: 0;
+  transition-delay: 0.15s;
+}
+
+@media (max-width: 768px) {
+  .chp-fix-row { font-size: 13.5px; padding: 8px 10px; }
+}
