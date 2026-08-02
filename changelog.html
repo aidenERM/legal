@@ -8,12 +8,22 @@
 <link rel="icon" href="assets/images/chp-badge.png">
 </head>
 <body>
+<div class="chp-progress-bar" id="chpProgressBar" aria-hidden="true"></div>
+<div class="chp-cursor-glow" id="chpCursorGlow" aria-hidden="true"></div>
 <div class="chp-scene" aria-hidden="true">
   <div class="chp-orb chp-orb-1"></div>
   <div class="chp-orb chp-orb-2"></div>
   <div class="chp-orb chp-orb-3"></div>
   <div class="chp-orb chp-orb-4"></div>
 </div>
+<nav class="chp-timeline-rail" id="chpTimelineRail" aria-hidden="true">
+  <button type="button" class="chp-rail-node" data-rail-node="ai-assistant" title="AI &amp; Assistant"></button>
+  <button type="button" class="chp-rail-node" data-rail-node="duty-shifts" title="Duty &amp; Shifts"></button>
+  <button type="button" class="chp-rail-node" data-rail-node="personnel-discipline" title="Personnel &amp; Discipline"></button>
+  <button type="button" class="chp-rail-node" data-rail-node="tools-access" title="Tools &amp; Access"></button>
+  <button type="button" class="chp-rail-node" data-rail-node="dashboard-automation" title="Dashboard &amp; Automation"></button>
+  <button type="button" class="chp-rail-node" data-rail-node="security-reliability" title="Security &amp; Reliability"></button>
+</nav>
 <div class="chp-wrap">
   <div class="chp-header">
     <img class="chp-badge" src="assets/images/chp-badge.png" alt="CHP Badge">
@@ -25,47 +35,242 @@
     <div class="entry chp-panel">
     <span class="chp-badge-tag feature">New Feature</span>
     <h2 style="border-left:none;padding-left:0;margin:8px 0 4px;">AI Overhaul, Transfers Rebuild, Self-Service Duty Fix, Auto-Promotions &amp; the Biggest Reliability Pass Yet</h2>
-    <div class="chp-subtitle" style="margin-bottom:12px;">Update #3 &middot; 2026-08-02</div>
+    <div class="chp-subtitle" style="margin-bottom:12px;">Update #3 &middot; 2026-08-01</div>
     <div class="chp-stat-strip">
-      <div class="chp-stat"><div class="chp-stat-value" data-count-target="277" data-count-suffix="">0</div><div class="chp-stat-label">Updates Shipped</div></div>
-      <div class="chp-stat"><div class="chp-stat-value" data-count-target="24" data-count-suffix="">0</div><div class="chp-stat-label">Systems Rebuilt</div></div>
-      <div class="chp-stat"><div class="chp-stat-value" data-count-target="30" data-count-suffix="+">0+</div><div class="chp-stat-label">New Commands</div></div>
+      <div class="chp-stat" data-tooltip="Commits shipped to the bot since Update #2, counted directly from git log"><div class="chp-odometer" data-count-target="277" data-count-suffix=""><span class="chp-odometer-digit"><span class="chp-odometer-inner" data-digit="2" style="--d:0"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></span></span><span class="chp-odometer-digit"><span class="chp-odometer-inner" data-digit="7" style="--d:0"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></span></span><span class="chp-odometer-digit"><span class="chp-odometer-inner" data-digit="7" style="--d:0"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></span></span></div><div class="chp-stat-label">Updates Shipped</div></div>
+      <div class="chp-stat" data-tooltip="Distinct features/systems that were newly built or substantially rebuilt this cycle"><div class="chp-odometer" data-count-target="24" data-count-suffix=""><span class="chp-odometer-digit"><span class="chp-odometer-inner" data-digit="2" style="--d:0"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></span></span><span class="chp-odometer-digit"><span class="chp-odometer-inner" data-digit="4" style="--d:0"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></span></span></div><div class="chp-stat-label">Systems Rebuilt</div></div>
+      <div class="chp-stat" data-tooltip="New or reorganized user-facing commands added across Discord and the dashboard"><div class="chp-odometer" data-count-target="30" data-count-suffix="+"><span class="chp-odometer-digit"><span class="chp-odometer-inner" data-digit="3" style="--d:0"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></span></span><span class="chp-odometer-digit"><span class="chp-odometer-inner" data-digit="0" style="--d:0"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></span></span><span class="chp-odometer-static">+</span></div><div class="chp-stat-label">New Commands</div></div>
     </div>
 
     <p class="chp-reveal">The biggest update since launch: the AI assistant now runs on a smarter model with real member-record grounding and tool-calling, transfers got a full self-service rebuild with fraud detection, a brand-new self-service shift correction flow, automatic promotion-list processing, plus new Sergeant Exam, Watch, Check, Retirement/Reinstatement, Service Stripe, Tester Program, and dashboard systems — on top of well over 250 fixes and performance improvements.</p>
-    <div class="chp-feature-grid">
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">AI ASSISTANT</p><p class="chp-feature-body">/ask now runs on a more capable model with real grounding: it knows your own rank/history when you ask about yourself, resolves plain names (not just @mentions) against real records, and can call live tools (leaderboard, your shifts, your history, on-duty count) instead of guessing. Added a rank whitelist so it can never state a rank that doesn&#x27;t exist, a hard rule against inventing evidence/dates it doesn&#x27;t have, a post-answer fact-check safety net, 👍/👎 feedback on every answer, and semantic knowledge-base search so a rephrased question can still find the right indexed answer.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">DASHBOARD AI</p><p class="chp-feature-body">Gained full tool-calling across every tier: self-service (your shifts/history/badges), Officer tools (on-duty count, recognized officers, department feed), High-Rank tools (officer roster, infractions, watch summaries, LOA/transfer decisions), and Board of Commissioners tools (quota enforcement, HR review, applications, audit log, announcements) — plus image/vision support, real-time streaming responses, conversation memory, and an undo button for reversible AI-driven actions.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">DUTY FIX</p><p class="chp-feature-body">&gt;duty fix lets you request a correction to one of your own recent shifts (wrong time, wrong type, or void it entirely) with a reason. A supervisor reviews and approves or denies it — you&#x27;re never editing your own record directly — and you get a DM either way.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">AUTO-PROMOTIONS FROM LIST</p><p class="chp-feature-body">Post a weekly promotion list, medal announcement, or Trooper of the Week callout in the promotions channel and the bot recognizes it, DMs you to confirm, and automatically applies the rank roles, nicknames, medal roles, and Trooper of the Week role for everyone listed — no manual role-clicking required.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">TRANSFERS</p><p class="chp-feature-body">Completely rebuilt: a member-initiated self-service panel, a private channel per transfer with a single pinned status card and visual step-tracker, auto-accept for high-confidence clean transfers, multi-image screenshot verification with fraud/reuse detection, post-denial and post-approval cooldowns, stalled-transfer auto-recheck, and a weekly throughput digest to Command.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">INFRACTIONS &amp; DISCIPLINE</p><p class="chp-feature-body">New !infract/!demote system with full appeal handling, a Disciplinary Score on member profiles, suspension/termination enforcement, and proof collection wired directly into HR documentation threads.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">SERGEANT EXAM</p><p class="chp-feature-body">A full Corporal-to-Sergeant promotion exam: supervisory scenario questions, a staggered review queue, per-answer AI-assisted grading, and cooldowns shown as live Discord timestamps.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">&gt;check</p><p class="chp-feature-body">a full member-lookup command (single member, multiple, by role, or server-wide) surfacing scanned history: promotions, demotions, infractions, transfers, tickets, and LOAs, with pagination and date-range filtering.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">WATCH</p><p class="chp-feature-body">&gt;watch flags members for closer attention (e.g. suspected shift-farming) with automatic activity summaries and an auto-close task once the concern resolves.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">RETIREMENT &amp; REINSTATEMENT</p><p class="chp-feature-body">New end-to-end systems for retiring and reinstating members, including multi-stage reinstatement window warnings and service-stripe protection.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">SERVICE STRIPES</p><p class="chp-feature-body">Tenure is now tracked automatically (from your real ride-along hire date, not just your Discord join date) and stripe roles are assigned for time served across 14 tiers, with a weekly coverage report flagging anyone whose tenure data looks unclear so it can be fixed before it affects them.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">HICOM INACTIVITY REVIEW</p><p class="chp-feature-body">Automatically flags command-staff who&#x27;ve gone quiet (30-day window, tuned to exclude LOA/ZTP/Probationary members) with one-click Warn/Terminate/Dismiss actions.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">ERLC PRESENCE</p><p class="chp-feature-body">Presence checks now re-sweep periodically instead of only at bot startup (so staff promoted mid-week are actually covered), tolerate transient lookup failures instead of permanently giving up, and can optionally auto-end a shift after several consecutive misses with no real in-game presence. New Long Shift (3h+) and heavy Break-Time alerts post to Internal Affairs. A separate daily check flags if your linked Roblox account changes after the fact.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">TESTER PROGRAM</p><p class="chp-feature-body">A CHP Management Tester Program lets designated testers try new features in a sandbox server, shown with a badge on their profile, with dashboard access synced automatically.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">CLEANER COMMANDS</p><p class="chp-feature-body">/duty went from 18 subcommands down to 13 (several merged together), &gt;member and &gt;scan are now organized groups instead of loose top-level commands, and &gt;help &lt;command&gt; gives focused help for one command instead of only the full category list. &gt;agentchannel brings the same AI tool-calling the dashboard uses into a Discord channel — plain-language requests that read data immediately and ask for a confirm click before writing anything.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">PRIVACY &amp; PROFILE</p><p class="chp-feature-body">New dashboard settings: a personal bio (about_me), an option to hide yourself from the public roster, and a welcome tour for first-time dashboard visitors. New milestone badges at 100/500/1000 duty hours and 6-month/2-year tenure.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">PUBLIC BOT LOGS</p><p class="chp-feature-body">A new officer-visible log channel mirrors non-confidential activity (shifts, promotions, transfers) separately from the private staff-only audit log.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">SECURITY</p><p class="chp-feature-body">Added rate limiting to the dashboard AI chat (every other AI surface already had it), a denylist so no developer tool can ever touch secrets/credentials, and timing-safe comparisons on both bridge authentication paths.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">LIVE LEADERBOARD</p><p class="chp-feature-body">Fixed the pinned leaderboard reposting itself and losing its pin every hour, fixed a rare session-creation race, and decoupled the bot&#x27;s presence rotation so it no longer silently depends on a live leaderboard existing. The regular leaderboard also got a redesigned period picker (Past Week / This Month / a custom date range) with .txt/.csv exports and a one-click push to Google Sheets for Management+.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">DASHBOARD</p><p class="chp-feature-body">A full bot-side API server now backs the web dashboard end to end: Officers roster, a Watch List panel, dedicated FTO Tools and IA Tools sections gated by your live Discord roles, a Board of Commissioners control center (scheduled quota/promotion runs, leaderboard resets, HR oversight), and dozens of endpoints spanning every permission tier from self-service up to Developer.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">AUTOMATION</p><p class="chp-feature-body">Historical channel data (promotions, demotions, infractions, transfers, LOAs, RAs, applications, tickets, callsigns) now scans and self-heals automatically on a schedule instead of needing a manual command, feeding both /ask&#x27;s knowledge base and &gt;check.</p></div>
-      <div class="chp-feature-card chp-reveal"><p class="chp-feature-title">RELIABILITY</p><p class="chp-feature-body">Well over 250 fixes and performance improvements this cycle: N+1 query fixes across officer rosters and leaderboards, database index additions, race-condition fixes in shift logging and RA results, decoration/stripe protection hardened against accidental removal, and dozens of crash fixes surfaced by real production use.</p></div>
+    <div class="chp-hero-features">
+      <div class="chp-hero-card chp-reveal" data-tilt><div class="chp-hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16a1 1 0 0 1 1 1V15a1 1 0 0 1-1 1H9l-4 3.5V16H4a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1Z"/><path d="M15.6 3.2l.55 1.35 1.35.55-1.35.55-.55 1.35-.55-1.35-1.35-.55 1.35-.55.55-1.35Z"/></svg></div><p class="chp-hero-title">AI Assistant, Rebuilt</p><p class="chp-hero-body">A smarter model, real grounding in your own records, and the ability to actually look things up instead of guessing. Ask it about your own rank, your history, or another officer by name — not just @mention — and it answers from what&#x27;s真actually on file, with a rank whitelist and a fact-check pass so it can&#x27;t invent an answer that isn&#x27;t real.</p></div>
+      <div class="chp-hero-card chp-reveal" data-tilt><div class="chp-hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.4a3.4 3.4 0 0 1-4.5 4.5L4.7 16.3a1.4 1.4 0 0 0 2 2l5.4-5.4a3.4 3.4 0 0 1 4.5-4.5l-1.9 1.9-1.4-1.4 1.9-1.9Z"/></svg></div><p class="chp-hero-title">Self-Service Duty Fix</p><p class="chp-hero-body">&gt;duty fix lets you request a correction to one of your own recent shifts — wrong time, wrong type, or void it entirely — with a reason. A supervisor reviews and approves or denies it. You&#x27;re never editing your own record directly, and you get a DM either way.</p></div>
+      <div class="chp-hero-card chp-reveal" data-tilt><div class="chp-hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 3.4l1.75 3.7 4.1.5-3 2.85.78 4.05-3.63-1.95-3.63 1.95.78-4.05-3-2.85 4.1-.5L12 3.4Z"/><path d="M9.1 17.4l-.9 2.9 3.8-1.95 3.8 1.95-.9-2.9"/></svg></div><p class="chp-hero-title">Auto-Promotions From List</p><p class="chp-hero-body">Post a weekly promotion list, medal announcement, or Trooper of the Week callout in the promotions channel and the bot recognizes it, DMs you to confirm, and applies every rank role, nickname, medal role, and Trooper of the Week role for everyone listed — no manual role-clicking required.</p></div>
     </div>
+    <div class="chp-nav-pills chp-reveal">
+      <button type="button" class="chp-pill" data-nav-pill="all"><span class="chp-pill-icon"></span>All</button>
+      <button type="button" class="chp-pill" data-nav-pill="ai-assistant"><span class="chp-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16a1 1 0 0 1 1 1V15a1 1 0 0 1-1 1H9l-4 3.5V16H4a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1Z"/><path d="M15.6 3.2l.55 1.35 1.35.55-1.35.55-.55 1.35-.55-1.35-1.35-.55 1.35-.55.55-1.35Z"/></svg></span>AI &amp; Assistant</button>
+      <button type="button" class="chp-pill" data-nav-pill="duty-shifts"><span class="chp-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.3"/><path d="M12 7.6V12l3.1 1.9"/></svg></span>Duty &amp; Shifts</button>
+      <button type="button" class="chp-pill" data-nav-pill="personnel-discipline"><span class="chp-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.4 18.8 6v5.1c0 4.5-2.9 7.7-6.8 9.2-3.9-1.5-6.8-4.7-6.8-9.2V6L12 3.4Z"/></svg></span>Personnel &amp; Discipline</button>
+      <button type="button" class="chp-pill" data-nav-pill="tools-access"><span class="chp-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.4a3.4 3.4 0 0 1-4.5 4.5L4.7 16.3a1.4 1.4 0 0 0 2 2l5.4-5.4a3.4 3.4 0 0 1 4.5-4.5l-1.9 1.9-1.4-1.4 1.9-1.9Z"/></svg></span>Tools &amp; Access</button>
+      <button type="button" class="chp-pill" data-nav-pill="dashboard-automation"><span class="chp-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.6" y="3.6" width="6.8" height="6.8" rx="1.3"/><rect x="13.6" y="3.6" width="6.8" height="6.8" rx="1.3"/><rect x="3.6" y="13.6" width="6.8" height="6.8" rx="1.3"/><rect x="13.6" y="13.6" width="6.8" height="6.8" rx="1.3"/></svg></span>Dashboard &amp; Automation</button>
+      <button type="button" class="chp-pill" data-nav-pill="security-reliability"><span class="chp-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.4" width="14" height="9" rx="1.4"/><path d="M8 10.4V7.5a4 4 0 0 1 8 0v2.9"/></svg></span>Security &amp; Reliability</button>
+    </div>
+        <section class="chp-category chp-reveal" id="cat-ai-assistant" data-accent="blue">
+      <div class="chp-category-watermark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16a1 1 0 0 1 1 1V15a1 1 0 0 1-1 1H9l-4 3.5V16H4a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1Z"/><path d="M15.6 3.2l.55 1.35 1.35.55-1.35.55-.55 1.35-.55-1.35-1.35-.55 1.35-.55.55-1.35Z"/></svg></div>
+      <div class="chp-category-header">
+        <span class="chp-category-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16a1 1 0 0 1 1 1V15a1 1 0 0 1-1 1H9l-4 3.5V16H4a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1Z"/><path d="M15.6 3.2l.55 1.35 1.35.55-1.35.55-.55 1.35-.55-1.35-1.35-.55 1.35-.55.55-1.35Z"/></svg></span>
+        <h3 class="chp-category-title">AI &amp; Assistant</h3>
+        <button type="button" class="chp-anchor-link" data-anchor="#cat-ai-assistant" aria-label="Copy link to AI &amp; Assistant section"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9.5 14.5l5-5"/><path d="M11 8.2l1-1a3 3 0 0 1 4.2 4.2l-1 1"/><path d="M13 15.8l-1 1a3 3 0 0 1-4.2-4.2l1-1"/></svg><span class="chp-anchor-label">Link</span></button>
+      </div>
+      <div class="chp-item-grid">
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">AI</span><span class="chp-tag">Dashboard</span></div>
+          <p class="chp-item-title">Dashboard AI</p>
+          <p class="chp-item-body">Gained full tool-calling across every tier: self-service (your shifts/history/badges), Officer tools (on-duty count, recognized officers, department feed), High-Rank tools (officer roster, infractions, watch summaries, LOA/transfer decisions), and Board of Commissioners tools (quota enforcement, HR review, applications, audit log, announcements) — plus image/vision support, real-time streaming responses, conversation memory, and an undo button for reversible AI-driven actions.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+      </div>
+    </section>
+    <div class="chp-divider-motif" aria-hidden="true"><svg viewBox="0 0 48 16" width="48" height="16" fill="none" stroke="currentColor" stroke-width="1.1"><path d="M24 1.5 30.5 8 24 14.5 17.5 8Z"/><line x1="0" y1="8" x2="13" y2="8"/><line x1="35" y1="8" x2="48" y2="8"/></svg></div>
+
+    <section class="chp-category chp-reveal" id="cat-duty-shifts" data-accent="gold">
+      <div class="chp-category-watermark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.3"/><path d="M12 7.6V12l3.1 1.9"/></svg></div>
+      <div class="chp-category-header">
+        <span class="chp-category-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.3"/><path d="M12 7.6V12l3.1 1.9"/></svg></span>
+        <h3 class="chp-category-title">Duty &amp; Shifts</h3>
+        <button type="button" class="chp-anchor-link" data-anchor="#cat-duty-shifts" aria-label="Copy link to Duty &amp; Shifts section"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9.5 14.5l5-5"/><path d="M11 8.2l1-1a3 3 0 0 1 4.2 4.2l-1 1"/><path d="M13 15.8l-1 1a3 3 0 0 1-4.2-4.2l1-1"/></svg><span class="chp-anchor-label">Link</span></button>
+      </div>
+      <div class="chp-item-grid">
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Duty</span><span class="chp-tag">Fix</span></div>
+          <p class="chp-item-title">Live Leaderboard</p>
+          <p class="chp-item-body">Fixed the pinned leaderboard reposting itself and losing its pin every hour, fixed a rare session-creation race, and decoupled the bot&#x27;s presence rotation so it no longer silently depends on a live leaderboard existing. The regular leaderboard also got a redesigned period picker (Past Week / This Month / a custom date range) with .txt/.csv exports and a one-click push to Google Sheets for Management+.</p>
+          <div class="chp-before-after"><span class="chp-ba-label">Self-repost bug</span><span class="chp-ba-before">Every hour</span><span class="chp-ba-arrow">&rarr;</span><span class="chp-ba-after">Gone for good</span></div>
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Duty</span><span class="chp-tag">Automation</span></div>
+          <p class="chp-item-title">ERLC Presence</p>
+          <p class="chp-item-body">Presence checks now re-sweep periodically instead of only at bot startup (so staff promoted mid-week are actually covered), tolerate transient lookup failures instead of permanently giving up, and can optionally auto-end a shift after several consecutive misses with no real in-game presence. New Long Shift (3h+) and heavy Break-Time alerts post to Internal Affairs. A separate daily check flags if your linked Roblox account changes after the fact.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+      </div>
+    </section>
+    <div class="chp-divider-motif" aria-hidden="true"><svg viewBox="0 0 48 16" width="48" height="16" fill="none" stroke="currentColor" stroke-width="1.1"><path d="M24 1.5 30.5 8 24 14.5 17.5 8Z"/><line x1="0" y1="8" x2="13" y2="8"/><line x1="35" y1="8" x2="48" y2="8"/></svg></div>
+
+    <section class="chp-category chp-reveal" id="cat-personnel-discipline" data-accent="warm">
+      <div class="chp-category-watermark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.4 18.8 6v5.1c0 4.5-2.9 7.7-6.8 9.2-3.9-1.5-6.8-4.7-6.8-9.2V6L12 3.4Z"/></svg></div>
+      <div class="chp-category-header">
+        <span class="chp-category-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.4 18.8 6v5.1c0 4.5-2.9 7.7-6.8 9.2-3.9-1.5-6.8-4.7-6.8-9.2V6L12 3.4Z"/></svg></span>
+        <h3 class="chp-category-title">Personnel &amp; Discipline</h3>
+        <button type="button" class="chp-anchor-link" data-anchor="#cat-personnel-discipline" aria-label="Copy link to Personnel &amp; Discipline section"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9.5 14.5l5-5"/><path d="M11 8.2l1-1a3 3 0 0 1 4.2 4.2l-1 1"/><path d="M13 15.8l-1 1a3 3 0 0 1-4.2-4.2l1-1"/></svg><span class="chp-anchor-label">Link</span></button>
+      </div>
+      <div class="chp-item-grid">
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Personnel</span><span class="chp-tag">New</span></div>
+          <p class="chp-item-title">Infractions &amp; Discipline</p>
+          <p class="chp-item-body">New !infract/!demote system with full appeal handling, a Disciplinary Score on member profiles, suspension/termination enforcement, and proof collection wired directly into HR documentation threads.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Personnel</span><span class="chp-tag">New</span></div>
+          <p class="chp-item-title">Sergeant Exam</p>
+          <p class="chp-item-body">A full Corporal-to-Sergeant promotion exam: supervisory scenario questions, a staggered review queue, per-answer AI-assisted grading, and cooldowns shown as live Discord timestamps.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Personnel</span><span class="chp-tag">New</span></div>
+          <p class="chp-item-title">Watch</p>
+          <p class="chp-item-body">&gt;watch flags members for closer attention (e.g. suspected shift-farming) with automatic activity summaries and an auto-close task once the concern resolves.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Personnel</span><span class="chp-tag">New</span></div>
+          <p class="chp-item-title">Retirement &amp; Reinstatement</p>
+          <p class="chp-item-body">New end-to-end systems for retiring and reinstating members, including multi-stage reinstatement window warnings and service-stripe protection.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Personnel</span><span class="chp-tag">Automation</span></div>
+          <p class="chp-item-title">Service Stripes</p>
+          <p class="chp-item-body">Tenure is now tracked automatically (from your real ride-along hire date, not just your Discord join date) and stripe roles are assigned for time served across 14 tiers, with a weekly coverage report flagging anyone whose tenure data looks unclear so it can be fixed before it affects them.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Personnel</span><span class="chp-tag">Automation</span></div>
+          <p class="chp-item-title">HICOM Inactivity Review</p>
+          <p class="chp-item-body">Automatically flags command-staff who&#x27;ve gone quiet (30-day window, tuned to exclude LOA/ZTP/Probationary members) with one-click Warn/Terminate/Dismiss actions.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Personnel</span><span class="chp-tag">Rebuilt</span></div>
+          <p class="chp-item-title">Transfers</p>
+          <p class="chp-item-body">Completely rebuilt: a member-initiated self-service panel, a private channel per transfer with a single pinned status card and visual step-tracker, auto-accept for high-confidence clean transfers, multi-image screenshot verification with fraud/reuse detection, post-denial and post-approval cooldowns, stalled-transfer auto-recheck, and a weekly throughput digest to Command.</p>
+          <div class="chp-before-after"><span class="chp-ba-label">Roster page load</span><span class="chp-ba-before">60+ seconds</span><span class="chp-ba-arrow">&rarr;</span><span class="chp-ba-after">A couple seconds</span></div>
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+      </div>
+    </section>
+    <div class="chp-divider-motif" aria-hidden="true"><svg viewBox="0 0 48 16" width="48" height="16" fill="none" stroke="currentColor" stroke-width="1.1"><path d="M24 1.5 30.5 8 24 14.5 17.5 8Z"/><line x1="0" y1="8" x2="13" y2="8"/><line x1="35" y1="8" x2="48" y2="8"/></svg></div>
+
+    <section class="chp-category chp-reveal" id="cat-tools-access" data-accent="gold">
+      <div class="chp-category-watermark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.4a3.4 3.4 0 0 1-4.5 4.5L4.7 16.3a1.4 1.4 0 0 0 2 2l5.4-5.4a3.4 3.4 0 0 1 4.5-4.5l-1.9 1.9-1.4-1.4 1.9-1.9Z"/></svg></div>
+      <div class="chp-category-header">
+        <span class="chp-category-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.4a3.4 3.4 0 0 1-4.5 4.5L4.7 16.3a1.4 1.4 0 0 0 2 2l5.4-5.4a3.4 3.4 0 0 1 4.5-4.5l-1.9 1.9-1.4-1.4 1.9-1.9Z"/></svg></span>
+        <h3 class="chp-category-title">Tools &amp; Access</h3>
+        <button type="button" class="chp-anchor-link" data-anchor="#cat-tools-access" aria-label="Copy link to Tools &amp; Access section"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9.5 14.5l5-5"/><path d="M11 8.2l1-1a3 3 0 0 1 4.2 4.2l-1 1"/><path d="M13 15.8l-1 1a3 3 0 0 1-4.2-4.2l1-1"/></svg><span class="chp-anchor-label">Link</span></button>
+      </div>
+      <div class="chp-item-grid">
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Command</span><span class="chp-tag">New</span></div>
+          <p class="chp-item-title">&gt;check</p>
+          <p class="chp-item-body">A full member-lookup command (single member, multiple, by role, or server-wide) surfacing scanned history: promotions, demotions, infractions, transfers, tickets, and LOAs, with pagination and date-range filtering.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">New</span></div>
+          <p class="chp-item-title">Tester Program</p>
+          <p class="chp-item-body">A CHP Management Tester Program lets designated testers try new features in a sandbox server, shown with a badge on their profile, with dashboard access synced automatically.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Command</span><span class="chp-tag">UX</span></div>
+          <p class="chp-item-title">Cleaner Commands</p>
+          <p class="chp-item-body">/duty went from 18 subcommands down to 13 (several merged together), &gt;member and &gt;scan are now organized groups instead of loose top-level commands, and &gt;help &lt;command&gt; gives focused help for one command instead of only the full category list. &gt;agentchannel brings the same AI tool-calling the dashboard uses into a Discord channel — plain-language requests that read data immediately and ask for a confirm click before writing anything.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Dashboard</span><span class="chp-tag">New</span></div>
+          <p class="chp-item-title">Privacy &amp; Profile</p>
+          <p class="chp-item-body">New dashboard settings: a personal bio (about_me), an option to hide yourself from the public roster, and a welcome tour for first-time dashboard visitors. New milestone badges at 100/500/1000 duty hours and 6-month/2-year tenure.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Command</span><span class="chp-tag">New</span></div>
+          <p class="chp-item-title">Public Bot Logs</p>
+          <p class="chp-item-body">A new officer-visible log channel mirrors non-confidential activity (shifts, promotions, transfers) separately from the private staff-only audit log.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+      </div>
+    </section>
+    <div class="chp-divider-motif" aria-hidden="true"><svg viewBox="0 0 48 16" width="48" height="16" fill="none" stroke="currentColor" stroke-width="1.1"><path d="M24 1.5 30.5 8 24 14.5 17.5 8Z"/><line x1="0" y1="8" x2="13" y2="8"/><line x1="35" y1="8" x2="48" y2="8"/></svg></div>
+
+    <section class="chp-category chp-reveal" id="cat-dashboard-automation" data-accent="blue">
+      <div class="chp-category-watermark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.6" y="3.6" width="6.8" height="6.8" rx="1.3"/><rect x="13.6" y="3.6" width="6.8" height="6.8" rx="1.3"/><rect x="3.6" y="13.6" width="6.8" height="6.8" rx="1.3"/><rect x="13.6" y="13.6" width="6.8" height="6.8" rx="1.3"/></svg></div>
+      <div class="chp-category-header">
+        <span class="chp-category-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.6" y="3.6" width="6.8" height="6.8" rx="1.3"/><rect x="13.6" y="3.6" width="6.8" height="6.8" rx="1.3"/><rect x="3.6" y="13.6" width="6.8" height="6.8" rx="1.3"/><rect x="13.6" y="13.6" width="6.8" height="6.8" rx="1.3"/></svg></span>
+        <h3 class="chp-category-title">Dashboard &amp; Automation</h3>
+        <button type="button" class="chp-anchor-link" data-anchor="#cat-dashboard-automation" aria-label="Copy link to Dashboard &amp; Automation section"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9.5 14.5l5-5"/><path d="M11 8.2l1-1a3 3 0 0 1 4.2 4.2l-1 1"/><path d="M13 15.8l-1 1a3 3 0 0 1-4.2-4.2l1-1"/></svg><span class="chp-anchor-label">Link</span></button>
+      </div>
+      <div class="chp-item-grid">
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Dashboard</span><span class="chp-tag">New</span></div>
+          <p class="chp-item-title">Dashboard</p>
+          <p class="chp-item-body">A full bot-side API server now backs the web dashboard end to end: Officers roster, a Watch List panel, dedicated FTO Tools and IA Tools sections gated by your live Discord roles, a Board of Commissioners control center (scheduled quota/promotion runs, leaderboard resets, HR oversight), and dozens of endpoints spanning every permission tier from self-service up to Developer.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Automation</span></div>
+          <p class="chp-item-title">Automation</p>
+          <p class="chp-item-body">Historical channel data (promotions, demotions, infractions, transfers, LOAs, RAs, applications, tickets, callsigns) now scans and self-heals automatically on a schedule instead of needing a manual command, feeding both /ask&#x27;s knowledge base and &gt;check.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+      </div>
+    </section>
+    <div class="chp-divider-motif" aria-hidden="true"><svg viewBox="0 0 48 16" width="48" height="16" fill="none" stroke="currentColor" stroke-width="1.1"><path d="M24 1.5 30.5 8 24 14.5 17.5 8Z"/><line x1="0" y1="8" x2="13" y2="8"/><line x1="35" y1="8" x2="48" y2="8"/></svg></div>
+
+    <section class="chp-category chp-reveal" id="cat-security-reliability" data-accent="warm">
+      <div class="chp-category-watermark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.4" width="14" height="9" rx="1.4"/><path d="M8 10.4V7.5a4 4 0 0 1 8 0v2.9"/></svg></div>
+      <div class="chp-category-header">
+        <span class="chp-category-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.4" width="14" height="9" rx="1.4"/><path d="M8 10.4V7.5a4 4 0 0 1 8 0v2.9"/></svg></span>
+        <h3 class="chp-category-title">Security &amp; Reliability</h3>
+        <button type="button" class="chp-anchor-link" data-anchor="#cat-security-reliability" aria-label="Copy link to Security &amp; Reliability section"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9.5 14.5l5-5"/><path d="M11 8.2l1-1a3 3 0 0 1 4.2 4.2l-1 1"/><path d="M13 15.8l-1 1a3 3 0 0 1-4.2-4.2l1-1"/></svg><span class="chp-anchor-label">Link</span></button>
+      </div>
+      <div class="chp-item-grid">
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Security</span></div>
+          <p class="chp-item-title">Security</p>
+          <p class="chp-item-body">Added rate limiting to the dashboard AI chat (every other AI surface already had it), a denylist so no developer tool can ever touch secrets/credentials, and timing-safe comparisons on both bridge authentication paths.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Fix</span><span class="chp-tag">Performance</span></div>
+          <p class="chp-item-title">Reliability</p>
+          <p class="chp-item-body">Well over 250 fixes and performance improvements this cycle: N+1 query fixes across officer rosters and leaderboards, database index additions, race-condition fixes in shift logging and RA results, decoration/stripe protection hardened against accidental removal, and dozens of crash fixes surfaced by real production use.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+      </div>
+    </section>
+    <div class="chp-divider-motif" aria-hidden="true"><svg viewBox="0 0 48 16" width="48" height="16" fill="none" stroke="currentColor" stroke-width="1.1"><path d="M24 1.5 30.5 8 24 14.5 17.5 8Z"/><line x1="0" y1="8" x2="13" y2="8"/><line x1="35" y1="8" x2="48" y2="8"/></svg></div>
+
     <div class="chp-fixes chp-reveal">
       <p class="chp-fixes-heading">Also fixed this cycle</p>
       <ul>
-        <li>The live leaderboard used to repost itself and lose its pin every hour — that&#x27;s gone for good.</li>
-        <li>The AI assistant could occasionally invent a rank that doesn&#x27;t exist — every answer is now checked against the real 14-rank list.</li>
-        <li>Officer roster pages that used to take 60+ seconds to load now load in a couple of seconds.</li>
-        <li>A rare timing bug could let two people submit the exact same request at nearly the same moment and both go through — closed.</li>
-        <li>A subdivision shift-mirroring bug that could double-count a shift (and once caused a wrongful infraction) has been fixed at the root cause.</li>
-        <li>Sergeant Exam&#x27;s &#x27;View Answers&#x27; used to crash on longer exams — fixed.</li>
+        <li><svg class="chp-checkmark" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path class="chp-checkmark-path" d="M4.3 10.4l3.4 3.4L15.7 5.6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg><span>The live leaderboard used to repost itself and lose its pin every hour — that&#x27;s gone for good.</span></li>
+        <li><svg class="chp-checkmark" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path class="chp-checkmark-path" d="M4.3 10.4l3.4 3.4L15.7 5.6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg><span>The AI assistant could occasionally invent a rank that doesn&#x27;t exist — every answer is now checked against the real 14-rank list.</span></li>
+        <li><svg class="chp-checkmark" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path class="chp-checkmark-path" d="M4.3 10.4l3.4 3.4L15.7 5.6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Officer roster pages that used to take 60+ seconds to load now load in a couple of seconds.</span></li>
+        <li><svg class="chp-checkmark" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path class="chp-checkmark-path" d="M4.3 10.4l3.4 3.4L15.7 5.6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg><span>A rare timing bug could let two people submit the exact same request at nearly the same moment and both go through — closed.</span></li>
+        <li><svg class="chp-checkmark" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path class="chp-checkmark-path" d="M4.3 10.4l3.4 3.4L15.7 5.6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg><span>A subdivision shift-mirroring bug that could double-count a shift (and once caused a wrongful infraction) has been fixed at the root cause.</span></li>
+        <li><svg class="chp-checkmark" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path class="chp-checkmark-path" d="M4.3 10.4l3.4 3.4L15.7 5.6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sergeant Exam&#x27;s &#x27;View Answers&#x27; used to crash on longer exams — fixed.</span></li>
       </ul>
     </div>
 
@@ -78,6 +283,8 @@
     <div class="chp-subtitle" style="margin-bottom:12px;">Update #2 &middot; 2026-07-02</div>
     
     <p>The second major release: full subdivision integration so officers only clock in once, a completely rebuilt RA training system, a live auto-refreshing leaderboard, new AI tools for management, ERLC presence detection, and dozens of quality-of-life improvements across shifts, settings, and the bot&#x27;s reliability.</p>
+    
+    
     <ul>
       <li>SUBDIVISIONS — Starting a shift in a subdivision server (e.g. SEU) now automatically mirrors it to CHP as a linked shift. Officers see a confirmation line in the shift embed confirming the mirror succeeded, or a warning if they haven&#x27;t joined the CHP server yet.</li>
       <li>The CHP linked role is automatically assigned the moment a member receives their subdivision division role, or on their first shift — whichever comes first. An hourly sweep catches anyone who slipped through.</li>
@@ -114,6 +321,8 @@
     <div class="chp-subtitle" style="margin-bottom:12px;">Update #1 &middot; 2026-06-26</div>
     
     <p>The first full release: automatic recruitment setup, a complete in-house application system with AI-assisted review, an AI assistant that knows CHP policy, a personal /settings command, an extra layer of tools for Deputies, and a long list of quality-of-life improvements across shifts and applications.</p>
+    
+    
     <ul>
       <li>Automatic Setup resolves the Hicom, Officer, Probationary Officer, Denied, and Blacklisted roles, plus the applications-log, apply, hicom-announcements, and recruitment-report channels - creating anything that&#x27;s missing.</li>
       <li>Passing an RA session now also grants the Officer role and swaps PO to O in the trainee&#x27;s nickname.</li>
@@ -168,43 +377,52 @@
   // end state depend on the same fragile trigger as the nice-to-have
   // animation.
   //
-  // Fixed properly here: the animated reveal (IntersectionObserver) and the
-  // guarantee (a plain, top-level setTimeout with zero dependency on any
-  // observer/animation-frame API) are fully independent. The guarantee's
-  // delay (4.5s) is deliberately generous - long enough that a real scroll-
-  // triggered reveal has already happened naturally for anyone actually
-  // reading the page, so it almost never visibly fires; it exists purely so
-  // nothing can end up permanently stuck at "0" or permanently invisible.
-  function chpFinishCount(el) {
-    var target = parseFloat(el.dataset.countTarget);
-    var suffix = el.dataset.countSuffix || "";
-    el.textContent = target.toLocaleString() + suffix;
-    el.dataset.counted = "1";
-  }
-  function chpCountUp(el) {
+  // Fixed properly here: every animated effect below (odometer digits,
+  // reveal-on-scroll, checkmark draw-on) and the guarantee (a plain,
+  // top-level setTimeout with zero dependency on any observer/animation-
+  // frame API) are fully independent. The guarantee's delay (4.5s) is
+  // deliberately generous - long enough that a real scroll-triggered
+  // reveal has already happened naturally for anyone actually reading the
+  // page, so it almost never visibly fires; it exists purely so nothing
+  // can end up permanently stuck at "0", permanently invisible, or
+  // permanently un-drawn.
+
+  // ── Odometer digit roll ─────────────────────────────────────────────
+  // Each digit is its own vertical reel (.chp-odometer-inner, a column of
+  // 0-9 spans); landing on a value just means setting a CSS custom
+  // property (--d) that a CSS transition (var(--ease-spring), which
+  // already overshoots slightly) animates to. JS only ever decides the
+  // target digit, never runs the animation itself.
+  function chpFinishOdometer(el) {
     if (el.dataset.counted === "1") return;
-    var target = parseFloat(el.dataset.countTarget);
-    var suffix = el.dataset.countSuffix || "";
-    var duration = 1200;
-    var start = null;
-    function step(ts) {
-      if (el.dataset.counted === "1") return;
-      if (start === null) start = ts;
-      var progress = Math.min((ts - start) / duration, 1);
-      var eased = 1 - Math.pow(1 - progress, 3); // ease-out-cubic
-      var value = Math.round(target * eased);
-      el.textContent = value.toLocaleString() + suffix;
-      if (progress < 1) requestAnimationFrame(step);
-      else chpFinishCount(el);
-    }
-    requestAnimationFrame(step);
+    el.dataset.counted = "1";
+    el.querySelectorAll(".chp-odometer-digit .chp-odometer-inner").forEach(function (inner) {
+      inner.style.transitionDuration = "0.01s";
+      inner.style.setProperty("--d", inner.dataset.digit);
+    });
+  }
+  function chpRollOdometer(el) {
+    if (el.dataset.counted === "1") return;
+    el.dataset.counted = "1";
+    var reels = el.querySelectorAll(".chp-odometer-digit .chp-odometer-inner");
+    reels.forEach(function (inner, i) {
+      setTimeout(function () {
+        inner.style.setProperty("--d", inner.dataset.digit);
+      }, i * 90);
+    });
+    // Sparkle flash once the slowest reel has settled.
+    var totalDelay = (reels.length - 1) * 90 + 900;
+    setTimeout(function () {
+      el.classList.add("is-complete");
+      setTimeout(function () { el.classList.remove("is-complete"); }, 900);
+    }, totalDelay);
   }
 
   try {
     var chpStatObserver = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (!entry.isIntersecting) return;
-        entry.target.querySelectorAll("[data-count-target]").forEach(chpCountUp);
+        entry.target.querySelectorAll(".chp-odometer").forEach(chpRollOdometer);
         chpStatObserver.unobserve(entry.target);
       });
     }, {threshold: 0.25});
@@ -212,10 +430,11 @@
       chpStatObserver.observe(strip);
     });
 
-    // One shared observer for every .chp-reveal element (feature cards,
-    // the summary paragraph, the fixes block) - each gets a small stagger
-    // based on its position among its immediate siblings, so a run of
-    // cards settles in one after another rather than simultaneously.
+    // One shared observer for every .chp-reveal element (hero cards,
+    // category sections, item cards, the summary paragraph, the fixes
+    // block) - each gets a small stagger based on its position among its
+    // immediate siblings, so a run of cards settles in one after another
+    // rather than simultaneously.
     var chpRevealObserver = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (!entry.isIntersecting) return;
@@ -236,7 +455,7 @@
   // The guarantee: independent of everything above, force the final,
   // correct visual state if it hasn't happened naturally by now.
   setTimeout(function () {
-    document.querySelectorAll("[data-count-target]").forEach(chpFinishCount);
+    document.querySelectorAll(".chp-odometer").forEach(chpFinishOdometer);
     document.querySelectorAll(".chp-reveal").forEach(function (el) {
       el.classList.add("is-visible");
     });
@@ -267,6 +486,169 @@
       requestAnimationFrame(applyParallax);
     }, {passive: true});
     applyParallax();
+  })();
+
+  // ── Top scroll progress bar ─────────────────────────────────────────
+  (function () {
+    var bar = document.getElementById("chpProgressBar");
+    if (!bar) return;
+    var ticking = false;
+    function update() {
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - doc.clientHeight;
+      var pct = max > 0 ? (doc.scrollTop / max) * 100 : 0;
+      bar.style.width = pct + "%";
+      ticking = false;
+    }
+    window.addEventListener("scroll", function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }, {passive: true});
+    window.addEventListener("resize", update);
+    update();
+  })();
+
+  // ── Page-wide cursor glow ───────────────────────────────────────────
+  // Extends the existing .chp-glass pointer-tracked highlight (already
+  // scoped to individual glass panels) to the whole viewport, so the
+  // scene itself feels alive rather than only individual cards.
+  (function () {
+    var glow = document.getElementById("chpCursorGlow");
+    if (!glow) return;
+    document.addEventListener("pointermove", function (e) {
+      glow.style.setProperty("--gx", e.clientX + "px");
+      glow.style.setProperty("--gy", e.clientY + "px");
+      glow.style.opacity = "1";
+    }, {passive: true});
+    document.addEventListener("pointerleave", function () {
+      glow.style.opacity = "0";
+    });
+  })();
+
+  // ── Cursor-tilt on cards ────────────────────────────────────────────
+  (function () {
+    var cards = document.querySelectorAll("[data-tilt]");
+    cards.forEach(function (card) {
+      card.addEventListener("pointermove", function (e) {
+        var rect = card.getBoundingClientRect();
+        var px = (e.clientX - rect.left) / rect.width - 0.5;
+        var py = (e.clientY - rect.top) / rect.height - 0.5;
+        card.style.transform = "perspective(900px) rotateX(" + (py * -6).toFixed(2) +
+          "deg) rotateY(" + (px * 6).toFixed(2) + "deg) translateY(-2px)";
+      });
+      card.addEventListener("pointerleave", function () {
+        card.style.transform = "";
+      });
+    });
+  })();
+
+  // ── Sticky nav / filter pills + timeline rail + scrollspy accent ───
+  // The pills double as both a scrollspy (highlight whichever category is
+  // currently in view while no filter is active) and real filter chips
+  // (clicking one hides every other category; clicking "All" resets).
+  (function () {
+    var categories = Array.prototype.slice.call(document.querySelectorAll(".chp-category"));
+    if (!categories.length) return;
+    var pills = Array.prototype.slice.call(document.querySelectorAll("[data-nav-pill]"));
+    var railNodes = Array.prototype.slice.call(document.querySelectorAll("[data-rail-node]"));
+    var activeFilter = null;
+
+    function setActive(slug) {
+      pills.forEach(function (p) {
+        p.classList.toggle("is-active", p.dataset.navPill === slug);
+      });
+      railNodes.forEach(function (n) {
+        n.classList.toggle("is-active", n.dataset.railNode === slug);
+      });
+      var cat = document.getElementById("cat-" + slug);
+      var accent = cat ? cat.dataset.accent : "gold";
+      document.documentElement.style.setProperty("--chp-scroll-accent", "var(--chp-accent-" + accent + ")");
+    }
+
+    function applyFilter(slug) {
+      activeFilter = slug;
+      categories.forEach(function (cat) {
+        cat.hidden = !!(slug && cat.id !== "cat-" + slug);
+      });
+      document.querySelectorAll(".chp-divider-motif").forEach(function (d) {
+        d.hidden = !!slug;
+      });
+      pills.forEach(function (p) {
+        p.classList.toggle("is-filtering", p.dataset.navPill === slug);
+      });
+      if (slug) setActive(slug);
+    }
+
+    pills.forEach(function (pill) {
+      pill.addEventListener("click", function () {
+        var slug = pill.dataset.navPill;
+        if (slug === "all") {
+          applyFilter(null);
+        } else if (activeFilter === slug) {
+          applyFilter(null);
+        } else {
+          applyFilter(slug);
+          var target = document.getElementById("cat-" + slug);
+          if (target) target.scrollIntoView({behavior: "smooth", block: "start"});
+        }
+      });
+    });
+
+    var ticking = false;
+    function scrollSpy() {
+      ticking = false;
+      if (activeFilter) return;
+      var best = null;
+      var bestDist = Infinity;
+      categories.forEach(function (cat) {
+        var rect = cat.getBoundingClientRect();
+        var dist = Math.abs(rect.top - 120);
+        if (rect.top < window.innerHeight * 0.7 && dist < bestDist) {
+          bestDist = dist;
+          best = cat;
+        }
+      });
+      if (best) setActive(best.id.replace("cat-", ""));
+    }
+    window.addEventListener("scroll", function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(scrollSpy);
+    }, {passive: true});
+    scrollSpy();
+  })();
+
+  // ── Section anchor links ────────────────────────────────────────────
+  (function () {
+    document.querySelectorAll(".chp-anchor-link").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var anchor = btn.dataset.anchor;
+        var url = location.origin + location.pathname + anchor;
+        history.replaceState(null, "", anchor);
+        var label = btn.querySelector(".chp-anchor-label");
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(url).catch(function () {});
+        }
+        if (label) {
+          var prev = label.textContent;
+          label.textContent = "Copied!";
+          setTimeout(function () { label.textContent = prev; }, 1400);
+        }
+      });
+    });
+  })();
+
+  // ── Expand / collapse item cards ────────────────────────────────────
+  (function () {
+    document.querySelectorAll(".chp-expand-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var card = btn.closest(".chp-item-card");
+        var body = card.querySelector(".chp-item-body");
+        var expanded = body.classList.toggle("is-expanded");
+        btn.textContent = expanded ? "Show less" : "Read more";
+      });
+    });
   })();
 </script>
 </body>

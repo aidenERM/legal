@@ -127,9 +127,60 @@
   .hub-desc {
     font-size: 13px;
     color: rgba(255,255,255,0.40);
-    margin-bottom: 32px;
+    margin-bottom: 20px;
     animation: fade-up 0.7s var(--ease-smooth) 0.35s both;
   }
+
+  /* ── Latest update banner ── */
+  .hub-latest {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    margin-bottom: 22px;
+    border-radius: 999px;
+    background: rgba(217,118,47,0.08);
+    border: 1px solid rgba(217,118,47,0.22);
+    text-decoration: none;
+    animation: fade-up 0.7s var(--ease-smooth) 0.38s both;
+    transition: background 0.25s var(--ease-smooth), border-color 0.25s var(--ease-smooth),
+                transform 0.25s var(--ease-spring);
+  }
+  .hub-latest:hover {
+    background: rgba(217,118,47,0.14);
+    border-color: rgba(217,118,47,0.40);
+    transform: translateY(-1px);
+  }
+  .hub-latest:active { transform: scale(0.98); }
+  .hub-latest-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--chp-gold-bright);
+    flex-shrink: 0;
+    box-shadow: 0 0 0 0 rgba(217,118,47,0.55);
+    animation: hub-latest-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes hub-latest-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(217,118,47,0.45); }
+    70%  { box-shadow: 0 0 0 7px rgba(217,118,47,0); }
+    100% { box-shadow: 0 0 0 0 rgba(217,118,47,0); }
+  }
+  .hub-latest-text {
+    flex: 1;
+    text-align: left;
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .hub-latest-text strong { color: #fff; font-weight: 700; }
+  .hub-latest-arrow {
+    font-size: 14px;
+    color: rgba(217,118,47,0.65);
+    transition: transform 0.25s var(--ease-spring);
+  }
+  .hub-latest:hover .hub-latest-arrow { transform: translateX(3px); }
 
   /* ── Nav links ── */
   .hub-links {
@@ -246,6 +297,12 @@
   <p class="hub-title">Management Bot</p>
   <p class="hub-desc">Discord bot for CHP roleplay community administration</p>
 
+  <a class="hub-latest" href="changelog.html">
+    <span class="hub-latest-dot" aria-hidden="true"></span>
+    <span class="hub-latest-text"><strong>Update #3</strong> &middot; AI overhaul, Duty Fix &amp; auto-promotions</span>
+    <span class="hub-latest-arrow">›</span>
+  </a>
+
   <nav class="hub-links" aria-label="Legal documents">
     <a class="hub-link" href="welcome.html">
       <span class="hub-link-icon">👋</span>
@@ -281,7 +338,7 @@
     </a>
   </nav>
 
-  <p class="hub-foot">Last updated July 1, 2026 &middot; CHP Management</p>
+  <p class="hub-foot">Last updated August 1, 2026 &middot; CHP Management</p>
 </main>
 
 <script>

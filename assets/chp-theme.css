@@ -815,3 +815,473 @@ html, body {
   position: relative;
   transform-style: preserve-3d;
 }
+
+/* ─── Changelog v3 UI overhaul ───────────────────────────────────────────
+   Everything below is scoped to the newer "hero + categories" changelog
+   layout (scripts/build_changelog_page.py). Older flat-list entries never
+   render any of these classes, so this addition can't change how any
+   existing page looks. */
+
+:root {
+  --chp-accent-blue: #7c9bff;
+  --chp-accent-gold: #d9762f;
+  --chp-accent-warm: #e2935a;
+  --chp-scroll-accent: var(--chp-accent-gold);
+}
+
+/* Small helper every clickable pill/button in this section shares - a felt
+   click, not just a registered one. */
+.chp-bounce-tap { transition: transform 0.15s var(--ease-spring); }
+.chp-bounce-tap:active { transform: scale(0.90); }
+
+/* ─── Top scroll progress bar ────────────────────────────────────────── */
+.chp-progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  width: 0%;
+  z-index: 300;
+  background: linear-gradient(90deg, var(--chp-gold-dim), var(--chp-scroll-accent), #fff2);
+  transition: width 0.12s linear, background 0.6s var(--ease-smooth);
+  pointer-events: none;
+}
+
+/* ─── Page-wide cursor glow ──────────────────────────────────────────── */
+.chp-cursor-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-smooth);
+  background: radial-gradient(circle 420px at var(--gx, 50%) var(--gy, 50%),
+    rgba(194,102,31,0.10), transparent 70%);
+  mix-blend-mode: screen;
+}
+
+/* ─── Left-side vertical timeline rail ───────────────────────────────── */
+.chp-timeline-rail {
+  position: fixed;
+  top: 50%;
+  left: max(24px, calc(50% - 560px));
+  transform: translateY(-50%);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  padding: 10px 0;
+}
+.chp-timeline-rail::before {
+  content: "";
+  position: absolute;
+  top: -20px; bottom: -20px;
+  left: 50%;
+  width: 1.5px;
+  background: linear-gradient(180deg, transparent, rgba(194,102,31,0.30) 15%, rgba(194,102,31,0.30) 85%, transparent);
+  transform: translateX(-50%);
+  z-index: -1;
+}
+.chp-rail-node {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--chp-black-soft);
+  border: 1.5px solid var(--glass-border-gold);
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.3s var(--ease-smooth), border-color 0.3s var(--ease-smooth),
+              transform 0.3s var(--ease-spring), box-shadow 0.3s var(--ease-smooth);
+}
+.chp-rail-node:hover { transform: scale(1.3); border-color: var(--chp-gold-bright); }
+.chp-rail-node.is-active {
+  background: var(--chp-scroll-accent);
+  border-color: var(--chp-scroll-accent);
+  box-shadow: 0 0 0 4px rgba(217,118,47,0.16);
+  transform: scale(1.35);
+}
+@media (max-width: 1300px) {
+  .chp-timeline-rail { display: none; }
+}
+
+/* ─── Hero moment cards ───────────────────────────────────────────────
+   2-3 near-full-width statement cards for the biggest features this
+   cycle, distinct from (and above) the dense category grid below them -
+   one idea per screen, Apple product-page style. */
+.chp-hero-features {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 22px 0 30px;
+}
+.chp-hero-card {
+  position: relative;
+  padding: 26px 28px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(217,118,47,0.08), rgba(255,255,255,0.02));
+  border: 1px solid var(--glass-border-gold);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: border-color 0.3s var(--ease-smooth), box-shadow 0.3s var(--ease-smooth),
+              opacity 0.7s var(--ease-out-expo), filter 0.7s var(--ease-out-expo);
+}
+.chp-hero-card:hover {
+  border-color: var(--chp-gold-bright);
+  box-shadow: 0 18px 46px rgba(0,0,0,0.30), 0 0 0 1px rgba(194,102,31,0.14);
+}
+.chp-hero-icon {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 12px;
+  color: var(--chp-gold-bright);
+  background: rgba(217,118,47,0.12);
+  border: 1px solid var(--glass-border-gold);
+  margin-bottom: 14px;
+}
+.chp-hero-icon svg { width: 22px; height: 22px; }
+.chp-hero-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+  margin: 0 0 8px;
+}
+.chp-hero-body {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--chp-text);
+  margin: 0;
+  max-width: 62ch;
+}
+
+/* ─── Sticky nav / filter pills ──────────────────────────────────────── */
+.chp-nav-pills {
+  position: sticky;
+  top: 12px;
+  z-index: 60;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  margin: 6px 0 26px;
+  border-radius: 999px;
+  background: rgba(8,8,11,0.55);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+}
+.chp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--chp-text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.25s var(--ease-smooth), background 0.25s var(--ease-smooth),
+              border-color 0.25s var(--ease-smooth), transform 0.15s var(--ease-spring);
+}
+.chp-pill:active { transform: scale(0.92); }
+.chp-pill-icon { width: 13px; height: 13px; display: inline-flex; }
+.chp-pill-icon svg { width: 100%; height: 100%; }
+.chp-pill:hover { color: #fff; background: rgba(255,255,255,0.06); }
+.chp-pill.is-active {
+  color: #fff;
+  background: rgba(217,118,47,0.16);
+  border-color: rgba(217,118,47,0.35);
+}
+.chp-pill.is-filtering {
+  background: var(--chp-scroll-accent);
+  color: #1a0f04;
+  border-color: var(--chp-scroll-accent);
+}
+
+/* ─── Category sections ──────────────────────────────────────────────── */
+.chp-category {
+  position: relative;
+  margin: 8px 0 6px;
+  padding: 4px 0 4px 18px;
+  border-left: 2px solid transparent;
+  --cat-color: var(--chp-accent-gold);
+}
+.chp-category[data-accent="blue"] { --cat-color: var(--chp-accent-blue); }
+.chp-category[data-accent="gold"] { --cat-color: var(--chp-accent-gold); }
+.chp-category[data-accent="warm"] { --cat-color: var(--chp-accent-warm); }
+.chp-category { border-left-color: color-mix(in srgb, var(--cat-color) 35%, transparent); }
+
+.chp-category-watermark {
+  position: absolute;
+  top: -10px;
+  right: -6px;
+  width: 130px;
+  height: 130px;
+  color: var(--cat-color);
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: -1;
+}
+.chp-category-watermark svg { width: 100%; height: 100%; }
+
+.chp-category-header {
+  position: sticky;
+  top: 64px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  background: rgba(8,8,11,0.72);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+}
+.chp-category-icon {
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--cat-color);
+  flex-shrink: 0;
+}
+.chp-category-icon svg { width: 20px; height: 20px; }
+.chp-category-title {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.005em;
+  margin: 0;
+  flex: 1;
+}
+.chp-anchor-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--chp-text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.25s var(--ease-smooth), color 0.2s var(--ease-smooth),
+              border-color 0.2s var(--ease-smooth), transform 0.15s var(--ease-spring);
+}
+.chp-anchor-link svg { width: 12px; height: 12px; }
+.chp-category-header:hover .chp-anchor-link,
+.chp-anchor-link:focus-visible { opacity: 1; }
+.chp-anchor-link:hover { color: #fff; border-color: var(--cat-color); }
+.chp-anchor-link:active { transform: scale(0.9); }
+
+/* ─── Item grid + cards (replaces the old flat feature grid for entries
+   using the categories schema) ──────────────────────────────────────── */
+.chp-item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.chp-item-card {
+  position: relative;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left: 3px solid var(--cat-color, var(--chp-gold));
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: border-color 0.25s var(--ease-smooth), background 0.25s var(--ease-smooth),
+              opacity 0.7s var(--ease-out-expo), filter 0.7s var(--ease-out-expo);
+}
+.chp-item-card:hover {
+  background: rgba(255,255,255,0.045);
+}
+.chp-item-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.chp-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cat-color, var(--chp-gold-bright));
+  background: color-mix(in srgb, var(--cat-color, var(--chp-gold)) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cat-color, var(--chp-gold)) 30%, transparent);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.chp-item-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 5px;
+}
+.chp-item-body {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--chp-text);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: -webkit-line-clamp 0.2s;
+}
+.chp-item-body.is-expanded {
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+.chp-expand-btn {
+  margin-top: 8px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cat-color, var(--chp-gold-bright));
+  cursor: pointer;
+  transition: color 0.2s var(--ease-smooth), transform 0.15s var(--ease-spring);
+}
+.chp-expand-btn:hover { color: #fff; }
+.chp-expand-btn:active { transform: scale(0.92); }
+
+/* Inline mini before/after stat embedded on an individual card. */
+.chp-before-after {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border);
+  font-size: 11.5px;
+  flex-wrap: wrap;
+}
+.chp-ba-label { color: var(--chp-text-muted); margin-right: 2px; }
+.chp-ba-before { color: var(--chp-text-muted); text-decoration: line-through; }
+.chp-ba-arrow { color: var(--cat-color, var(--chp-gold-bright)); }
+.chp-ba-after { color: #fff; font-weight: 700; }
+
+/* ─── Divider motif between categories ───────────────────────────────── */
+.chp-divider-motif {
+  display: flex;
+  justify-content: center;
+  color: var(--chp-gold-dim);
+  opacity: 0.6;
+  margin: 22px 0;
+}
+
+/* ─── Odometer digit-roll stat numbers ───────────────────────────────── */
+.chp-odometer {
+  position: relative;
+  display: inline-flex;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--chp-gold-bright);
+}
+.chp-odometer-digit {
+  position: relative;
+  width: 0.62em;
+  height: 1.15em;
+  overflow: hidden;
+  display: inline-block;
+}
+.chp-odometer-inner {
+  position: absolute;
+  left: 0; top: 0;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.9s var(--ease-spring);
+  transform: translateY(calc(-1em * var(--d, 0)));
+  background: linear-gradient(135deg, var(--chp-gold-bright), #ffb066 55%, var(--chp-gold-bright));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.chp-odometer-inner span {
+  height: 1.15em;
+  line-height: 1.15em;
+  text-align: center;
+}
+.chp-odometer-static {
+  background: linear-gradient(135deg, var(--chp-gold-bright), #ffb066 55%, var(--chp-gold-bright));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+/* Completion sparkle - a brief radial flash the instant the slowest digit
+   settles, a small "done" cue rather than the numbers just stopping flat. */
+.chp-stat { position: relative; }
+.chp-stat::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 40%, rgba(255,220,150,0.55), transparent 60%);
+  opacity: 0;
+  pointer-events: none;
+}
+.chp-stat:has(.chp-odometer.is-complete)::after {
+  animation: stat-flash 0.9s var(--ease-out-expo);
+}
+@keyframes stat-flash {
+  0%   { opacity: 0; transform: scale(0.85); }
+  30%  { opacity: 0.9; transform: scale(1.08); }
+  100% { opacity: 0; transform: scale(1.25); }
+}
+/* Hover tooltip explaining what a stat actually counts. */
+.chp-stat[data-tooltip]:hover::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 200px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: rgba(10,10,13,0.95);
+  border: 1px solid var(--glass-border-gold);
+  color: var(--chp-text);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: center;
+  z-index: 40;
+  pointer-events: none;
+  animation: fade-up 0.2s var(--ease-out-expo) both;
+}
+
+/* ─── Animated checkmarks in the fixes list ──────────────────────────── */
+.chp-fixes li { display: flex; align-items: flex-start; gap: 8px; padding-left: 0; }
+.chp-fixes li::before { content: none; }
+.chp-checkmark {
+  width: 16px; height: 16px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #8ea0ff;
+}
+.chp-checkmark-path {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  transition: stroke-dashoffset 0.5s var(--ease-out-expo);
+}
+.chp-fixes.is-visible .chp-checkmark-path {
+  stroke-dashoffset: 0;
+  transition-delay: 0.3s;
+}
+
+@media (max-width: 768px) {
+  .chp-nav-pills { top: 6px; }
+  .chp-category-header { top: 6px; }
+  .chp-hero-card { padding: 20px 18px; }
+  .chp-item-grid { grid-template-columns: 1fr; }
+}
