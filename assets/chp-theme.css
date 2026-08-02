@@ -847,18 +847,6 @@ html, body {
 }
 
 /* ─── Page-wide cursor glow ──────────────────────────────────────────── */
-.chp-cursor-glow {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.4s var(--ease-smooth);
-  background: radial-gradient(circle 420px at var(--gx, 50%) var(--gy, 50%),
-    rgba(194,102,31,0.10), transparent 70%);
-  mix-blend-mode: screen;
-}
-
 /* ─── Left-side vertical timeline rail ───────────────────────────────── */
 .chp-timeline-rail {
   position: fixed;
@@ -922,7 +910,6 @@ html, body {
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   transform-style: preserve-3d;
-  will-change: transform;
   transition: border-color 0.3s var(--ease-smooth), box-shadow 0.3s var(--ease-smooth),
               opacity 0.7s var(--ease-out-expo), filter 0.7s var(--ease-out-expo);
 }
@@ -1037,9 +1024,12 @@ html, body {
   padding: 8px 10px;
   margin-bottom: 14px;
   border-radius: 12px;
-  background: rgba(8,8,11,0.72);
-  backdrop-filter: blur(10px) saturate(150%);
-  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  /* Solid (not blurred) background - this element is position:sticky and
+     present for every category simultaneously, so a backdrop-filter here
+     means N always-live blur layers instead of one. A solid dark fill
+     reads almost identically against this page's already-dark backdrop
+     without the compositor cost. */
+  background: rgba(10,10,13,0.88);
 }
 .chp-category-icon {
   width: 24px; height: 24px;
@@ -1089,13 +1079,17 @@ html, body {
   position: relative;
   padding: 16px 18px;
   border-radius: 14px;
-  background: rgba(255,255,255,0.025);
+  /* No backdrop-filter here on purpose: with 19+ of these cards on one
+     entry, each running its own blur is the single biggest cost on this
+     page (every blurred layer is its own GPU-composited surface). A flat
+     tinted background looks nearly identical against the dark scene
+     behind it, without the per-card blur cost. will-change is applied by
+     JS only while a card is actually hovered (see page script), not here
+     unconditionally - an idle card holds no extra compositor layer. */
+  background: rgba(255,255,255,0.035);
   border: 1px solid rgba(255,255,255,0.08);
   border-left: 3px solid var(--cat-color, var(--chp-gold));
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   transform-style: preserve-3d;
-  will-change: transform;
   transition: border-color 0.25s var(--ease-smooth), background 0.25s var(--ease-smooth),
               opacity 0.7s var(--ease-out-expo), filter 0.7s var(--ease-out-expo);
 }
@@ -1126,7 +1120,12 @@ html, body {
   color: var(--chp-text);
   margin: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  /* Most item bodies run 3-5 sentences - clamped at 3 lines nearly every
+     card needed a click just to read the whole thing. 6 lines shows the
+     full text on almost every card by default; "Read more" (hidden by
+     the page script when a card isn't actually clamped) only appears on
+     the handful that still overflow. */
+  -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;
   overflow: hidden;
   transition: -webkit-line-clamp 0.2s;

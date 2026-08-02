@@ -9,7 +9,6 @@
 </head>
 <body>
 <div class="chp-progress-bar" id="chpProgressBar" aria-hidden="true"></div>
-<div class="chp-cursor-glow" id="chpCursorGlow" aria-hidden="true"></div>
 <div class="chp-scene" aria-hidden="true">
   <div class="chp-orb chp-orb-1"></div>
   <div class="chp-orb chp-orb-2"></div>
@@ -190,7 +189,14 @@
         <div class="chp-item-card chp-reveal" data-tilt>
           <div class="chp-item-tags"><span class="chp-tag">Command</span><span class="chp-tag">UX</span></div>
           <p class="chp-item-title">Cleaner Commands</p>
-          <p class="chp-item-body">/duty went from 18 subcommands down to 13 (several merged together), &gt;member and &gt;scan are now organized groups instead of loose top-level commands, and &gt;help &lt;command&gt; gives focused help for one command instead of only the full category list. &gt;agentchannel brings the same AI tool-calling the dashboard uses into a Discord channel — plain-language requests that read data immediately and ask for a confirm click before writing anything.</p>
+          <p class="chp-item-body">/duty went from 18 subcommands down to 13 (several merged together), &gt;member and &gt;scan are now organized groups instead of loose top-level commands, and &gt;help &lt;command&gt; gives focused help for one command instead of only the full category list.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Command</span><span class="chp-tag">AI</span><span class="chp-tag">New</span></div>
+          <p class="chp-item-title">&gt;agentchannel</p>
+          <p class="chp-item-body">Brings the same AI tool-calling the dashboard uses into a Discord channel — plain-language requests that read data immediately and ask for a confirm click before writing anything.</p>
           
           <button type="button" class="chp-expand-btn">Read more</button>
         </div>
@@ -222,8 +228,15 @@
       <div class="chp-item-grid">
         <div class="chp-item-card chp-reveal" data-tilt>
           <div class="chp-item-tags"><span class="chp-tag">Dashboard</span><span class="chp-tag">New</span></div>
-          <p class="chp-item-title">Dashboard</p>
-          <p class="chp-item-body">A full bot-side API server now backs the web dashboard end to end: Officers roster, a Watch List panel, dedicated FTO Tools and IA Tools sections gated by your live Discord roles, a Board of Commissioners control center (scheduled quota/promotion runs, leaderboard resets, HR oversight), and dozens of endpoints spanning every permission tier from self-service up to Developer.</p>
+          <p class="chp-item-title">Officer &amp; Watch Tools</p>
+          <p class="chp-item-body">A full bot-side API server now backs the web dashboard end to end: an Officers roster, a Watch List panel, and dedicated FTO Tools and IA Tools sections, each gated by your live Discord roles rather than a static permission flag.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Dashboard</span><span class="chp-tag">New</span></div>
+          <p class="chp-item-title">Board of Commissioners Center</p>
+          <p class="chp-item-body">A dedicated control center for scheduled quota/promotion runs, leaderboard resets, and HR oversight, plus dozens of endpoints spanning every permission tier from self-service up to Developer.</p>
           
           <button type="button" class="chp-expand-btn">Read more</button>
         </div>
@@ -254,9 +267,16 @@
           <button type="button" class="chp-expand-btn">Read more</button>
         </div>
         <div class="chp-item-card chp-reveal" data-tilt>
-          <div class="chp-item-tags"><span class="chp-tag">Fix</span><span class="chp-tag">Performance</span></div>
-          <p class="chp-item-title">Reliability</p>
-          <p class="chp-item-body">Well over 250 fixes and performance improvements this cycle: N+1 query fixes across officer rosters and leaderboards, database index additions, race-condition fixes in shift logging and RA results, decoration/stripe protection hardened against accidental removal, and dozens of crash fixes surfaced by real production use.</p>
+          <div class="chp-item-tags"><span class="chp-tag">Performance</span></div>
+          <p class="chp-item-title">Performance</p>
+          <p class="chp-item-body">N+1 query fixes across officer rosters and leaderboards, plus database index additions on the collections those pages hit hardest — the roster/leaderboard slowdowns reported earlier this cycle.</p>
+          
+          <button type="button" class="chp-expand-btn">Read more</button>
+        </div>
+        <div class="chp-item-card chp-reveal" data-tilt>
+          <div class="chp-item-tags"><span class="chp-tag">Fix</span></div>
+          <p class="chp-item-title">Stability</p>
+          <p class="chp-item-body">Well over 250 fixes this cycle: race-condition fixes in shift logging and RA results, decoration/stripe protection hardened against accidental removal, and dozens of crash fixes surfaced by real production use.</p>
           
           <button type="button" class="chp-expand-btn">Read more</button>
         </div>
@@ -511,37 +531,47 @@
     update();
   })();
 
-  // ── Page-wide cursor glow ───────────────────────────────────────────
-  // Extends the existing .chp-glass pointer-tracked highlight (already
-  // scoped to individual glass panels) to the whole viewport, so the
-  // scene itself feels alive rather than only individual cards.
-  (function () {
-    var glow = document.getElementById("chpCursorGlow");
-    if (!glow) return;
-    document.addEventListener("pointermove", function (e) {
-      glow.style.setProperty("--gx", e.clientX + "px");
-      glow.style.setProperty("--gy", e.clientY + "px");
-      glow.style.opacity = "1";
-    }, {passive: true});
-    document.addEventListener("pointerleave", function () {
-      glow.style.opacity = "0";
-    });
-  })();
-
   // ── Cursor-tilt on cards ────────────────────────────────────────────
+  // rAF-throttled (at most one style write per frame instead of one per
+  // raw pointermove event) and only promotes a card to its own compositor
+  // layer (will-change) while the pointer is actually over it - a card
+  // sitting idle costs nothing instead of every card permanently holding
+  // a GPU layer just in case it's hovered later.
   (function () {
     var cards = document.querySelectorAll("[data-tilt]");
+    var pending = null;
     cards.forEach(function (card) {
+      card.addEventListener("pointerenter", function () {
+        card.style.willChange = "transform";
+      });
       card.addEventListener("pointermove", function (e) {
-        var rect = card.getBoundingClientRect();
-        var px = (e.clientX - rect.left) / rect.width - 0.5;
-        var py = (e.clientY - rect.top) / rect.height - 0.5;
-        card.style.transform = "perspective(900px) rotateX(" + (py * -6).toFixed(2) +
-          "deg) rotateY(" + (px * 6).toFixed(2) + "deg) translateY(-2px)";
+        if (pending) return;
+        pending = requestAnimationFrame(function () {
+          pending = null;
+          var rect = card.getBoundingClientRect();
+          var px = (e.clientX - rect.left) / rect.width - 0.5;
+          var py = (e.clientY - rect.top) / rect.height - 0.5;
+          card.style.transform = "perspective(900px) rotateX(" + (py * -6).toFixed(2) +
+            "deg) rotateY(" + (px * 6).toFixed(2) + "deg) translateY(-2px)";
+        });
       });
       card.addEventListener("pointerleave", function () {
         card.style.transform = "";
+        card.style.willChange = "auto";
       });
+    });
+  })();
+
+  // ── Expand/collapse visibility: only show "Read more" on cards whose
+  // text actually got clamped - a card whose full body already fits in
+  // the default clamp shouldn't offer a button that does nothing. ──────
+  (function () {
+    document.querySelectorAll(".chp-item-body").forEach(function (body) {
+      var btn = body.parentElement.querySelector(".chp-expand-btn");
+      if (!btn) return;
+      if (body.scrollHeight <= body.clientHeight + 2) {
+        btn.hidden = true;
+      }
     });
   })();
 
